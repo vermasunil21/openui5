@@ -2,8 +2,8 @@
  * ${copyright}
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/m/semantic/SegmentedContainer', 'sap/m/semantic/SemanticConfiguration','sap/m/Button', 'sap/m/Title', 'sap/m/ActionSheet', 'sap/m/Page', 'sap/m/OverflowToolbar', 'sap/m/OverflowToolbarButton', 'sap/m/OverflowToolbarLayoutData', 'sap/m/ToolbarSpacer', 'sap/m/Bar', 'sap/ui/core/CustomData', 'sap/ui/base/ManagedObject'],
-function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, ActionSheet, Page, OverflowToolbar, OverflowToolbarButton, OverflowToolbarLayoutData, ToolbarSpacer, Bar, CustomData, ManagedObject) {
+sap.ui.define(['jquery.sap.global', 'sap/m/semantic/SegmentedContainer', 'sap/m/semantic/SemanticConfiguration','sap/m/Button', 'sap/m/Title', 'sap/m/ActionSheet', 'sap/m/Page', 'sap/m/OverflowToolbar', 'sap/m/OverflowToolbarButton', 'sap/m/OverflowToolbarLayoutData', 'sap/m/ToolbarSpacer', 'sap/m/Bar', 'sap/ui/core/CustomData', 'sap/ui/base/ManagedObject', 'sap/ui/core/AccessibleLandmarkRole', 'sap/m/PageAccessibleLandmarkInfo'],
+function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, ActionSheet, Page, OverflowToolbar, OverflowToolbarButton, OverflowToolbarLayoutData, ToolbarSpacer, Bar, CustomData, ManagedObject, AccessibleLandmarkRole, PageAccessibleLandmarkInfo) {
 	"use strict";
 
 	/**
@@ -43,6 +43,8 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 	 */
 	var SemanticPage = sap.ui.core.Control.extend("sap.m.semantic.SemanticPage", /** @lends sap.m.semantic.SemanticPage.prototype */ {
 		metadata: {
+
+			library: "sap.m",
 
 			properties: {
 
@@ -138,6 +140,13 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 				},
 
 				/**
+				 * Accessible landmark settings to be applied to the containers of the <code>sap.m.Page</code> control.
+				 *
+				 * If not set, no landmarks will be written.
+				 */
+				landmarkInfo : {type : "sap.m.PageAccessibleLandmarkInfo", multiple : false},
+
+				/**
 				 * Wrapped instance of {@link sap.m.Page}
 				 */
 				_page: {
@@ -153,7 +162,8 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 				 * See {@link sap.m.Page#navButtonPress}
 				 */
 				navButtonPress: {}
-			}
+			},
+			designTime : true
 		}
 	});
 
@@ -162,6 +172,7 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 		this._currentMode = SemanticConfiguration._PageMode.display;
 		this._getPage().setCustomHeader(this._getInternalHeader());
 		this._getPage().setFooter(new OverflowToolbar(this.getId() + "-footer"));
+		this._getPage().setLandmarkInfo(new PageAccessibleLandmarkInfo());
 	};
 
 	/**
@@ -204,6 +215,17 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 
 	SemanticPage.prototype.setShowSubHeader = function (bShowSubHeader, bSuppressInvalidate) {
 		this._getPage().setShowSubHeader(bShowSubHeader, bSuppressInvalidate);
+		this.setProperty("showSubHeader", bShowSubHeader, true);
+		return this;
+	};
+
+	SemanticPage.prototype.getShowFooter = function () {
+		return this._getPage().getShowFooter();
+	};
+
+	SemanticPage.prototype.setShowFooter = function (bShowFooter, bSuppressInvalidate) {
+		this._getPage().setShowFooter(bShowFooter, bSuppressInvalidate);
+		this.setProperty("showFooter", bShowFooter, true);
 		return this;
 	};
 
@@ -281,6 +303,18 @@ function (jQuery, SegmentedContainer, SemanticConfiguration, Button, Title, Acti
 		this._getPage().setEnableScrolling(bEnable);
 		this.setProperty("enableScrolling", bEnable, true);
 		return this;
+	};
+
+	SemanticPage.prototype.setLandmarkInfo = function (oLandmarkInfo) {
+		return this._getPage().setLandmarkInfo(oLandmarkInfo);
+	};
+
+	SemanticPage.prototype.getLandmarkInfo = function () {
+		return this._getPage().getLandmarkInfo();
+	};
+
+	SemanticPage.prototype.destroyLandmarkInfo = function () {
+		return this._getPage().destroyLandmarkInfo();
 	};
 
 	/*

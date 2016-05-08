@@ -6,18 +6,20 @@
 /* TimePicker Input Field                   */
 /* ======================================== */
 .sapMTimePicker {
-	.sapMInputBaseInner {
-		padding-right: 2.5rem;
-	}
 	.sapUiIcon {
 		cursor: pointer;
 	}
 }
+
+.TPSliderItemHidden {
+	display: none;
+}
+
 /* ======================================== */
 /* TimePicker Dropdown                      */
 /* ======================================== */
 .sapMTimePickerDropDown {
-  overflow: hidden !important;
+	overflow: hidden !important;
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
@@ -26,7 +28,6 @@
 	.sapMTimePickerContainer {
 		height: 100%;
 		min-width: 20rem;
-		-moz-box-sizing: border-box;
 		box-sizing: border-box;
 		padding: 1rem;
 		text-align: center;
@@ -38,7 +39,6 @@
 		}
 		.sapMTimePickerContainerLabel {
 			display: none;
-			-moz-box-sizing: border-box;
 			box-sizing: border-box;
 		}
 		.sapMTPColumn {
@@ -47,7 +47,6 @@
 			height: 3rem;
 			vertical-align: middle;
 			text-align: center;
-			-moz-box-sizing: border-box;
 			box-sizing: border-box;
 			cursor: pointer;
 			.sapMTimePickerLabel {
@@ -60,11 +59,11 @@
 			}
 			.sapMTimePickerItemArrows {
 				display: none;
+				box-sizing: border-box;
 			}
 			.sapMTimePickerSlider {
 				overflow: hidden;
 				height: 100%;
-				-moz-box-sizing: border-box;
 				box-sizing: border-box;
 				.sapMTimePickerItem {
 					height: 3rem;
@@ -76,7 +75,6 @@
 					width: 4.5rem;
 					height: 3rem;
 					position: absolute;
-					-moz-box-sizing: border-box;
 					box-sizing: border-box;
 					display: none;
 				}
@@ -98,14 +96,40 @@
 				}
 				.sapMTimePickerSlider {
 					height: calc(100% - 2rem);
-					.sapMTimePickerItem {
-					}
+					max-height: 100%; //because of the SliderValuesN classes below
 					.sapMTPPickerSelectionFrame {
 						display: block;
 					}
-					& > ul {
-						box-sizing: border-box;
-					}
+				}
+				.sapMTimePickerSlider.SliderValues3 {
+					height: 9rem;
+				}
+				.sapMTimePickerSlider.SliderValues4 {
+					height: 12rem;
+				}
+				.sapMTimePickerSlider.SliderValues5 {
+					height: 15rem;
+				}
+				.sapMTimePickerSlider.SliderValues6 {
+					height: 18rem;
+				}
+				.sapMTimePickerSlider.SliderValues7 {
+					height: 21rem;
+				}
+				.sapMTimePickerSlider.SliderValues8 {
+					height: 24rem;
+				}
+				.sapMTimePickerSlider.SliderValues9 {
+					height: 27rem;
+				}
+				.sapMTimePickerSlider.SliderValues10 {
+					height: 30rem;
+				}
+				.sapMTimePickerSlider.SliderValues11 {
+					height: 33rem;
+				}
+				.sapMTimePickerSlider.SliderValues12 {
+					height: 36rem;
 				}
 			}
 		}
@@ -116,112 +140,77 @@
 /* ======================================== */
 .sapUiSizeCompact {
 	/* ======================================== */
-	/* TimePicker Input Field                   */
-	/* ======================================== */
-	.sapMTimePicker {
-		.sapMInputBaseInner {
-			padding-right: 1.625rem;
-		}
-		.sapUiIcon {
-			cursor: pointer;
-		}
-	}
-	/* ======================================== */
 	/* TimePicker Dropdown                      */
 	/* ======================================== */
 	.sapMTimePickerDropDown {
 		.sapMTimePickerContainer {
-			height: 100%;
 			min-width: 17rem;
 			padding: 0.5rem;
-			box-sizing: border-box;
 			margin: auto;
 			.sapMTPColumn {
 				height: 2rem;
-				margin: 0 1px;
-				overflow: hidden;
-				text-align: center;
-				cursor: pointer;
 				.sapMTimePickerLabel {
-					height: 2rem;
 					width: 4rem;
-					text-align: center;
-					vertical-align: middle;
-					display: none;
-				}
-				.sapMTimePickerItemArrows {
-					border: 0.0625rem;
-					border-radius: 0.125rem;
-					box-sizing: border-box;
-					height: 2rem;
-					width: 4rem;
-					font-size: 1.375rem;
-					vertical-align: middle;
-					display: none;
-					padding: 0 0.5rem;
 				}
 				.sapMTimePickerSlider {
-					height: 100%;
-					overflow: hidden;
 					.sapMTimePickerItem {
 						height: 2rem;
 						line-height: 2rem;
 						width: 4rem;
 						box-sizing: border-box;
-						-moz-box-sizing: border-box;
 					}
 					.sapMTPPickerSelectionFrame {
-						position:absolute;
 						width: 4rem;
 						height: 2rem;
-						box-sizing: border-box;
-						-moz-box-sizing: border-box;
-						display: none;
-					}
-					& > ul {
-						list-style: none;
-						margin: 0;
-						padding: 0;
 					}
 				}
 				&.sapMTPSliderExpanded {
 					height: 100%;
 					cursor: default;
-					.sapMTimePickerLabel {
-						display: block;
-					}
+					margin: 0;
 					.sapMTimePickerItemArrows {
 						display: block;
 					}
 					.sapMTimePickerSlider {
 						height: ~"calc(100% - 6rem)";
-						overflow: hidden;
-						.sapMTimePickerItem {
-							height: 2rem;
-							width: 4rem;
-							box-sizing: border-box;
-						}
-						.sapMTPPickerSelectionFrame {
-							display: block;
-						}
+					}
+					.sapMTimePickerSlider.SliderValues3 {
+						height: 6rem;
+					}
+					.sapMTimePickerSlider.SliderValues4 {
+						height: 8rem;
+					}
+					.sapMTimePickerSlider.SliderValues5 {
+						height: 10rem;
+					}
+					.sapMTimePickerSlider.SliderValues6 {
+						height: 12rem;
+					}
+					.sapMTimePickerSlider.SliderValues7 {
+						height: 14rem;
+					}
+					.sapMTimePickerSlider.SliderValues8 {
+						height: 16rem;
+					}
+					.sapMTimePickerSlider.SliderValues9 {
+						height: 18rem;
+					}
+					.sapMTimePickerSlider.SliderValues10 {
+						height: 20rem;
+					}
+					.sapMTimePickerSlider.SliderValues11 {
+						height: 22rem;
+					}
+					.sapMTimePickerSlider.SliderValues12 {
+						height: 24rem;
 					}
 				}
 			}
 		}
 	}
 }
-
 /* PHONE STYLES */
-
-.sap-phone {
-	/* ======================================== */
-	/* TimePicker Input Field                   */
-	/* ======================================== */
-	.sapMTimePicker {
-		.sapMInputBaseInner {
-			padding-right: 2.5rem;
-		}
-	}
+html.sap-phone {
 	/* ======================================== */
 	/* TimePicker Dropdown                      */
 	/* ======================================== */
@@ -233,6 +222,7 @@
 			padding: 0;
 		}
 		.sapMTimePickerContainer {
+			max-height: 38rem; // 12 * item height + label's height
 			height: 100%;
 			padding: 1rem;
 			box-sizing: border-box;
@@ -290,11 +280,6 @@
 						display: none;
 						box-sizing: border-box;
 					}
-					& > ul {
-						list-style: none;
-						margin: 0;
-						padding: 0;
-					}
 				}
 				&.sapMTPSliderExpanded {
 					height: 100%;
@@ -319,8 +304,36 @@
 						.sapMTPPickerSelectionFrame {
 							display: block;
 						}
-						& > ul {
-						}
+					}
+					.sapMTimePickerSlider.SliderValues3 {
+						height: 9rem;
+					}
+					.sapMTimePickerSlider.SliderValues4 {
+						height: 12rem;
+					}
+					.sapMTimePickerSlider.SliderValues5 {
+						height: 15rem;
+					}
+					.sapMTimePickerSlider.SliderValues6 {
+						height: 18rem;
+					}
+					.sapMTimePickerSlider.SliderValues7 {
+						height: 21rem;
+					}
+					.sapMTimePickerSlider.SliderValues8 {
+						height: 24rem;
+					}
+					.sapMTimePickerSlider.SliderValues9 {
+						height: 27rem;
+					}
+					.sapMTimePickerSlider.SliderValues10 {
+						height: 30rem;
+					}
+					.sapMTimePickerSlider.SliderValues11 {
+						height: 33rem;
+					}
+					.sapMTimePickerSlider.SliderValues12 {
+						height: 36rem;
 					}
 				}
 			}

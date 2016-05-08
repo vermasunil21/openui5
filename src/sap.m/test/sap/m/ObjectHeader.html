@@ -1,11 +1,11 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
 <title>Object Header - sap.m</title>
 
-<script src="../../../resources/sap-ui-core.js" type="text/javascript" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m" data-sap-ui-theme="sap_bluecrystal">
+<script src="../../../resources/sap-ui-core.js" type="text/javascript" id="sap-ui-bootstrap" data-sap-ui-libs="sap.m, sap.ui.commons" data-sap-ui-theme="sap_bluecrystal">
 
 </script>
 
@@ -44,9 +44,6 @@
 
 	var oh1 = new sap.m.ObjectHeader(
 			"oh1", {
-				intro : "On behalf of John Smith Ñagçyfox",
-				title : "some normal title",
-				number : "3.624,00",
 				intro : "1234 On behalf of John Smith Ñagçyfox RTL",
 				introTextDirection: sap.ui.core.TextDirection.RTL,
 				title : "5678 some normal title RTL",
@@ -64,7 +61,7 @@
 					state : sap.ui.core.ValueState.Error
 				}) ]
 			});
-	
+
 	var oh1Icon = new sap.m.ObjectHeader("oh1-with-icon",{
 				intro : "1234 On behalf of John Smith Ñagçyfox LTR",
 				introTextDirection: sap.ui.core.TextDirection.LTR,
@@ -81,7 +78,7 @@
 					state : sap.ui.core.ValueState.Success
 				}) ]
 			});
-	
+
 	var oh1IconNoNumber = new sap.m.ObjectHeader(
 			"oh1-with-icon-no-number",	{
 				icon : sap.ui.core.IconPool.getIconURI("attachment"),
@@ -151,7 +148,7 @@
 					text : "This one is invisible",
 					visible : false
 				}),
-				    new sap.m.ObjectAttribute({
+				new sap.m.ObjectAttribute({
 					text : "Ñagçyfox Contract #D1234567890"
 				}) ],
 				markFavorite : true
@@ -372,37 +369,37 @@
 	var oh16EventHandler = function(oEvent) {
 		domRef = oEvent.getParameters().domRef;
 		var popover = new sap.m.Popover({
-			   placement: sap.m.PlacementType.Bottom,
-			   showHeader: true,
-			   content: new sap.m.List({
-					 mode: "SingleSelectMaster",
-					 includeItemInSelection : true,
-					 select : function (evt) {
+				placement: sap.m.PlacementType.Bottom,
+				showHeader: true,
+				content: new sap.m.List({
+					mode: "SingleSelectMaster",
+					includeItemInSelection : true,
+					select : function (evt) {
 							header.setTitle(evt.getParameter("listItem").getTitle());
 							popover.close();
-					 },
-					 items: [
+					},
+					items: [
 							new sap.m.StandardListItem({
-								  title : "Lorem ipsum dolor",
-								  selected : true
+								title : "Lorem ipsum dolor",
+								selected : true
 							}),
 							new sap.m.StandardListItem({
-								  title : "Lorem ipsum",
+								title : "Lorem ipsum",
 							}),
 							new sap.m.StandardListItem({
-								  title : "Lorem ipsum dolor sit amet et sineat",
+								title : "Lorem ipsum dolor sit amet et sineat",
 							}),
 							new sap.m.StandardListItem({
-								  title : "Lorem ipsum",
+								title : "Lorem ipsum",
 							}),
 							new sap.m.ActionListItem({
-								  text : "Lorem ipsum",
+								text : "Lorem ipsum",
 							}),
 							new sap.m.ActionListItem({
-								  text : "Lorem ipsum",
+								text : "Lorem ipsum",
 							})
 					 ] //end of item
-			   }) // end of content
+				}) // end of content
 		}); //end of popover
 		popover.openBy(domRef);
 	}
@@ -411,6 +408,7 @@
 		title : "Object Header for testing title arrow icon",
 		showTitleSelector : true,
 		titleSelectorPress : oh16EventHandler,
+		titleSelectorTooltip: "custom tooltip",
 		number : "1.000",
 		numberUnit : "EUR",
 		numberState : sap.ui.core.ValueState.Error,
@@ -424,7 +422,7 @@
 
 	var oh15StatusesId = "oh15Statuses";
 	var oh17 = new sap.m.ObjectHeader(oh15StatusesId, {
-		title : "Object Header with 15 Statuses",
+		title : "Header with 15 Statuses",
 		showTitleSelector : true,
 		titleSelectorPress : oh16EventHandler,
 		number : "100.00",
@@ -585,7 +583,7 @@
 		numberUnit : "EUR",
 		condensed : true
 	});
-	
+
 	var ohCondensedId6 = "ohc6";
 	var ohCondensed6 = new sap.m.ObjectHeader(ohCondensedId6, {
 		title : "Ñagçyfox Condensed Object header with attribute, Ñagçyfox number and number unit. The number is long to demonstrate overflow",
@@ -596,7 +594,7 @@
 			text : "Ñagçyfox overflow testing."
 		})],
 	});
-	
+
 	var ohCondensedId7 = "ohc7";
 	var ohCondensed7 = new sap.m.ObjectHeader(ohCondensedId7, {
 		title : "Ñagçyfox short title",
@@ -607,7 +605,7 @@
 			text : "Ñagçyfox long attribute description for property display testing."
 		})],
 	});
-	
+
 	var ohCondensedId8 = "ohc8";
 
 	var ohCondensed8 = new sap.m.ObjectHeader(ohCondensedId8, {
@@ -620,23 +618,36 @@
 			text : "Ñagçyfox This is the only attribute in the object header Ñagçyfox"
 		})],
 	});
-	
+
 	var ohCondensedId9 = "ohc9";
-	
+
 	var ohCondensed9 = new sap.m.ObjectHeader(ohCondensedId9, {
 		title : "InLayoutNotworkingfineWithSapceInName verrrrrrrryyyyyyyyyyylongggggggggggname",
-        showTitleSelector : true,
-        condensed : true,
+		showTitleSelector : true,
+		condensed : true,
 		titleSelectorPress : oh16EventHandler
 	});
-	
-	
+
+	var ohAdditionalNumbers = new sap.m.ObjectHeader(
+			"ohAdditionalNumbers", {
+				title : "Additional numbers example",
+				showTitleSelector : true,
+				number : "500230.09",
+				numberUnit : "USD",
+				numberState : sap.ui.core.ValueState.Success,
+				additionalNumbers : [ 
+					new sap.m.ObjectNumber({
+						number : "1.10234",
+						unit : "Conversion Rate"
+				}) ]
+			});
+
 	var objectHeaderLayout = new sap.m.VBox({
 		width : "200px"
 	}
-                                            );
-  	objectHeaderLayout.addItem(ohCondensed9);
-	
+);
+	objectHeaderLayout.addItem(ohCondensed9);
+
 	// put all the testing object header objects on the testing page
 	var app = new sap.m.App();
 	var page = new sap.m.Page({
@@ -698,7 +709,7 @@
 	page.addContent(new sap.ui.core.HTML({
 		content : "<div style='width:100%;height:2px;background-color:blue'/>"
 	}));
-	
+
 	addToPage(oh16);
 	addToPage(oh17);
 	addToPage(oh18);
@@ -711,8 +722,8 @@
 	addToPage(ohCondensed6);
 	addToPage(ohCondensed7);
 	addToPage(ohCondensed8);
-	
-	
+	addToPage(ohAdditionalNumbers);
+
 	app.placeAt('body');
 </script>
 

@@ -2,7 +2,10 @@
  * ${copyright}
  */
 
-sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
+sap.ui.define([
+	"jquery.sap.global",
+	"sap/ui/core/mvc/Controller"
+], function ($, Controller) {
 	"use strict";
 
 	return Controller.extend("sap.ui.demokit.explored.view.sample", {
@@ -60,7 +63,7 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
 			oModelData.showNewTab = !!oSampleConfig.iframe;
 
 			if (oSampleConfig.iframe) {
-				oContent = this._createIframe(oContent, oSampleConfig.iframe);
+				oContent = this._createIframe(oSampleConfig.iframe);
 			} else {
 				this.sIFrameUrl = null;
 			}
@@ -88,16 +91,16 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
 		onPreviousSample: function (oEvent) {
 			this.router.navTo("sample", {
 				id: this._viewModel.getProperty("/previousSampleId")
-			}, false);
+			}, true);
 		},
 
 		onNextSample: function (oEvent) {
 			this.router.navTo("sample", {
 				id: this._viewModel.getProperty("/nextSampleId")
-			}, false);
+			}, true);
 		},
 
-		_createIframe : function (oIframeContent, vIframe) {
+		_createIframe : function (vIframe) {
 			var sSampleId = this._sId,
 				rExtractFilename = /\/([^\/]*)$/,// extracts everything after the last slash (e.g. some/path/index.html -> index.html)
 				rStripUI5Ending = /\..+$/,// removes everything after the first dot in the filename (e.g. someFile.qunit.html -> .qunit.html)
@@ -113,18 +116,50 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
 				var sIframeWithoutUI5Ending = vIframe.replace(rStripUI5Ending, "");
 
 				// combine namespace with the file name again
-				this.sIFrameUrl = jQuery.sap.getModulePath(sSampleId + "." + sIframeWithoutUI5Ending, sFileEnding || ".html");
+				sIframeWithoutUI5Ending = jQuery.sap.getModulePath(sSampleId + "." + sIframeWithoutUI5Ending, sFileEnding || ".html");
+
+				// construct iFrame URL based on the index file and the current query parameters
+				var sSearch = window.location.search,
+					sThemeUrlParameter = "sap-ui-theme=" + sap.ui.getCore().getConfiguration().getTheme();
+
+				// applying the theme after the bootstrap causes flickering, so we inject a URL parameter
+				// to override the bootstrap parameter of the iFrame example
+				if (sSearch) {
+					var oRegExp = /sap-ui-theme=[a-z0-9\-]+/;
+					if (sSearch.match(oRegExp)) {
+						sSearch = sSearch.replace(oRegExp, sThemeUrlParameter);
+					} else {
+						sSearch += "&" + sThemeUrlParameter;
+					}
+				} else {
+					sSearch = "?" + sThemeUrlParameter;
+				}
+				this.sIFrameUrl = sIframeWithoutUI5Ending + sSearch;
 			} else {
 				jQuery.sap.log.error("no iframe source was provided");
 				return;
 			}
 
-			var oHtmlControl = new sap.ui.core.HTML({
+			// destroy previous sample iframe
+			var oHtmlControl = sap.ui.getCore().byId("sampleFrame");
+			if (oHtmlControl) {
+				oHtmlControl.destroy();
+			}
+
+
+			oHtmlControl = new sap.ui.core.HTML({
+				id : "sampleFrame",
 				content : '<iframe src="' + this.sIFrameUrl + '" id="sampleFrame" frameBorder="0"></iframe>'
 			}).addEventDelegate({
 				onAfterRendering : function () {
 					oHtmlControl.$().on("load", function () {
-						oIframeContent.placeAt("body");
+						var oSampleFrame = oHtmlControl.$()[0].contentWindow;
+
+						oSampleFrame.sap.ui.getCore().attachInit(function() {
+							var oSampleFrame = oHtmlControl.$()[0].contentWindow;
+							oSampleFrame.sap.ui.getCore().applyTheme(sap.ui.getCore().getConfiguration().getTheme());
+							oSampleFrame.jQuery('body').toggleClass("sapUiSizeCompact", $("body").hasClass("sapUiSizeCompact")).toggleClass("sapUiSizeCozy", $("body").hasClass("sapUiSizeCozy"));
+						});
 					});
 				}
 			});
@@ -139,13 +174,15 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
 			var sCompName = this._sId;
 
 			this._oComp = sap.ui.component(sCompId);
-			if (!this._oComp) {
-				this._oComp = sap.ui.getCore().createComponent({
-					id : sCompId,
-					name : sCompName
-				});
+
+			if (this._oComp) {
+				this._oComp.destroy();
 			}
 
+			this._oComp = sap.ui.getCore().createComponent({
+				id : sCompId,
+				name : sCompName
+			});
 			// create component container
 			return new sap.ui.core.ComponentContainer({
 				component: this._oComp
@@ -153,6 +190,9 @@ sap.ui.define(["sap/ui/core/mvc/Controller"], function (Controller) {
 		},
 
 		onNavBack : function (oEvt) {
+			if (this._oComp && this._oComp.exit) {
+				this._oComp.exit();
+			}
 			this.router.myNavBack("home", {});
 		},
 

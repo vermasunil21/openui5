@@ -946,11 +946,12 @@
       var P = local.Promise;
 
       // ##### BEGIN: MODIFIED BY SAP
-      // Original line: 
+      // Original line:
       //    if (P && Object.prototype.toString.call(P.resolve()) === '[object Promise]' && !P.cast) {
-      // This lead to the polyfill replacing the native promise object in Chrome, where "[object Object]" is returned
-      // instead of '[object Promise]'
-      if (P && Object.prototype.toString.call(P.resolve()).indexOf('[object ') === 0 && !P.cast) {
+      // This lead to the polyfill replacing the native promise object in
+      // - Chrome, where "[object Object]" is returned instead of '[object Promise]'
+      // - Safari, where native promise contains a definition for Promise.cast
+      if (P && Object.prototype.toString.call(P.resolve()).indexOf('[object ') === 0) {
       // ##### END: MODIFIED BY SAP
         return;
       }
@@ -977,6 +978,10 @@
       this['ES6Promise'] = lib$es6$promise$umd$$ES6Promise;
     }
 
-    lib$es6$promise$polyfill$$default();
-}).call(this);
 
+    // ##### BEGIN: MODIFIED BY SAP
+    // Original line:
+    //     lib$es6$promise$polyfill$$default();
+    // Do not automatically call the polyfill method as this will be called by UI5 only when needed.
+    // ##### END: MODIFIED BY SAP
+}).call(this);

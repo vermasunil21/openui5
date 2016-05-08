@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
 
 <title>Table - sap.ui.table</title>
 <link rel="shortcut icon" type="image/x-icon" href="images/controls/sap.ui.table.Table.gif">
@@ -119,7 +119,7 @@ oTable.addColumn(oColumn);
 
 // sap.m.Label
 oControl = new sap.m.Label({text: "{name}"});
-oColumn = new sap.ui.table.Column({label: new sap.m.Label({text: "m.Label"}), template: oControl, sortProperty: "name", filterProperty: "name", width: "120px"});
+oColumn = new sap.ui.table.Column({label: new sap.m.Label({text: "m.Label"}), template: oControl, sortProperty: "name", filterProperty: "name", width: "6em"});
 oTable.addColumn(oColumn);
 
 // sap.m.ObjectStatus
@@ -129,7 +129,7 @@ oTable.addColumn(oColumn);
 
 // sap.ui.core.Icon
 oControl = new sap.ui.core.Icon({src: "sap-icon://account", decorative: false});
-oColumn = new sap.ui.table.Column({label: new sap.m.Label({text: "core.Icon"}), template: oControl, width: "80px", hAlign: sap.ui.core.HorizontalAlign.Center});
+oColumn = new sap.ui.table.Column({resizable: false, label: new sap.m.Label({text: "core.Icon"}), template: oControl, width: "80px", hAlign: sap.ui.core.HorizontalAlign.Center});
 oTable.addColumn(oColumn);
 
 // sap.m.Button

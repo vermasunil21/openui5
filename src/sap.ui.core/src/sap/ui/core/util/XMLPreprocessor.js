@@ -4,14 +4,20 @@
 
 // Provides object sap.ui.core.util.XMLPreprocessor
 sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/ManagedObject',
-	'sap/ui/core/XMLTemplateProcessor', 'sap/ui/model/BindingMode',
+	'sap/ui/core/XMLTemplateProcessor', 'sap/ui/Device', 'sap/ui/model/BindingMode',
 	'sap/ui/model/CompositeBinding', 'sap/ui/model/Context'],
-	function (jQuery, BindingParser, ManagedObject, XMLTemplateProcessor, BindingMode,
+	function (jQuery, BindingParser, ManagedObject, XMLTemplateProcessor, Device, BindingMode,
 		CompositeBinding, Context) {
 		'use strict';
 
 		var oUNBOUND = {}, // @see getAny
 			sNAMESPACE = "http://schemas.sap.com/sapui5/extension/sap.ui.core.template/1",
+			// some constants
+			sXMLPreprocessor = "sap.ui.core.util.XMLPreprocessor",
+			aPerformanceCategories = [sXMLPreprocessor],
+			sPerformanceInsertFragment = sXMLPreprocessor + "/insertFragment",
+			sPerformanceGetResolvedBinding = sXMLPreprocessor + "/getResolvedBinding",
+			sPerformanceProcess = sXMLPreprocessor + ".process",
 			/**
 			 * <template:with> control holding the models and the bindings. Also used as substitute
 			 * for any control during template processing in order to resolve property bindings.
@@ -117,7 +123,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 			 * model).
 			 *
 			 * This interface provides callback functions to access the model and path  which are
-			 * needed to process OData v4 annotations. It initially offers a subset of methods
+			 * needed to process OData V4 annotations. It initially offers a subset of methods
 			 * from {@link sap.ui.model.Context} so that formatters might also be called with a
 			 * context object for convenience, e.g. outside of XML template processing (see below
 			 * for an exception to this rule).
@@ -449,6 +455,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					bDebug = jQuery.sap.log.isLoggable(jQuery.sap.log.Level.DEBUG),
 					bCallerLoggedForWarnings = bDebug, // debug output already contains caller
 					sCurrentName = oViewInfo.name, // current view or fragment name
+					mFragmentCache = {},
 					iNestingLevel = 0,
 					sName,
 					oScope = {}, // for BindingParser.complexParser()
@@ -468,8 +475,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					if (bDebug) {
 						jQuery.sap.log.debug(getNestingLevel()
 							+ Array.prototype.slice.call(arguments, 1).join(" "),
-							oElement && serializeSingleElement(oElement),
-							"sap.ui.core.util.XMLPreprocessor");
+							oElement && serializeSingleElement(oElement), sXMLPreprocessor);
 					}
 				}
 
@@ -483,8 +489,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 				function debugFinished(oElement) {
 					if (bDebug) {
 						jQuery.sap.log.debug(getNestingLevel()
-							+ "Finished", "</" + oElement.nodeName + ">",
-							"sap.ui.core.util.XMLPreprocessor");
+							+ "Finished", "</" + oElement.nodeName + ">", sXMLPreprocessor);
 					}
 				}
 
@@ -502,7 +507,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 				 */
 				function error(sMessage, oElement) {
 					sMessage = sMessage + serializeSingleElement(oElement);
-					jQuery.sap.log.error(sMessage, sCaller, "sap.ui.core.util.XMLPreprocessor");
+					jQuery.sap.log.error(sMessage, sCaller, sXMLPreprocessor);
 					throw new Error(sCaller + ": " + sMessage);
 				}
 
@@ -602,7 +607,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 				 */
 				function getResolvedBinding(sValue, oElement, oWithControl, bMandatory,
 					fnCallIfConstant) {
-					var vBindingInfo
+					var vBindingInfo;
+
+					jQuery.sap.measure.average(sPerformanceGetResolvedBinding, "",
+						aPerformanceCategories);
+					vBindingInfo
 						= BindingParser.complexParser(sValue, oScope, bMandatory, true, true)
 						|| sValue; // in case there is no binding and nothing to unescape
 
@@ -611,6 +620,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 							warn(oElement, 'Function name(s)',
 								vBindingInfo.functionsNotFound.join(", "), 'not found');
 						}
+						jQuery.sap.measure.end(sPerformanceGetResolvedBinding);
 						return oUNBOUND; // treat incomplete bindings as unrelated
 					}
 
@@ -622,6 +632,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					} else if (fnCallIfConstant) { // string
 						fnCallIfConstant();
 					}
+					jQuery.sap.measure.end(sPerformanceGetResolvedBinding);
 					return vBindingInfo;
 				}
 
@@ -653,8 +664,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					oWithControl.$mFragmentContexts[sFragmentName] = true;
 					sCurrentName = sFragmentName;
 
-					oFragmentElement
-						= XMLTemplateProcessor.loadTemplate(sFragmentName, "fragment");
+					jQuery.sap.measure.average(sPerformanceInsertFragment, "",
+						aPerformanceCategories);
+					// take fragment from cache and import it
+					oFragmentElement = mFragmentCache[sFragmentName];
+					if (!oFragmentElement) {
+						oFragmentElement
+							= XMLTemplateProcessor.loadTemplate(sFragmentName, "fragment");
+						mFragmentCache[sFragmentName] = oFragmentElement;
+					}
+					oFragmentElement = oElement.ownerDocument.importNode(oFragmentElement, true);
+					jQuery.sap.measure.end(sPerformanceInsertFragment);
+
 					requireFor(oFragmentElement);
 					if (oFragmentElement.namespaceURI === "sap.ui.core"
 							&& localName(oFragmentElement) === "FragmentDefinition") {
@@ -1064,11 +1085,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					var i,
 						oAttributesList = oNode.attributes;
 
-					if (oAttributesList) { // only if oNode is an Element
-						// Note: iterate backwards to account for removal of attributes!
-						for (i = oAttributesList.length - 1; i >= 0; i -= 1) {
-							resolveAttributeBinding(oNode, oAttributesList.item(i), oWithControl);
-						}
+					// Note: iterate backwards to account for removal of attributes!
+					for (i = oAttributesList.length - 1; i >= 0; i -= 1) {
+						resolveAttributeBinding(oNode, oAttributesList.item(i), oWithControl);
 					}
 				}
 
@@ -1088,6 +1107,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 					for (i = 0; i < n; i += 1) {
 						aChildren[i] = oNodeList.item(i);
 					}
+					oNodeList = null; // do not keep node list (a)live during further processing
 					for (i = 0; i < n; i += 1) {
 						visitNode(aChildren[i], oWithControl);
 					}
@@ -1100,6 +1120,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 				 * @param {sap.ui.core.template._with} oWithControl the "with" control
 				 */
 				function visitNode(oNode, oWithControl) {
+					// process only ELEMENT_NODEs
+					if (oNode.nodeType !== 1 /* Node.ELEMENT_NODE */) {
+						return;
+					}
 					if (oNode.namespaceURI === sNAMESPACE) {
 						switch (localName(oNode)) {
 						case "alias":
@@ -1159,20 +1183,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 						if (!bCallerLoggedForWarnings) {
 							bCallerLoggedForWarnings = true;
 							jQuery.sap.log.warning("Warning(s) during processing of " + sCaller,
-								null, "sap.ui.core.util.XMLPreprocessor");
+								null, sXMLPreprocessor);
 						}
 						jQuery.sap.log.warning(getNestingLevel()
 							+ Array.prototype.slice.call(arguments, 1).join(" "),
-							oElement && serializeSingleElement(oElement),
-							"sap.ui.core.util.XMLPreprocessor");
+							oElement && serializeSingleElement(oElement), sXMLPreprocessor);
 					}
 				}
 
+				jQuery.sap.measure.average(sPerformanceProcess, "", aPerformanceCategories);
 				mSettings = mSettings || {};
 
 				if (bDebug) {
 					debug(undefined, "Start processing", sCaller);
-					if (mSettings.bindingContexts instanceof Context)  {
+					if (mSettings.bindingContexts instanceof Context) {
 						debug(undefined, "undefined =", mSettings.bindingContexts);
 					} else {
 						for (sName in mSettings.bindingContexts) {
@@ -1187,6 +1211,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/BindingParser', 'sap/ui/base/Ma
 				}));
 				debug(undefined, "Finished processing", sCaller);
 
+				jQuery.sap.measure.end(sPerformanceProcess);
 				return oRootElement;
 			}
 		};

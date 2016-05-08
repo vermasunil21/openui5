@@ -37,12 +37,14 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 
 	});
 
+	var EVENT__LISTENERS_CHANGED = "EventHandlerChange";
+
 	/**
 	 * Map of event names and ids, that are provided by this class
 	 * @private
 	 * @static
 	 */
-	EventProvider.M_EVENTS = {EventHandlerChange:"EventHandlerChange"};
+	EventProvider.M_EVENTS = {EventHandlerChange:EVENT__LISTENERS_CHANGED};
 
 	/**
 	 * Pool is defined on the prototype to be shared among all EventProviders
@@ -69,6 +71,7 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 	 * @public
 	 */
 	EventProvider.prototype.attachEvent = function(sEventId, oData, fnFunction, oListener) {
+		var mEventRegistry = this.mEventRegistry;
 		jQuery.sap.assert(typeof (sEventId) === "string" && sEventId, "EventProvider.attachEvent: sEventId must be a non-empty string");
 		if (typeof (oData) === "function") {
 		//one could also increase the check in the line above
@@ -80,13 +83,17 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 		jQuery.sap.assert(typeof (fnFunction) === "function", "EventProvider.attachEvent: fnFunction must be a function");
 		jQuery.sap.assert(!oListener || typeof (oListener) === "object", "EventProvider.attachEvent: oListener must be empty or an object");
 
-		if (!this.mEventRegistry[sEventId]) {
-			this.mEventRegistry[sEventId] = [];
+		var aEventListeners = mEventRegistry[sEventId];
+		if ( !Array.isArray(aEventListeners) ) {
+			aEventListeners = mEventRegistry[sEventId] = [];
 		}
-		this.mEventRegistry[sEventId].push({oListener:oListener, fFunction:fnFunction, oData: oData});
+
+		aEventListeners.push({oListener:oListener, fFunction:fnFunction, oData: oData});
 
 		// Inform interested parties about changed EventHandlers
-		this.fireEvent(EventProvider.M_EVENTS.EventHandlerChange, {EventId: sEventId, type: 'listenerAttached'});
+		if ( mEventRegistry[EVENT__LISTENERS_CHANGED] ) {
+			this.fireEvent(EVENT__LISTENERS_CHANGED, {EventId: sEventId, type: 'listenerAttached'});
+		}
 
 		return this;
 	};
@@ -117,6 +124,7 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 			fnFunction = oData;
 			oData = undefined;
 		}
+		jQuery.sap.assert(typeof (fnFunction) === "function", "EventProvider.attachEventOnce: fnFunction must be a function");
 		function fnOnce() {
 			this.detachEvent(sEventId, fnOnce);  // ‘this’ is always the control, due to the context ‘undefined’ in the attach call below
 			fnFunction.apply(oListener || this, arguments);  // needs to do the same resolution as in fireEvent
@@ -140,12 +148,13 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 	 * @public
 	 */
 	EventProvider.prototype.detachEvent = function(sEventId, fnFunction, oListener) {
+		var mEventRegistry = this.mEventRegistry;
 		jQuery.sap.assert(typeof (sEventId) === "string" && sEventId, "EventProvider.detachEvent: sEventId must be a non-empty string" );
 		jQuery.sap.assert(typeof (fnFunction) === "function", "EventProvider.detachEvent: fnFunction must be a function");
 		jQuery.sap.assert(!oListener || typeof (oListener) === "object", "EventProvider.detachEvent: oListener must be empty or an object");
 
-		var aEventListeners = this.mEventRegistry[sEventId];
-		if (!aEventListeners) {
+		var aEventListeners = mEventRegistry[sEventId];
+		if ( !Array.isArray(aEventListeners) ) {
 			return this;
 		}
 
@@ -163,12 +172,12 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 		}
 		// If we just deleted the last registered EventHandler, remove the whole entry from our map.
 		if (aEventListeners.length == 0) {
-			delete this.mEventRegistry[sEventId];
+			delete mEventRegistry[sEventId];
 		}
 
-		if (bListenerDetached) {
+		if (bListenerDetached && mEventRegistry[EVENT__LISTENERS_CHANGED] ) {
 			// Inform interested parties about changed EventHandlers
-			this.fireEvent(EventProvider.M_EVENTS.EventHandlerChange, {EventId: sEventId, type: 'listenerDetached' });
+			this.fireEvent(EVENT__LISTENERS_CHANGED, {EventId: sEventId, type: 'listenerDetached' });
 		}
 
 		return this;
@@ -191,60 +200,48 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 	 * @protected
 	 */
 	EventProvider.prototype.fireEvent = function(sEventId, mParameters, bAllowPreventDefault, bEnableEventBubbling) {
-		// at least in BrowserEventManager when firing events of its E_EVENTS enumeration, the type will be an integer... thus avoid this check
-		//	jQuery.sap.assert(typeof (sEventId) == "string");
 
 		// get optional parameters right
-		if (typeof mParameters == "boolean") {
+		if (typeof mParameters === "boolean") {
 			bEnableEventBubbling = bAllowPreventDefault;
 			bAllowPreventDefault = mParameters;
 		}
 
-		var aEventListeners = this.mEventRegistry[sEventId],
+		/* eslint-disable consistent-this */
+		var oProvider = this,
+		/* eslint-enable consistent-this */
 			bPreventDefault = false,
-			oEvent, oParent, oInfo;
+			aEventListeners, oEvent, i, iL, oInfo;
 
-		if (bEnableEventBubbling || (aEventListeners && jQuery.isArray(aEventListeners))) {
+		do {
+			aEventListeners = oProvider.mEventRegistry[sEventId];
 
-			// this ensures no 'concurrent modification exception' occurs (e.g. an event listener deregisters itself).
-			aEventListeners = aEventListeners ? aEventListeners.slice() : [];
+			if ( Array.isArray(aEventListeners) ) {
 
-			oEvent = this.oEventPool.borrowObject(sEventId, this, mParameters);
+				// avoid issues with 'concurrent modification' (e.g. if an event listener unregisters itself).
+				aEventListeners = aEventListeners.slice();
+				oEvent = oEvent || this.oEventPool.borrowObject(sEventId, this, mParameters); // borrow event lazily
 
-			//PERFOPT use array. remember length to not re-calculate over and over again
-			for (var i = 0, iL = aEventListeners.length; i < iL; i++) {
-				oInfo = aEventListeners[i];
-				oInfo.fFunction.call(oInfo.oListener || this, oEvent, oInfo.oData);
-			}
-
-			// In case this is a bubbling event and object has a getParent method, also fire on parents
-			if (bEnableEventBubbling) {
-				oParent = this.getEventingParent();
-				while (oParent && !oEvent.bCancelBubble) {
-					aEventListeners = oParent.mEventRegistry[sEventId];
-					if (aEventListeners && aEventListeners instanceof Array) {
-						aEventListeners = aEventListeners.slice();
-						for (var i = 0, iL = aEventListeners.length; i < iL; i++) {
-							oInfo = aEventListeners[i];
-							oInfo.fFunction.call(oInfo.oListener || oParent, oEvent, oInfo.oData);
-						}
-					}
-					oParent = oParent.getEventingParent();
+				for (i = 0, iL = aEventListeners.length; i < iL; i++) {
+					oInfo = aEventListeners[i];
+					oInfo.fFunction.call(oInfo.oListener || oProvider, oEvent, oInfo.oData);
 				}
+
+				bEnableEventBubbling = bEnableEventBubbling && !oEvent.bCancelBubble;
 			}
 
-			// Store prevent default state, before returning event to the pool
-			bPreventDefault = oEvent.bPreventDefault;
+			oProvider = oProvider.getEventingParent();
 
+		} while (bEnableEventBubbling && oProvider);
+
+		if ( oEvent ) {
+			// remember 'prevent default' state before returning event to the pool
+			bPreventDefault = oEvent.bPreventDefault;
 			this.oEventPool.returnObject(oEvent);
 		}
 
-		// Only return prevent default result in case it has been enabled, for compatibility
-		if (bAllowPreventDefault) {
-			return !bPreventDefault;
-		} else {
-			return this;
-		}
+		// return 'execute default' flag only when 'prevent default' has been enabled, otherwise return 'this' (for compatibility)
+		return bAllowPreventDefault ? !bPreventDefault : this;
 	};
 
 	/**
@@ -267,6 +264,7 @@ sap.ui.define(['jquery.sap.global', './Event', './Object', './ObjectPool'],
 	 * As the callers are limited and known and for performance reasons the internal event registry
 	 * is returned. It contains more information than necessary, but needs no expensive conversion.
 	 *
+	 * @param {sap.ui.base.EventProvider} oEventProvider The event provider to get the registered events for
 	 * @return {object} the list of events currently having listeners attached
 	 * @private
 	 * @static

@@ -1,12 +1,13 @@
 <!DOCTYPE HTML>
 
-<!-- 
+<!--
   Tested control/class: sap.ui.unified.Calendar
 -->
 
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta charset="utf-8">
 		<title>Calendar - sap.ui.unified</title>
 		<link rel="shortcut icon" type="image/x-icon" href="../images/controls/sap.ui.unified.Calendar.gif">
 		<script id="sap-ui-bootstrap"
@@ -17,7 +18,7 @@
 			data-sap-ui-libs="sap.ui.unified"
 			data-sap-ui-language="en-US">
 		</script>
-		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
@@ -30,10 +31,15 @@
 
 			var bSelectFired = false;
 			var oSelectedDate = undefined;
+			var iStartDateChangeFired = 0;
 			var oLocaleUS = new sap.ui.core.Locale("en-US");
 			var oLocaleDE = new sap.ui.core.Locale("de-DE");
 			var oLocaleDataUS = sap.ui.core.LocaleData.getInstance(oLocaleUS);
 			var oLocaleDataDE = sap.ui.core.LocaleData.getInstance(oLocaleDE);
+
+			var handleStartDateChange = function(oEvent) {
+				iStartDateChangeFired++;
+			};
 
 			var oCal1 = new sap.ui.unified.Calendar("Cal1",{
 				select: function(oEvent){
@@ -43,14 +49,17 @@
 					if (aSelectedDates.length > 0 ) {
 						oSelectedDate = aSelectedDates[0].getStartDate();
 					}
-				}
+				},
+				startDateChange: handleStartDateChange
 			}).placeAt("uiArea1");
 
 			var oCal2 = new sap.ui.unified.Calendar("Cal2",{
 				intervalSelection: true,
+				width: "400px",
 				selectedDates: [new sap.ui.unified.DateRange({startDate: new Date("2011", "0", "10"), endDate: new Date("2011", "0", "13")})],
 				specialDates: [new sap.ui.unified.DateTypeRange({startDate: new Date("2011", "0", "1"), type: sap.ui.unified.CalendarDayType.Type01, tooltip: "Text"}),
-				               new sap.ui.unified.DateTypeRange({startDate: new Date("2011", "0", "2"), endDate: new Date("2011", "0", "4"), type: sap.ui.unified.CalendarDayType.Type02, tooltip: "Text"})]
+				               new sap.ui.unified.DateTypeRange({startDate: new Date("2011", "0", "2"), endDate: new Date("2011", "0", "4"), type: sap.ui.unified.CalendarDayType.Type02, tooltip: "Text"})],
+				startDateChange: handleStartDateChange
 			}).placeAt("uiArea2");
 			oCal2.setLocale("de-DE");
 
@@ -58,7 +67,12 @@
 				months: 2,
 				firstDayOfWeek: 2,
 				nonWorkingDays: [3, 5],
+				minDate: new Date("2000", "0", "7"),
+				maxDate: new Date("2015", "1", "25"),
 				selectedDates: [new sap.ui.unified.DateRange({startDate: new Date("2015", "0", "5")})],
+				disabledDates: [new sap.ui.unified.DateRange({startDate: new Date("2015", "0", "10")}),
+				                new sap.ui.unified.DateRange({startDate: new Date("2015", "1", "10"), endDate: new Date("2015", "1", "20")})],
+				startDateChange: handleStartDateChange
 			}).placeAt("uiArea3");
 			oCal3.setLocale("de-DE");
 
@@ -67,6 +81,14 @@
 			qutils.delayTestStart();
 
 			module("Rendering");
+
+			test("width", function() {
+				var sStyle = jQuery("#Cal1").attr("style");
+				ok((!sStyle || sStyle.search("width") < 0), "Calendar1: no width set");
+
+				sStyle = jQuery("#Cal2").attr("style");
+				ok((sStyle && sStyle.search("width:") >= 0  && sStyle.search("400px") >= 0), "Calendar2: width set");
+			});
 
 			test("Week day orders", function() {
 				var $Month = sap.ui.getCore().byId("Cal1").getAggregation("month")[0].$();
@@ -81,6 +103,9 @@
 				$Month = sap.ui.getCore().byId("Cal3").getAggregation("month")[0].$();
 				var aWeekHeaders = $Month.find(".sapUiCalWH");
 				equal(jQuery(aWeekHeaders[0]).text(), "Di", "Thuesday ist first weekday for custom setting");
+
+				equal(iStartDateChangeFired, 0, "Initially no startdateChange event fired");
+				equal(oFormatYyyymmdd.format(oCal2.getStartDate()), "20110101", "Cal2: Start date");
 			});
 
 			test("rendered month", function() {
@@ -94,6 +119,8 @@
 				var $Today = jQuery(jQuery("#Cal1--Month0-days").find(".sapUiCalItemNow"));
 				equal($Today.attr("data-sap-day"), oFormatYyyymmdd.format(oToday), "current date is marked as today");
 				ok(!$Today.hasClass(".sapUiCalItemOtherMonth"), "current date is not in other month");
+				ok(!$Today.hasClass("sapUiCalItemSel"), "current date not marked as selected");
+				equal($Today.attr("aria-selected"), "false", "current date aria-selected = false");
 
 				equal(jQuery("#Cal2--Head-B1").text(), "Januar", "January shown");
 				equal(jQuery("#Cal2--Head-B2").text(), "2011", "year 2011 shown");
@@ -103,8 +130,10 @@
 				equal(aSelectedDays.length, 4, "4 days selected");
 				equal(jQuery(aSelectedDays[0]).attr("data-sap-day"), "20110110", "first day selected: 10");
 				ok(jQuery(aSelectedDays[0]).hasClass("sapUiCalItemSelStart"), "first selected day marked as selction start");
+				equal(jQuery(aSelectedDays[0]).attr("aria-selected"), "true", "first selected day aria-selected = true");
 				equal(jQuery(aSelectedDays[3]).attr("data-sap-day"), "20110113", "last day selected: 13");
 				ok(jQuery(aSelectedDays[3]).hasClass("sapUiCalItemSelEnd"), "last selected day marked as selction end");
+				equal(jQuery(aSelectedDays[3]).attr("aria-selected"), "true", "last selected day aria-selected  = true");
 				var aDays = jQuery("#Cal2--Month0-days").find(".sapUiCalItem");
 				equal(jQuery(aDays[0]).attr("data-sap-day"), "20101227", "first displayed day");
 				equal(jQuery(aDays[0]).attr("id"), "Cal2--Month0-20101227", "first displayed day has right ID");
@@ -123,7 +152,7 @@
 				}
 				ok(bOK, "Only Saturday and Sunday are Weekend");
 
-				equal(jQuery("#Cal3--Head-B1").text(), "Januar - Februar", "January - Februar shown");
+				equal(jQuery("#Cal3--Head-B1").text(), "Januar – Februar", "January – Februar shown");
 				equal(jQuery("#Cal3--Head-B2").text(), "2015", "year 2015 shown");
 				aMonths = jQuery(jQuery("#Cal3-content").children(".sapUiCalMonthView"));
 				equal(aMonths.length, 2, "2 months rendered");
@@ -145,7 +174,23 @@
 				ok(bOK, "Custom weekend used");
 			});
 
+			test("disabled date", function() {
+				ok(jQuery("#Cal3--Month0-20150110").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150110 is disabled");
+				ok(jQuery("#Cal3--Month0-20150110").attr("aria-disabled"), "Calendar3: 20150110 has aria-disabled");
+				ok(jQuery("#Cal3--Month1-20150211").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150211 is disabled");
+				ok(jQuery("#Cal3--Month1-20150211").attr("aria-disabled"), "Calendar3: 20150211 has aria-disabled");
+				ok(jQuery("#Cal3--Month1-20150212").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150212 is disabled");
+				ok(jQuery("#Cal3--Month1-20150212").attr("aria-disabled"), "Calendar3: 20150212 has aria-disabled");
+				ok(jQuery("#Cal3--Month1-20150219").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150219 is disabled");
+				ok(jQuery("#Cal3--Month1-20150219").attr("aria-disabled"), "Calendar3: 20150219 has aria-disabled");
+				ok(!jQuery("#Cal3--Month1-20150220").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150220 is not disabled");
+				ok(!jQuery("#Cal3--Month1-20150220").attr("aria-disabled"), "Calendar3: 20150220 has no aria-disabled");
+				ok(jQuery("#Cal3--Month1-20150226").hasClass("sapUiCalItemDsbl"), "Calendar3: 20150226 is disabled");
+				ok(jQuery("#Cal3--Month1-20150226").attr("aria-disabled"), "Calendar3: 20150226 has aria-disabled");
+			});
+
 			test("focusDate method", function() {
+				iStartDateChangeFired = 0;
 				oCal2.focusDate(new Date(2012, 11, 12));
 				equal(jQuery("#Cal2--Head-B1").text(), "Dezember", "December shown");
 				equal(jQuery("#Cal2--Head-B2").text(), "2012", "year 2012 shown");
@@ -158,6 +203,7 @@
 					}
 				}
 				ok((bFound && jQuery(aDays[i]).attr("data-sap-day") == "20121212"), "20121212 focused");
+				equal(iStartDateChangeFired, 0, "no startdateChange event fired");
 
 				oCal2.focusDate(new Date(2011, 0, 10));
 			});
@@ -196,9 +242,55 @@
 				ok(jQuery("#Cal2--Month0-20110104").attr("title", "Text"), "20110104 has special days tooltip");
 			});
 
+			test("primaryCalendarType", function() {
+				equal(oCal2.getPrimaryCalendarType(), sap.ui.getCore().getConfiguration().getCalendarType(), "Calendar2: PrimaryCalendarType default")
+				oCal2.focusDate(new Date(2011, 0, 1)); // to be sure where focus is
+				oCal2.setPrimaryCalendarType(sap.ui.core.CalendarType.Islamic);
+				sap.ui.getCore().applyChanges();
+
+				var aDays = jQuery("#Cal2--Month0-days").find(".sapUiCalItem");
+				equal(aDays.length, 35, "Calendar2: number of displayed days");
+				equal(jQuery(aDays[0]).attr("data-sap-day"), "20101206", "Calendar2: first displayed day");
+				equal(jQuery(aDays[aDays.length - 1]).attr("data-sap-day"), "20110109", "Calendar2: last displayed day");
+				equal(jQuery("#Cal2--Head-B1").text(), "Muharram", "Muharram shown");
+				equal(jQuery("#Cal2--Head-B2").text(), "1432 AH", "year 1432 shown");
+				qutils.triggerEvent("click", "Cal2--Head-B1");
+				var aMonths = jQuery("#Cal2--MP").find(".sapUiCalItem");
+				equal(jQuery(aMonths[0]).text(), "Muharram", "Calendar2: first displayed month");
+				qutils.triggerEvent("click", "Cal2--Head-B2");
+				var aYears = jQuery("#Cal2--YP").find(".sapUiCalItem");
+				equal(jQuery(aYears[0]).text(), "1422 AH", "Calendar2: first displayed year");
+				qutils.triggerEvent("click", "Cal2--Head-B2");
+
+				oCal2.setPrimaryCalendarType(sap.ui.getCore().getConfiguration().getCalendarType());
+				sap.ui.getCore().applyChanges();
+			});
+
+			test("secondaryCalendarType", function() {
+				oCal2.setSecondaryCalendarType(sap.ui.core.CalendarType.Islamic);
+				sap.ui.getCore().applyChanges();
+
+				var aDays = jQuery("#Cal2--Month0-days").find(".sapUiCalItem");
+				equal(jQuery(aDays[0]).attr("data-sap-day"), "20101227", "Calendar2: first displayed day");
+				equal(jQuery(jQuery(aDays[0]).children(".sapUiCalItemText")[0]).text(), "27", "Calendar2: first displayed day - text");
+				equal(jQuery(jQuery(aDays[0]).children(".sapUiCalItemSecText")[0]).text(), "20", "Calendar2: first displayed day - secondary text");
+				equal(jQuery(jQuery("#Cal2--Head-B1").children(".sapUiCalHeadBText")[0]).text(), "Januar", "Januar shown");
+				equal(jQuery(jQuery("#Cal2--Head-B1").children(".sapUiCalHeadBAddText")[0]).text(), "Muh. – Saf.", "Muh. - Saf. shown");
+				equal(jQuery(jQuery("#Cal2--Head-B2").children(".sapUiCalHeadBText")[0]).text(), "2011", "year 2011 shown");
+				equal(jQuery(jQuery("#Cal2--Head-B2").children(".sapUiCalHeadBAddText")[0]).text(), "1432 AH", "year 1432 shown");
+
+				oCal2.setSecondaryCalendarType(sap.ui.getCore().getConfiguration().getCalendarType());
+				sap.ui.getCore().applyChanges();
+				aDays = jQuery("#Cal2--Month0-days").find(".sapUiCalItem");
+				ok(!jQuery(aDays[0]).children(".sapUiCalItemSecText")[0], "Calendar2: first displayed day - no secondary text");
+				equal(jQuery("#Cal2--Head-B1").text(), "Januar", "Januar shown");
+				equal(jQuery("#Cal2--Head-B2").text(), "2011", "year 2011 shown");
+			});
+
 			module("Interaction");
 
 			test("month switch", function() {
+				iStartDateChangeFired = 0;
 				qutils.triggerEvent("click", "Cal2--Head-prev");
 				equal(jQuery("#Cal2--Head-B1").text(), "Dezember", "December shown");
 				equal(jQuery("#Cal2--Head-B2").text(), "2010", "year 2010 shown");
@@ -207,7 +299,10 @@
 				ok(jQuery(aDays[0]).hasClass("sapUiCalItemOtherMonth"), "first displayed day is in other month");
 				equal(jQuery(aDays[aDays.length-1]).attr("data-sap-day"), "20110102", "last displayed day");
 				ok(jQuery(aDays[aDays.length-1]).hasClass("sapUiCalItemOtherMonth"), "last displayed day is in other month");
+				equal(iStartDateChangeFired, 1, "startdateChange event fired");
+				equal(oFormatYyyymmdd.format(oCal2.getStartDate()), "20101201", "Start date");
 
+				iStartDateChangeFired = 0;
 				qutils.triggerEvent("click", "Cal2--Head-next");
 				equal(jQuery("#Cal2--Head-B1").text(), "Januar", "january shown again");
 				equal(jQuery("#Cal2--Head-B2").text(), "2011", "year 2011 shown again");
@@ -216,7 +311,10 @@
 				ok(jQuery(aDays[0]).hasClass("sapUiCalItemOtherMonth"), "first displayed day is in other month");
 				equal(jQuery(aDays[aDays.length-1]).attr("data-sap-day"), "20110206", "last displayed day");
 				ok(jQuery(aDays[aDays.length-1]).hasClass("sapUiCalItemOtherMonth"), "last displayed day is in other month");
+				equal(iStartDateChangeFired, 1, "startdateChange event fired");
+				equal(oFormatYyyymmdd.format(oCal2.getStartDate()), "20110101", "Start date");
 
+				iStartDateChangeFired = 0;
 				qutils.triggerEvent("click", "Cal2--Head-B1");
 				ok(jQuery(jQuery("#Cal2--MP").get(0)).is(":visible"), "Month picker rendered");
 				var $July = jQuery("#Cal2--MP-m6"); // use keybord to select month to prevent event processing from ItemNavigation
@@ -229,6 +327,8 @@
 				ok(jQuery(aDays[0]).hasClass("sapUiCalItemOtherMonth"), "first displayed day is in other month");
 				equal(jQuery(aDays[aDays.length-1]).attr("data-sap-day"), "20110731", "last displayed day");
 				ok(!jQuery(aDays[aDays.length-1]).hasClass("sapUiCalItemOtherMonth"), "last displayed day is not in other month");
+				equal(iStartDateChangeFired, 1, "startdateChange event fired");
+				equal(oFormatYyyymmdd.format(oCal2.getStartDate()), "20110701", "Start date");
 
 				// go back to january
 				qutils.triggerEvent("click", "Cal2--Head-B1");
@@ -237,14 +337,14 @@
 				qutils.triggerKeyboardEvent($January.get(0), jQuery.sap.KeyCodes.ENTER, false, false, false);
 
 				qutils.triggerEvent("click", "Cal3--Head-prev");
-				equal(jQuery("#Cal3--Head-B1").text(), "November - Dezember", "November - December shown");
+				equal(jQuery("#Cal3--Head-B1").text(), "November – Dezember", "November – December shown");
 				equal(jQuery("#Cal3--Head-B2").text(), "2014", "year 2014 shown");
 				aDays = jQuery("#Cal3--Month0-days").find(".sapUiCalItem");
 				equal(jQuery(aDays[0]).attr("data-sap-day"), "20141028", "first displayed day");
 				aDays = jQuery("#Cal3--Month1-days").find(".sapUiCalItem");
 				equal(jQuery(aDays[aDays.length-1]).attr("data-sap-day"), "20150105", "last displayed day");
 				qutils.triggerEvent("click", "Cal3--Head-next");
-				equal(jQuery("#Cal3--Head-B1").text(), "Januar - Februar", "january - february shown again");
+				equal(jQuery("#Cal3--Head-B1").text(), "Januar – Februar", "january – february shown again");
 				equal(jQuery("#Cal3--Head-B2").text(), "2015", "year 2015 shown again");
 				aDays = jQuery("#Cal3--Month0-days").find(".sapUiCalItem");
 				equal(jQuery(aDays[0]).attr("data-sap-day"), "20141230", "first displayed day");
@@ -254,6 +354,7 @@
 			});
 
 			test("year switch", function() {
+				iStartDateChangeFired = 0;
 				qutils.triggerEvent("click", "Cal2--Head-B2");
 				ok(jQuery("#Cal2--YP").get(0), "Year picker rendered");
 				ok(jQuery(jQuery("#Cal2--YP").get(0)).is(":visible"), "Year picker visible");
@@ -267,7 +368,7 @@
 				equal(jQuery(aYears[0]).text(), "1981", "first rendered year after prev clicked");
 				equal(jQuery(aYears[aYears.length-1]).text(), "2000", "last rendered year after prev clicked");
 
-				var $NewYear = jQuery("#Cal2--YP-y1999"); // use keybord to select month to prevent event processing from ItemNavigation
+				var $NewYear = jQuery("#Cal2--YP-y19990101"); // use keybord to select month to prevent event processing from ItemNavigation
 				$NewYear.focus();
 				qutils.triggerKeyboardEvent($NewYear.get(0), jQuery.sap.KeyCodes.ENTER, false, false, false);
 				ok(!jQuery(jQuery("#Cal2--YP").get(0)).is(":visible"), "Year picker not visible after selecting year");
@@ -278,6 +379,8 @@
 				ok(jQuery(aDays[0]).hasClass("sapUiCalItemOtherMonth"), "first displayed day is in other month");
 				equal(jQuery(aDays[aDays.length-1]).attr("data-sap-day"), "19990131", "last displayed day");
 				ok(!jQuery(aDays[aDays.length-1]).hasClass("sapUiCalItemOtherMonth"), "last displayed day is not in other month");
+				equal(iStartDateChangeFired, 1, "startdateChange event fired");
+				equal(oFormatYyyymmdd.format(oCal2.getStartDate()), "19990101", "Start date");
 
 				qutils.triggerEvent("click", "Cal2--Head-B2");
 				ok(jQuery("#Cal2--YP").get(0), "Year picker rendered");
@@ -291,12 +394,90 @@
 				equal(jQuery(aYears[0]).text(), "2009", "first rendered year after prev clicked");
 				equal(jQuery(aYears[aYears.length-1]).text(), "2028", "last rendered year after prev clicked");
 
-				$NewYear = jQuery("#Cal2--YP-y2011"); // use keybord to select month to prevent event processing from ItemNavigation
+				$NewYear = jQuery("#Cal2--YP-y20110101"); // use keybord to select month to prevent event processing from ItemNavigation
 				$NewYear.focus();
 				qutils.triggerKeyboardEvent($NewYear.get(0), jQuery.sap.KeyCodes.ENTER, false, false, false);
 				ok(!jQuery(jQuery("#Cal2--YP").get(0)).is(":visible"), "Year picker not visible after selecting year");
 				equal(jQuery("#Cal2--Head-B1").text(), "Januar", "January still shown");
 				equal(jQuery("#Cal2--Head-B2").text(), "2011", "year 2011 shown again");
+			});
+
+			test("Min/Max", function() {
+				oCal1.focusDate(new Date(9999, 10, 10));
+				ok(!jQuery("#Cal1--Head-prev").hasClass("sapUiCalDsbl"), "Previous Button enabled");
+				ok(!jQuery("#Cal1--Head-next").hasClass("sapUiCalDsbl"), "Next Button enabled");
+				qutils.triggerEvent("click", "Cal1--Head-next");
+				ok(!jQuery("#Cal1--Head-prev").hasClass("sapUiCalDsbl"), "Previous Button enabled on max month");
+				ok(jQuery("#Cal1--Head-next").hasClass("sapUiCalDsbl"), "Next Button disabled on max month");
+				qutils.triggerEvent("click", "Cal1--Head-B2");
+				var aYears = jQuery("#Cal1--YP").find(".sapUiCalItem");
+				equal(jQuery(aYears[aYears.length-1]).text(), "9999", "Max Year is last rendered year");
+				qutils.triggerEvent("click", "Cal1--Head-B2");
+
+				var oDate = new Date(1,1,1);
+				oDate.setFullYear(1);
+				oCal1.focusDate(oDate);
+				ok(!jQuery("#Cal1--Head-prev").hasClass("sapUiCalDsbl"), "Previous Button enabled");
+				ok(!jQuery("#Cal1--Head-next").hasClass("sapUiCalDsbl"), "Next Button enabled");
+				qutils.triggerEvent("click", "Cal1--Head-prev");
+				ok(jQuery("#Cal1--Head-prev").hasClass("sapUiCalDsbl"), "Previous Button disabled on min month");
+				ok(!jQuery("#Cal1--Head-next").hasClass("sapUiCalDsbl"), "Next Button enabled on min month");
+				qutils.triggerEvent("click", "Cal1--Head-B2");
+				aYears = jQuery("#Cal1--YP").find(".sapUiCalItem");
+				equal(jQuery(aYears[0]).text(), "0001", "Min Year is first rendered year");
+				qutils.triggerEvent("click", "Cal1--Head-B2");
+
+				oCal1.focusDate(new Date());
+
+				ok(!jQuery("#Cal3--Head-prev").hasClass("sapUiCalDsbl"), "Calendar3: Previous Button enabled");
+				ok(jQuery("#Cal3--Head-next").hasClass("sapUiCalDsbl"), "Calendar3: Next Button disabled");
+				qutils.triggerEvent("click", "Cal3--Head-B1");
+				ok(!jQuery("#Cal3--Head-prev").hasClass("sapUiCalDsbl"), "Calendar3: Previous Button for MonthPicker enabled");
+				ok(jQuery("#Cal3--Head-next").hasClass("sapUiCalDsbl"), "Calendar3: Next Button for MonthPicker disabled");
+				ok(!jQuery("#Cal3--MP-m0").hasClass("sapUiCalItemDsbl"), "Calendar3: January enabled");
+				ok(!jQuery("#Cal3--MP-m1").hasClass("sapUiCalItemDsbl"), "Calendar3: February enabled");
+				ok(jQuery("#Cal3--MP-m2").hasClass("sapUiCalItemDsbl"), "Calendar3: March disabled");
+				ok(jQuery("#Cal3--MP-m3").hasClass("sapUiCalItemDsbl"), "Calendar3: April disabled");
+				ok(jQuery("#Cal3--MP-m4").hasClass("sapUiCalItemDsbl"), "Calendar3: May disabled");
+				ok(jQuery("#Cal3--MP-m5").hasClass("sapUiCalItemDsbl"), "Calendar3: June disabled");
+				ok(jQuery("#Cal3--MP-m6").hasClass("sapUiCalItemDsbl"), "Calendar3: July disabled");
+				ok(jQuery("#Cal3--MP-m7").hasClass("sapUiCalItemDsbl"), "Calendar3: August disabled");
+				ok(jQuery("#Cal3--MP-m8").hasClass("sapUiCalItemDsbl"), "Calendar3: September disabled");
+				ok(jQuery("#Cal3--MP-m9").hasClass("sapUiCalItemDsbl"), "Calendar3: October disabled");
+				ok(jQuery("#Cal3--MP-m10").hasClass("sapUiCalItemDsbl"), "Calendar3: November disabled");
+				ok(jQuery("#Cal3--MP-m11").hasClass("sapUiCalItemDsbl"), "Calendar3: December disabled");
+				qutils.triggerEvent("click", "Cal3--Head-prev");
+				ok(!jQuery("#Cal3--Head-prev").hasClass("sapUiCalDsbl"), "Calendar3: Previous Button for MonthPicker enabled");
+				ok(!jQuery("#Cal3--Head-next").hasClass("sapUiCalDsbl"), "Calendar3: Next Button for MonthPicker enabled");
+				ok(!jQuery("#Cal3--MP-m0").hasClass("sapUiCalItemDsbl"), "Calendar3: January enabled");
+				ok(!jQuery("#Cal3--MP-m1").hasClass("sapUiCalItemDsbl"), "Calendar3: February enabled");
+				ok(!jQuery("#Cal3--MP-m2").hasClass("sapUiCalItemDsbl"), "Calendar3: March enabled");
+				ok(!jQuery("#Cal3--MP-m3").hasClass("sapUiCalItemDsbl"), "Calendar3: April enabled");
+				ok(!jQuery("#Cal3--MP-m4").hasClass("sapUiCalItemDsbl"), "Calendar3: May enabled");
+				ok(!jQuery("#Cal3--MP-m5").hasClass("sapUiCalItemDsbl"), "Calendar3: June enabled");
+				ok(!jQuery("#Cal3--MP-m6").hasClass("sapUiCalItemDsbl"), "Calendar3: July enabled");
+				ok(!jQuery("#Cal3--MP-m7").hasClass("sapUiCalItemDsbl"), "Calendar3: August enabled");
+				ok(!jQuery("#Cal3--MP-m8").hasClass("sapUiCalItemDsbl"), "Calendar3: September enabled");
+				ok(!jQuery("#Cal3--MP-m9").hasClass("sapUiCalItemDsbl"), "Calendar3: October enabled");
+				ok(!jQuery("#Cal3--MP-m10").hasClass("sapUiCalItemDsbl"), "Calendar3: November enabled");
+				ok(!jQuery("#Cal3--MP-m11").hasClass("sapUiCalItemDsbl"), "Calendar3: December enabled");
+				qutils.triggerEvent("click", "Cal3--Head-B2");
+				ok(jQuery("#Cal3--Head-prev").hasClass("sapUiCalDsbl"), "Calendar3: Previous Button for YearPicker disabled");
+				ok(jQuery("#Cal3--Head-next").hasClass("sapUiCalDsbl"), "Calendar3: Next Button for YearPicker disabled");
+				var aYears = jQuery("#Cal3--YP").find(".sapUiCalItem");
+				equal(jQuery(aYears[0]).text(), "1996", "Calendar3: first displayed year");
+				ok(jQuery(aYears[0]).hasClass("sapUiCalItemDsbl"), "Calendar3: 1996 is disabled");
+				ok(jQuery(aYears[0]).attr("aria-disabled"), "Calendar3: 1996 has aria-disabled");
+				equal(jQuery(aYears[4]).text(), "2000", "Calendar3: 4. displayed year");
+				ok(!jQuery(aYears[4]).hasClass("sapUiCalItemDsbl"), "Calendar3: 2000 is enabled");
+				ok(!jQuery(aYears[4]).attr("aria-disabled"), "Calendar3: 2000 has no aria-disabled");
+				qutils.triggerEvent("click", "Cal3--Head-B2");
+
+				oCal3.focusDate(new Date(2000, 0, 10));
+				ok(jQuery("#Cal3--Head-prev").hasClass("sapUiCalDsbl"), "Calendar3: Previous Button disabled");
+				ok(!jQuery("#Cal3--Head-next").hasClass("sapUiCalDsbl"), "Calendar3: Next Button enabled");
+
+				oCal3.focusDate(new Date(2015, 0, 5));
 			});
 
 			test("select event", function() {
@@ -309,6 +490,16 @@
 				ok(bSelectFired, "Select event fired");
 				equal(oSelectedDate.getDate(), oToday.getDate(), "Today was selected");
 				ok($Today.hasClass("sapUiCalItemSel"), "Today marked as selected");
+				equal($Today.attr("aria-selected"), "true", "Today aria-selected = true");
+
+				bSelectFired = false;
+				oSelectedDate = undefined;
+				var $Date = jQuery("#Cal3--Month0-20150110");
+				$Date.focus();
+				qutils.triggerKeyboardEvent($Date[0], jQuery.sap.KeyCodes.ENTER, false, false, false);
+				ok(!bSelectFired, "No Select event fired on disabled date");
+				ok(!$Date.hasClass("sapUiCalItemSel"), "Disabled date not marked as selected");
+				equal($Date.attr("aria-selected"), "false", "Disabled date aria-selected = false");
 			});
 
 		</script>

@@ -6,7 +6,7 @@
   <copyright>${copyright}</copyright>
   <version>${version}</version>
 
-  <documentation>SAPUI5 library with controls specialized for mobile devices.</documentation>
+  <documentation>The main UI5 control library, with responsive controls that can be used in touch devices as well as desktop browsers.</documentation>
 
   <dependencies>
     <dependency>
@@ -34,7 +34,7 @@
     <ownership xmlns="http://www.sap.com/ui5/buildext/ownership">
         <component>CA-UI5-CTR</component><!-- default component for library, embedded text as a shortcut for <name>text</name> -->
         <component>
-            <name>CA-UI5-BS-FCP</name>
+            <name>CA-UI5-CTR-SOF-BAL</name>
             <modules>
                 <module>sap/m/FacetFilter</module>
             </modules>
@@ -45,6 +45,13 @@
                 <module>sap/m/FeedInput</module>
                 <module>sap/m/FeedListItem</module>
                 <module>sap/m/UploadCollection</module>
+                <module>sap/m/SlideTile</module>
+                <module>sap/m/GenericTile</module>
+                <module>sap/m/TileContent</module>
+                <module>sap/m/FeedContent</module>
+                <module>sap/m/NewsContent</module>
+                <module>sap/m/NumericContent</module>
+                <module>sap/m/ImageContent</module>
             </modules>
         </component>
         <component>
@@ -54,6 +61,16 @@
                 <module>sap/m/tutorial/Testing-BulletinBoard</module>
                 <module>sap/m/tutorial/MasterDetail-DisplayOrders</module>
                 <module>sap/m/tutorial/Worklist-ManageProductStock</module>
+            </modules>
+        </component>
+         <component>
+            <name>CA-UI5-CMP</name>
+            <modules>
+                <module>sap/m/P13nDialog</module>
+                <module>sap/m/P13nColumnsPanel</module>
+                <module>sap/m/P13nFilterPanel</module>
+                <module>sap/m/P13nGroupPanel</module>
+                <module>sap/m/P13nSortPanel</module>
             </modules>
         </component>
     </ownership>

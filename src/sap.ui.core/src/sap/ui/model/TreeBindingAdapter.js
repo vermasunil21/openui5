@@ -19,7 +19,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		var TreeBindingAdapter = function() {
 
 			// ensure only TreeBindings are enhanced which have not been enhanced yet
-			if (!(this instanceof TreeBinding && this.getContexts === undefined)) {
+			if (!(this instanceof TreeBinding) || this._bIsAdapted) {
 				return;
 			}
 
@@ -52,6 +52,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 
 			//create general tree structure
 			this._createTreeState();
+
+			this._bIsAdapted = true;
 		};
 
 		TreeBindingAdapter.prototype.setAutoExpandMode = function (sAutoExpandMode) {
@@ -233,19 +235,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 				if (!oNode) {
 					return;
 				}
-				var iMaxGroupSize = 0;
-				if (oNode.isArtificial) {
-					// when displaying the root node, the magnitude will always be at least 1,
-					// because we display the one node we request
-					// if the user requests the root node(s) by level and not by ID, we can retrieve a group-size
-					if (this.bDisplayRootNode && this.mParameters.rootNodeID && !this._bRootMissing) {
-						iMaxGroupSize = 1;
-					} else {
-						iMaxGroupSize = this._getGroupSize(oNode) || 0;
-					}
-				} else {
-					iMaxGroupSize = this.nodeHasChildren(oNode) ? this._getGroupSize(oNode) : 0;
-				}
+				var iMaxGroupSize = this._getMaxGroupSize(oNode);
+
 				// adapt node sections if the page size increased since the last getcontexts call
 				// and only if we do not already have a count for the group
 				var oNodeState = oNode.nodeState;
@@ -264,9 +255,31 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		};
 
 		/**
+		 * Calculates the maximum possible group-size for a given node.
+		 * Not the same as the direct number of children.
+		 */
+		TreeBindingAdapter.prototype._getMaxGroupSize = function (oNode) {
+			var iMaxGroupSize = 0;
+			if (oNode.isArtificial) {
+				// When displaying the root node, the magnitude will always be at least 1:
+				// Except: if we are bound to a list/collection (e.g. Employees), there will be no single root node
+				// so we retrieve the regular groupSize instead
+				var bIsList = this.oModel.isList(this.sPath, this.getContext());
+				if (this.bDisplayRootNode && !bIsList && !this._bRootMissing) {
+					iMaxGroupSize = 1;
+				} else {
+					iMaxGroupSize = this._getGroupSize(oNode) || 0;
+				}
+			} else {
+				iMaxGroupSize = this.nodeHasChildren(oNode) ? this._getGroupSize(oNode) : 0;
+			}
+			return iMaxGroupSize;
+		};
+
+		/**
 		 * Retrieves the requested part from the tree.
 		 */
-		TreeBindingAdapter.prototype.getContexts = function(iStartIndex, iLength, iThreshold) {
+		TreeBindingAdapter.prototype.getContexts = function(iStartIndex, iLength, iThreshold, bReturnNodes) {
 
 			//step out if the binding is initial (as long as the metadata is not yet loaded)
 			if (this.isInitial()) {
@@ -343,7 +356,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 				}
 			}
 
-			return aContexts;
+			if (bReturnNodes) {
+				return aNodes;
+			} else {
+				return aContexts;
+			}
+		};
+
+		/**
+		 * Retrieves the requested part from the tree and returns node objects.
+		 * @param iStartIndex
+		 * @param iLength
+		 * @param iThreshold
+		 * @return {Object} Tree Node
+		 * @protected
+		 */
+		TreeBindingAdapter.prototype.getNodes = function (iStartIndex, iLength, iThreshold) {
+			return this.getContexts(iStartIndex, iLength, iThreshold, true);
 		};
 
 		/**
@@ -452,19 +481,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 			var oNodeState = oNode.nodeState;
 
 			// calculate magnitude/groupsize of (artificial) root node seperately
-			var iMaxGroupSize = 0;
-			if (oNode.isArtificial) {
-				// when displaying the root node, the magnitude will always be at least 1,
-				// because we display the one node we request
-				// if the user requests the root node(s) by level and not by ID, we can retrieve a group-size
-				if (this.bDisplayRootNode && this.mParameters.rootNodeID && !this._bRootMissing) {
-					iMaxGroupSize = 1;
-				} else {
-					iMaxGroupSize = this._getGroupSize(oNode) || 0;
-				}
-			} else {
-				iMaxGroupSize = this.nodeHasChildren(oNode) ? this._getGroupSize(oNode) : 0;
-			}
+			var iMaxGroupSize = this._getMaxGroupSize(oNode);
+
 			// make sure the children array gets at least the requested length
 			if (iMaxGroupSize > 0) {
 				if (!oNode.children[iMaxGroupSize - 1]) {
@@ -479,7 +497,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 					length: iMaxGroupSize
 				}];
 			}
-			
+
 			//iterate all loaded (known) sections
 			for (var i = 0; i < oNodeState.sections.length; i++) {
 
@@ -617,6 +635,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 
 		/**
 		 * Hook which needs to be implemented by subclasses
+		 * Calculates a unique group ID for a given node
+		 * @param {Object} oNode Node of which the group ID shall be calculated
+		 * @returns {string} Group ID for oNode
 		 */
 		TreeBindingAdapter.prototype._calculateGroupID = function (oNode) {
 			jQuery.sap.log.error("TreeBindingAdapter#_calculateGroupID: Not implemented. Needs to be implemented in respective sub-classes.");
@@ -840,7 +861,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		 * @param {int} iIndex the absolute row index
 		 */
 		TreeBindingAdapter.prototype.toggleIndex = function(iIndex) {
-			var oNode = this._aRowIndexMap[iIndex];
+			var oNode = this.findNode(iIndex);
 
 			jQuery.sap.assert(oNode, "There is no node at index " + iIndex + ".");
 
@@ -991,11 +1012,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		 */
 		TreeBindingAdapter.prototype.getSelectedIndices = function () {
 			var aResultIndices = [];
+			var that = this;
 
 			//if we have no nodes selected, the selection indices are empty
 			if (jQuery.isEmptyObject(this._mTreeState.selected)) {
 				return aResultIndices;
 			}
+
+			// maximum number of possibly selected nodes
+			var iNumberOfNodesToSelect = Object.keys(this._mTreeState.selected).length;
 
 			// collect the indices of all selected nodes
 			var iNodeCounter = -1;
@@ -1007,13 +1032,24 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 				if (oNode) {
 					if (oNode.nodeState && oNode.nodeState.selected && !oNode.isArtificial) {
 						aResultIndices.push(iNodeCounter);
+						// cache the selected node for subsequent findNode/getContextByIndex calls
+						that._aRowIndexMap[iNodeCounter] = oNode;
+						return true;
 					}
 				}
 			};
 
-			this._map(this._oRootNode, fnMatchFunction);
+			this._match(this._oRootNode, [], iNumberOfNodesToSelect, fnMatchFunction);
 
 			return aResultIndices;
+		};
+
+		/**
+		 * Returns the number of selected nodes.
+		 * @private
+		 */
+		TreeBindingAdapter.prototype.getSelectedNodesCount = function () {
+			return Object.keys(this._mTreeState.selected).length;
 		};
 
 		/**
@@ -1022,22 +1058,34 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		 */
 		TreeBindingAdapter.prototype.getSelectedContexts = function () {
 			var aResultContexts = [];
+			var that = this;
 
 			//if we have no nodes selected, the selection indices are empty
 			if (jQuery.isEmptyObject(this._mTreeState.selected)) {
 				return aResultContexts;
 			}
 
-			// collect the indices of all selected nodes
+			// maximum number of possibly selected nodes
+			var iNumberOfNodesToSelect = Object.keys(this._mTreeState.selected).length;
+
+			// collect the indices & contexts of all selected nodes
+			var iNodeCounter = -1;
 			var fnMatchFunction = function (oNode) {
+				if (!oNode || !oNode.isArtificial) {
+					iNodeCounter++;
+				}
+
 				if (oNode) {
-					if (oNode.nodeState.selected && !oNode.isArtificial) {
+					if (oNode.nodeState && oNode.nodeState.selected && !oNode.isArtificial) {
 						aResultContexts.push(oNode.context);
+						// cache the selected node for subsequent findNode/getContextByIndex calls
+						that._aRowIndexMap[iNodeCounter] = oNode;
+						return true;
 					}
 				}
 			};
 
-			this._map(this._oRootNode, fnMatchFunction);
+			this._match(this._oRootNode, [], iNumberOfNodesToSelect, fnMatchFunction);
 
 			return aResultContexts;
 		};
@@ -1192,7 +1240,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 
 			var mParams = {
 				rowIndices: [],
-				oldIndex: -1
+				oldIndex: -1,
+				selectAll: true
 			};
 
 			// recursion variables
@@ -1344,6 +1393,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/model/TreeBinding', 'sap/ui/model/Cl
 		 */
 		TreeBindingAdapter.prototype.setCollapseRecursive = function (bCollapseRecursive) {
 			this.bCollapseRecursive = !!bCollapseRecursive;
+		};
+
+		/**
+		 * Gets the collapsing behavior when parent nodes are collapsed.
+		 * @param {boolean} bCollapseRecursive
+		 */
+		TreeBindingAdapter.prototype.getCollapseRecursive = function () {
+			return this.bCollapseRecursive;
 		};
 
 		//*********************************************

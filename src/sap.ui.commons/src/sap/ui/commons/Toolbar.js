@@ -24,6 +24,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 *
 		 * @constructor
 		 * @public
+		 * @deprecated Since version 1.38. Instead, use the <code>sap.m.Toolbar</code> control.
 		 * @alias sap.ui.commons.Toolbar
 		 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 		 */
@@ -543,8 +544,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			// Register for window resize event during the popup is opened, so that the popup will be closed if the window is resized.
 			jQuery(window).bind("resize", jQuery.proxy(this.onwindowresize, this));
 
-			//Open popup with a little delay in IE8 to avoid focus calls when the popup is not yet opened
-			var iDuration = !!sap.ui.Device.browser.internet_explorer && (sap.ui.Device.browser.version == 7 || sap.ui.Device.browser.version == 8) ? 1 : 0;
+			var iDuration = 0;
 			this.popup.open(iDuration, Popup.Dock.EndTop, Popup.Dock.EndBottom, this.$("mn"), "", "fit", true);
 		};
 

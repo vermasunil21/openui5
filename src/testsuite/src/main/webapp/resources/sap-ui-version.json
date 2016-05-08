@@ -20,6 +20,13 @@
 			"gav": "com.sap.openui5:sap.m:${version}:jar"
 		},
 		{
+			"name": "sap.tnt",
+			"version": "${version}",
+			"buildTimestamp": "${buildtimestamp}",
+			"scmRevision": "${lastchange}",
+			"gav": "com.sap.openui5:sap.tnt:${version}:jar"
+		},
+		{
 			"name": "sap.ui.commons",
 			"version": "${version}",
 			"buildTimestamp": "${buildtimestamp}",
@@ -69,6 +76,20 @@
 			"gav": "com.sap.openui5:sap.ui.ux3:${version}:jar"
 		},
 		{
+			"name": "sap.ui.dt",
+			"version": "${version}",
+			"buildTimestamp": "${buildtimestamp}",
+			"scmRevision": "${lastchange}",
+			"gav": "com.sap.openui5:sap.ui.dt:${version}:jar"
+		},
+		{
+			"name": "sap.uxap",
+			"version": "${version}",
+			"buildTimestamp": "${buildtimestamp}",
+			"scmRevision": "${lastchange}",
+			"gav": "com.sap.openui5:sap.uxap:${version}:jar"
+		},
+		{
 			"name": "themelib_sap_bluecrystal",
 			"version": "${version}",
 			"buildTimestamp": "${buildtimestamp}",
@@ -81,6 +102,13 @@
 			"buildTimestamp": "${buildtimestamp}",
 			"scmRevision": "${lastchange}",
 			"gav": "com.sap.openui5:themelib_sap_goldreflection:${version}:jar"
+		},
+		{
+			"name": "themelib_sap_belize",
+			"version": "${version}",
+			"buildTimestamp": "${buildtimestamp}",
+			"scmRevision": "${lastchange}",
+			"gav": "com.sap.openui5:themelib_sap_belize:${version}:jar"
 		}
 	]
 }

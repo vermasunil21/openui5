@@ -10,11 +10,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	/**
 	 * Constructor for a new InputBase.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given
-	 * @param {object} [mSettings] initial settings for the new control
+	 * @param {string} [sId] ID for the new control, generated automatically if no ID is given
+	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * Base control for Input fields.
+	 * The <code>sap.m.InputBase</code> control provides a base functionality of the Input controls, e.g. <code>sap.m.Input</code>, <code>sap.m.DatePicker</code>, <code>sap.m.TextArea</code>, <code>sap.m.ComboBox</code>.
 	 * @extends sap.ui.core.Control
 	 *
 	 * @author SAP SE
@@ -32,61 +32,63 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		properties: {
 
 			/**
-			 * Defines the value of the input.
+			 * Defines the value of the control.
 			 */
 			value: { type: "string", group: "Data", defaultValue: null, bindable: "bindable" },
 
 			/**
-			 * Defines the width of the input.
+			 * Defines the width of the control.
 			 */
 			width: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: null },
 
 			/**
-			 * Determines whether the user can change the input value (default is true).
+			 * Indicates whether the user can interact with the control or not.
+			 * <b>Note:</b> Disabled controls cannot be focused and they are out of the tab-chain.
 			 */
 			enabled: { type: "boolean", group: "Behavior", defaultValue: true },
 
 			/**
-			 * Visualizes warnings or errors related to the text field. Possible values: Warning, Error, Success.
+			 * Visualizes the validation state of the control, e.g. <code>Error</code>, <code>Warning</code>, <code>Success</code>.
 			 */
 			valueState: { type: "sap.ui.core.ValueState", group: "Appearance", defaultValue: sap.ui.core.ValueState.None },
 
 			/**
-			 * The "name" property to be used in the HTML code (e.g. for HTML forms that send data to the server via 'submit').
+			 * Defines the name of the control for the purposes of form submission.
 			 */
 			name: { type: "string", group: "Misc", defaultValue: null },
 
 			/**
-			 * Text shown when no value available.
+			 * Defines a short hint intended to aid the user with data entry when the control has no value.
 			 */
 			placeholder: { type: "string", group: "Misc", defaultValue: null },
 
 			/**
-			 * Controls if a user can change the value.
+			 * Defines whether the control can be modified by the user or not.
+			 * <b>Note:</b> A user can tab to non-editable control, highlight it, and copy the text from it.
 			 * @since 1.12.0
 			 */
 			editable: { type: "boolean", group: "Behavior", defaultValue: true },
 
 			/**
-			 * The text which is shown in the value state message popup. If not specfied a default text is shown. This property is already available for sap.m.Input since 1.16.0.
+			 * Defines the text that appears in the value state message pop-up. If this is not specified, a default text is shown from the resource bundle.
 			 * @since 1.26.0
 			 */
 			valueStateText: { type: "string", group: "Misc", defaultValue: null },
 
 			/**
-			 * Whether the value state message should be shown. This property is already available for sap.m.Input since 1.16.0.
+			 * Indicates whether the value state message should be shown or not.
 			 * @since 1.26.0
 			 */
 			showValueStateMessage: { type: "boolean", group: "Misc", defaultValue: true },
 
 			/**
-			 * Sets the horizontal alignment of the text.
+			 * Defines the horizontal alignment of the text that is shown inside the input field.
 			 * @since 1.26.0
 			 */
 			textAlign: { type: "sap.ui.core.TextAlign", group: "Appearance", defaultValue: sap.ui.core.TextAlign.Initial },
 
 			/**
-			 * This property specifies the element's text directionality with enumerated options. By default, the control inherits text direction from the DOM.
+			 * Defines the text directionality of the input field, e.g. <code>RTL</code>, <code>LTR</code>
 			 * @since 1.28.0
 			 */
 			textDirection: { type: "sap.ui.core.TextDirection", group: "Appearance", defaultValue: sap.ui.core.TextDirection.Inherit }
@@ -94,7 +96,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		associations: {
 
 			/**
-			 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).
+			 * Association to controls / IDs that label this control (see WAI-ARIA attribute aria-labelledby).
 			 * @since 1.27.0
 			 */
 			ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
@@ -102,13 +104,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		events: {
 
 			/**
-			 * This event gets fired when the text in the input field has changed and the focus leaves the input field or the enter key is pressed.
+			 * Is fired when the text in the input field has changed and the focus leaves the input field or the enter key is pressed.
 			 */
 			change: {
 				parameters: {
 
 					/**
-					 * The new value of the input.
+					 * The new <code>value</code> of the <code>control</code>.
 					 */
 					value: { type: "string" }
 				}
@@ -157,12 +159,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * Update the synthetic placeholder visibility.
 	 */
 	InputBase.prototype._setLabelVisibility = function() {
-		if (!this.bShowLabelAsPlaceholder || !this._$label || !this.isActive()) {
+		if (!this.bShowLabelAsPlaceholder) {
 			return;
 		}
 
-		var sValue = this._getInputValue();
-		this._$label.css("display", sValue ? "none" : "inline");
+		var sValue = this.$("inner").val();
+		this.$("placeholder").css("display", sValue ? "none" : "inline");
 	};
 
 	/**
@@ -172,7 +174,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * TODO: write two different functions for two different behaviour
 	 */
 	InputBase.prototype._getInputValue = function(sValue) {
-		sValue = (typeof sValue == "undefined") ? this._$input.val() : sValue.toString();
+		sValue = (sValue === undefined) ? this.$("inner").val() || "" : sValue.toString();
 
 		if (this.getMaxLength && this.getMaxLength() > 0) {
 			sValue = sValue.substring(0, this.getMaxLength());
@@ -209,8 +211,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	InputBase.prototype.init = function() {
-		this._lastValue = "";	// last changed value
-		this._changeProxy = jQuery.proxy(this.onChange, this);
+		// last changed value
+		this._lastValue = "";
 
 		/**
 		 * Indicates whether the input field is in the rendering phase.
@@ -232,15 +234,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.onBeforeRendering = function() {
 
-		// mark the rendering phase
-		this.bRenderingPhase = true;
-
-		if (this._bCheckDomValue) {
+		if (this._bCheckDomValue && !this.bRenderingPhase) {
 
 			// remember dom value in case of invalidation during keystrokes
 			// so the following should only be used onAfterRendering
 			this._sDomValue = this._getInputValue();
 		}
+
+		// mark the rendering phase
+		this.bRenderingPhase = true;
 	};
 
 	/**
@@ -250,9 +252,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.onAfterRendering = function() {
 
-		// cache input as jQuery
-		this._$input = this.$("inner");
-
 		// maybe control is invalidated on keystrokes and
 		// even the value property did not change
 		// dom value is still the old value
@@ -260,17 +259,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		if (this._bCheckDomValue && this._sDomValue !== this._getInputValue()) {
 
 			// so we should keep the dom up-to-date
-			this._$input.val(this._sDomValue);
+			this.$("inner").val(this._sDomValue);
 		}
 
 		// now dom value is up-to-date
 		this._bCheckDomValue = false;
 
 		// handle synthetic placeholder visibility
-		if (this.bShowLabelAsPlaceholder) {
-			this._$label = this.$("placeholder");
-			this._setLabelVisibility();
-		}
+		this._setLabelVisibility();
 
 		// rendering phase is finished
 		this.bRenderingPhase = false;
@@ -282,9 +278,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	InputBase.prototype.exit = function() {
-		this._$input = null;
-		this._$label = null;
-		if ( this._popup ){
+		if (this._popup) {
 			this._popup.destroy();
 			this._popup = null;
 		}
@@ -321,66 +315,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 									!this._getInputValue();
 
 		this.$().toggleClass("sapMFocus", true);
-		if (sap.ui.Device.support.touch) {
-			// listen to all touch events
-			jQuery(document).on('touchstart.sapMIBtouchstart', jQuery.proxy(this._touchstartHandler, this));
-		}
 
 		// open value state message popup when focus is in the input
 		this.openValueStateMessage();
-	};
-
-	/**
-	 * Captures the initial touch position and sets up listeners for touchmove, touchcancel and touchend
-	 *
-	 * @private
-	 */
-	InputBase.prototype._touchstartHandler = function (oEvent) {
-		if (oEvent.target != this._$input[0]) {
-			this._touchX = oEvent.targetTouches[0].pageX;
-			this._touchY = oEvent.targetTouches[0].pageY;
-			this._touchT = oEvent.timestamp;
-			jQuery(oEvent.target)
-				.on(  'touchmove.sapMIBtouch', jQuery.proxy(this._touchmoveHandler,this))
-				.on(   'touchend.sapMIBtouch', jQuery.proxy(this._touchendHandler ,this))
-				.on('touchcancel.sapMIBtouch', this._removeTouchHandler);
-		}
-	};
-
-	/**
-	 * Calculates if a touch session is a click event or something else (scoll, longtouch)
-	 *
-	 * @private
-	 */
-	InputBase.prototype._isClick = function(oEvent) {
-		return Math.abs(oEvent.changedTouches[0].pageX - this._touchX) < 10 && Math.abs(oEvent.changedTouches[0].pageY - this._touchY) < 10 &&  oEvent.timestamp - this._touchT < jQuery.event.special.tap.tapholdThreshold; // 750ms
-	};
-
-	/**
-	 * Cancels the action if the touch session is a long tap or scroll
-	 *
-	 * @private
-	 */
-	InputBase.prototype._touchmoveHandler = function(oEvent){
-		if (!this._isClick(oEvent)) {
-			jQuery(oEvent.target).off('.sapMIBtouch');
-		}
-	};
-
-	/**
-	 * Sends an early change event to the input if a tap has happened outside the input - e.g. on a button
-	 *
-	 * @private
-	 */
-	InputBase.prototype._touchendHandler = function(oEvent) {
-		// cancel if scrolling or long tap
-		if (this._isClick(oEvent)) {
-			// simulate change event
-			this.onChange(oEvent);
-		}
-
-		// remove all touch handlers
-		jQuery(oEvent.target).off('.sapMIBtouch');
 	};
 
 	/**
@@ -392,9 +329,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	InputBase.prototype.onfocusout = function(oEvent) {
 		this.bFocusoutDueRendering = this.bRenderingPhase;
 		this.$().toggleClass("sapMFocus", false);
-
-		// remove touch handler from document for mobile devices
-		jQuery(document).off(".sapMIBtouchstart");
 
 		// because dom is replaced during the rendering
 		// onfocusout event is triggered probably focus goes to the document
@@ -649,14 +583,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * Selects the text within the input field between the specified start and end positions.
 	 * Only supported for input control's type of Text, Url, Tel and Password.
 	 *
-	 * @param {integer} iSelectionStart The index into the text at which the first selected character is located.
-	 * @param {integer} iSelectionEnd The index into the text at which the last selected character is located.
+	 * @param {int} iSelectionStart The index into the text at which the first selected character is located.
+	 * @param {int} iSelectionEnd The index into the text at which the last selected character is located.
 	 * @returns {sap.m.InputBase} <code>this</code> to allow method chaining.
 	 * @protected
 	 * @since 1.22.1
 	 */
 	InputBase.prototype.selectText = function(iSelectionStart, iSelectionEnd) {
-		jQuery(this.getFocusDomRef()).selectText(iSelectionStart, iSelectionEnd);
+		this.$("inner").selectText(iSelectionStart, iSelectionEnd);
 		return this;
 	};
 
@@ -669,7 +603,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @since 1.32
 	 */
 	InputBase.prototype.getSelectedText = function() {
-		return jQuery(this.getFocusDomRef()).getSelectedText();
+		return this.$("inner").getSelectedText();
 	};
 
 	/**
@@ -766,13 +700,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.updateDomValue = function(sValue) {
 
+		if (!this.isActive()) {
+			return this;
+		}
+
 		// respect to max length
 		sValue = this._getInputValue(sValue);
 
 		// update the DOM value when necessary
 		// otherwise cursor can goto end of text unnecessarily
-		if (this.isActive() && (this._getInputValue() !== sValue)) {
-			this._$input.val(sValue);
+		if (this._getInputValue() !== sValue) {
+			this.$("inner").val(sValue);
 
 			// dom value updated other than value property
 			this._bCheckDomValue = true;
@@ -792,11 +730,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	InputBase.prototype.closeValueStateMessage = function (){
 		if (this._popup) {
-			this._popup.close();
+			this._popup.close(0);
 		}
 
-		var $Input = jQuery(this.getFocusDomRef());
-		$Input.removeAriaDescribedBy(this.getId() + "-message");
+		this.$("inner").removeAriaDescribedBy(this.getId() + "-message");
 	};
 
 	/**
@@ -810,7 +747,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		return this.getFocusDomRef();
 	};
 
-	InputBase.prototype.iOpenMessagePopupDuration = 200;
+	InputBase.prototype.iOpenMessagePopupDuration = 0;
 
 	/**
 	 * Open value state message popup.
@@ -819,10 +756,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @protected
 	 */
 	InputBase.prototype.openValueStateMessage = function (){
-		
+
 		var sState = this.getValueState();
-		if (sState == sap.ui.core.ValueState.None || 
-			!this.getShowValueStateMessage() || 
+		if (sState == sap.ui.core.ValueState.None ||
+			!this.getShowValueStateMessage() ||
 			!this.getEditable() ||
 			!this.getEnabled()) {
 			return;
@@ -840,10 +777,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			});
 		}
 
-		var that = this;
 		var mDock = Popup.Dock;
-		var $Input = jQuery(this.getFocusDomRef());
-		var bIsRightAligned = $Input.css("text-align") === "right";
+		var $Input = this.$("inner");
 		var sClass = "sapMInputBaseMessage sapMInputBaseMessage" + sState;
 		var sTextClass = "sapMInputBaseMessageText";
 		var oRB = sap.ui.getCore().getLibraryResourceBundle("sap.m");
@@ -875,21 +810,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		this._popup.close(0);
 		this._popup.open(
 			this.iOpenMessagePopupDuration,
-			bIsRightAligned ? mDock.EndTop : mDock.BeginTop,
-			bIsRightAligned ? mDock.EndBottom : mDock.BeginBottom,
+			mDock.BeginTop,
+			mDock.BeginBottom,
 			this.getDomRefForValueStateMessage(),
 			null,
 			null,
-			function() {
-				that._popup.close();
-			}
+			sap.ui.Device.system.phone ? true : Popup.CLOSE_ON_SCROLL
 		);
 
 		// Check whether popup is below or above the input
-		if ($Input.offset().top < this._popup._$().offset().top) {
-			this._popup._$().addClass("sapMInputBaseMessageBottom");
+		if ($Input.offset().top < $Content.offset().top) {
+			$Content.addClass("sapMInputBaseMessageBottom");
 		} else {
-			this._popup._$().addClass("sapMInputBaseMessageTop");
+			$Content.addClass("sapMInputBaseMessageTop");
 		}
 
 		$Input.addAriaDescribedBy(sMessageId);
@@ -897,9 +830,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	InputBase.prototype.updateValueStateClasses = function(sValueState, sOldValueState) {
-		var mValueState = sap.ui.core.ValueState,
-			$This = this.$(),
-			$Input = jQuery(this.getFocusDomRef());
+		var $This = this.$(),
+			$Input = this.$("inner"),
+			mValueState = sap.ui.core.ValueState;
 
 		if (sOldValueState !== mValueState.None) {
 			$This.removeClass("sapMInputBaseState sapMInputBase" + sOldValueState);
@@ -940,7 +873,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return this;
 		}
 
-		var $Input = jQuery(this.getFocusDomRef()),
+		var $Input = this.$("inner"),
 			mValueState = sap.ui.core.ValueState;
 
 		if (sValueState === mValueState.Error) {
@@ -950,7 +883,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		this.updateValueStateClasses(sValueState, sOldValueState);
-		
+
 		if ($Input[0] === document.activeElement) {
 			(sValueState == mValueState.None) ? this.closeValueStateMessage() : this.openValueStateMessage();
 		}
@@ -1030,9 +963,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	InputBase.prototype.setTooltip = function(vTooltip) {
-		var oDomRef = this.getDomRef(),
-			oDescribedByDomRef = null,
-			sAnnouncement;
+		var oDomRef = this.getDomRef();
 
 		this._refreshTooltipBaseDelegate(vTooltip);
 		this.setAggregation("tooltip", vTooltip, true);
@@ -1041,43 +972,85 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			return this;
 		}
 
-		sAnnouncement = this.getRenderer().getDescribedByAnnouncement(this);
+		var sTooltip = this.getTooltip_AsString();
 
-		if (sAnnouncement) {
-			oDomRef.setAttribute("title", this.getTooltip_AsString());
+		if (sTooltip) {
+			oDomRef.setAttribute("title", sTooltip);
 		} else {
 			oDomRef.removeAttribute("title");
 		}
 
-		oDescribedByDomRef = this.getDomRef("describedby");
+		if (sap.ui.getCore().getConfiguration().getAccessibility()) {
 
-		if (!oDescribedByDomRef && sAnnouncement) {
-			oDescribedByDomRef = document.createElement("span");
-			oDescribedByDomRef.setAttribute("id", this.getId() + "-describedby");
-			oDescribedByDomRef.setAttribute("aria-hidden", "true");
-			oDescribedByDomRef.setAttribute("class", "sapUiInvisibleText");
-			oDomRef.appendChild(oDescribedByDomRef);
-		}
+			var oDescribedByDomRef = this.getDomRef("describedby"),
+				sAnnouncement = this.getRenderer().getDescribedByAnnouncement(this),
+				sDescribedbyId = this.getId() + "-describedby",
+				sAriaDescribedByAttr = "aria-describedby",
+				oFocusDomRef = this.getFocusDomRef(),
+				sAriaDescribedby = oFocusDomRef.getAttribute(sAriaDescribedByAttr);
 
-		if (oDescribedByDomRef && !sAnnouncement) {
-			oDomRef.removeChild(oDescribedByDomRef);
-		}
+			if (!oDescribedByDomRef && sAnnouncement) {
+				oDescribedByDomRef = document.createElement("span");
+				oDescribedByDomRef.id = sDescribedbyId;
+				oDescribedByDomRef.setAttribute("aria-hidden", "true");
+				oDescribedByDomRef.className = "sapUiInvisibleText";
 
-		if (oDescribedByDomRef) {
-			oDescribedByDomRef.textContent = sAnnouncement;
+				if (this.getAriaDescribedBy) {
+					oFocusDomRef.setAttribute(sAriaDescribedByAttr, (this.getAriaDescribedBy().join(" ") + " " + sDescribedbyId).trim());
+				} else {
+					oFocusDomRef.setAttribute(sAriaDescribedByAttr, sDescribedbyId);
+				}
+
+				oDomRef.appendChild(oDescribedByDomRef);
+			} else if (oDescribedByDomRef && !sAnnouncement) {
+				oDomRef.removeChild(oDescribedByDomRef);
+				var sDescribedByDomRefId = oDescribedByDomRef.id;
+
+				if (sAriaDescribedby && sDescribedByDomRefId) {
+					oFocusDomRef.setAttribute(sAriaDescribedByAttr, sAriaDescribedby.replace(sDescribedByDomRefId, "").trim());
+				}
+			}
+
+			if (oDescribedByDomRef) {
+				oDescribedByDomRef.textContent = sAnnouncement;
+			}
 		}
 
 		return this;
 	};
 
 	/**
-	 * @see sap.ui.core.Element.refreshDataState
+	 * This method is called in case an AggregatedDataStateChange happens.
 	 */
 	InputBase.prototype.refreshDataState = function(sName, oDataState) {
-		if (sName === "value" && oDataState.getMessages()) {
+		if (oDataState.getChanges().messages) {
 			this.propagateMessages(sName, oDataState.getMessages());
 		}
 	};
+
+	/**
+	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @protected
+	 */
+	InputBase.prototype.getAccessibilityInfo = function() {
+		var oRenderer = this.getRenderer();
+		return {
+			role: oRenderer.getAriaRole(this),
+			type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_INPUT"),
+			description: [this.getValue() || "", oRenderer.getLabelledByAnnouncement(this), oRenderer.getDescribedByAnnouncement(this)].join(" ").trim(),
+			focusable: this.getEnabled(),
+			enabled: this.getEnabled(),
+			editable: this.getEnabled() && this.getEditable()
+		};
+	};
+
+	// do not cache jQuery object and define _$input for compatibility reasons
+	Object.defineProperty(InputBase.prototype, "_$input", {
+		get: function() {
+			return this.$("inner");
+		}
+	});
+
 	return InputBase;
 
 }, /* bExport= */ true);

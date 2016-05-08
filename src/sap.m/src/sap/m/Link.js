@@ -3,8 +3,8 @@
  */
 
 // Provides control sap.m.Link.
-sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator'],
-	function(jQuery, library, Control, EnabledPropagator) {
+sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/core/InvisibleText', 'sap/ui/core/EnabledPropagator', 'sap/ui/core/LabelEnablement'],
+	function(jQuery, library, Control, InvisibleText, EnabledPropagator, LabelEnablement) {
 	"use strict";
 
 
@@ -117,6 +117,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	EnabledPropagator.call(Link.prototype); // inherit "disabled" state from parent controls
 
 	/**
+	 * Required adaptations before rendering.
+	 *
+	 * @private
+	 */
+	Link.prototype.onBeforeRendering = function() {
+		// add/remove self reference for aria-labelledby  to fix reading issues
+		this.removeAssociation("ariaLabelledBy", this.getId(), true);
+		if (this.getAriaLabelledBy().length > 0 || LabelEnablement.getReferencingLabels(this).length > 0) {
+			this.addAssociation("ariaLabelledBy", this.getId(), true);
+		}
+	};
+
+	/**
 	 * Triggers link activation when space key is pressed on the focused control.
 	 *
 	 * @param {jQuery.Event} oEvent
@@ -202,14 +215,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var $this = this.$();
 		if ($this.length) { // only when actually rendered
 			$this.toggleClass("sapMLnkSubtle", bSubtle);
+
 			if (bSubtle) {
-				if (!this.getDomRef("linkSubtle")) {
-					$this.append("<label id='" + this.getId() + "-linkSubtle" + "' class='sapUiHidden'>" + this._getLinkDescription("LINK_SUBTLE") + "</label>");
-				}
+				Link._addToDescribedBy($this, this._sAriaLinkSubtleId);
 			} else {
-				this.$("linkSubtle").remove();
+				Link._removeFromDescribedBy($this, this._sAriaLinkSubtleId);
 			}
 		}
+
+		if (bSubtle && !Link.prototype._sAriaLinkSubtleId) {
+			Link.prototype._sAriaLinkSubtleId = Link._getARIAInvisibleTextId("LINK_SUBTLE");
+		}
+
 		return this;
 	};
 
@@ -219,14 +236,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var $this = this.$();
 		if ($this.length) { // only when actually rendered
 			$this.toggleClass("sapMLnkEmphasized", bEmphasized);
-			if (bEmphasized) { // strictly spoken this should only be done when accessibility mode is true. But it is true by default, so not sure it is worth checking...
-				if (!this.getDomRef("linkEmphasized")) {
-					$this.append("<label id='" + this.getId() + "-linkEmphasized" + "' class='sapUiHidden'>" + this._getLinkDescription("LINK_EMPHASIZED") + "</label>");
-				}
+
+			if (bEmphasized) {
+				Link._addToDescribedBy($this, this._sAriaLinkEmphasizedId);
 			} else {
-				this.$("linkEmphasized").remove();
+				Link._removeFromDescribedBy($this, this._sAriaLinkEmphasizedId);
 			}
 		}
+
+		if (bEmphasized && !Link.prototype._sAriaLinkEmphasizedId) {
+			Link.prototype._sAriaLinkEmphasizedId = Link._getARIAInvisibleTextId("LINK_EMPHASIZED");
+		}
+
 		return this;
 	};
 
@@ -277,17 +298,79 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		return this;
 	};
 
+	/*************************************** Static members ******************************************/
+
 	/**
-	 * Translates a text from the resource bundle.
+	 * Retrieves the resource bundle for the sap.m library
 	 *
-	 * @param {String} sKey the resource to be translated
-	 * @private
-	 * @returns {String} the translated text
+	 * @returns {Object} the resource bundle object
 	 */
-	Link.prototype._getLinkDescription = function(sKey) {
-		var oRb = sap.ui.getCore().getLibraryResourceBundle("sap.m");
-		var sText = oRb.getText(sKey);
-		return sText;
+	Link._getResourceBundle = function () {
+		return sap.ui.getCore().getLibraryResourceBundle("sap.m");
+	};
+
+	/**
+	 * Creates ARIA sap.ui.core.InvisibleText for the given translation text
+	 *
+	 * @param {String} sResourceBundleKey the resource key in the translation bundle
+	 * @returns {String} the InvisibleText control ID
+	 */
+	Link._getARIAInvisibleTextId = function (sResourceBundleKey) {
+		var oRb = Link._getResourceBundle();
+
+		return new InvisibleText({
+			text: oRb.getText(sResourceBundleKey)
+		}).toStatic().getId();
+	};
+
+	/**
+	 * Adds ARIA InvisibleText ID to aria-secribedby
+	 *
+	 * @param {Object} $oLink control DOM reference
+	 * @param {String} sInvisibleTextId  static Invisible Text ID to be added
+	 */
+	Link._addToDescribedBy = function ($oLink, sInvisibleTextId) {
+		var sAriaDescribedBy = $oLink.attr("aria-describedby");
+
+		if (sAriaDescribedBy) {
+			$oLink.attr("aria-describedby",  sAriaDescribedBy + " " +  sInvisibleTextId); // Add the ID at the end, separated with space
+		} else {
+			$oLink.attr("aria-describedby",  sInvisibleTextId);
+		}
+	};
+
+	/**
+	 * Removes ARIA InvisibleText ID from aria-secribedby or the attribute itself
+	 *
+	 * @param {Object} $oLink control DOM reference
+	 * @param {String} sInvisibleTextId  static Invisible Text ID to be removed
+	 */
+	Link._removeFromDescribedBy = function ($oLink, sInvisibleTextId) {
+		var sAriaDescribedBy = $oLink.attr("aria-describedby");
+
+		if (sAriaDescribedBy && sAriaDescribedBy.indexOf(sInvisibleTextId) !== -1) { // Remove only the static InvisibleText ID for Emphasized link
+			sAriaDescribedBy = sAriaDescribedBy.replace(sInvisibleTextId, '');
+
+			if (sAriaDescribedBy.length > 1) {
+				$oLink.attr("aria-describedby",  sAriaDescribedBy);
+			} else {
+				$oLink.removeAttr("aria-describedby"); //  Remove the aria-describedby attribute, as it`s not needed
+			}
+		}
+	};
+
+	/**
+	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @protected
+	 */
+	Link.prototype.getAccessibilityInfo = function() {
+		return {
+			role: "link",
+			type: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_LINK"),
+			description: this.getText() || this.getHref() || "",
+			focusable: this.getEnabled(),
+			enabled: this.getEnabled()
+		};
 	};
 
 	return Link;

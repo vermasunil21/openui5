@@ -19,9 +19,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/unified/cale
 
 	};
 
-	DatesRowRenderer.getClass = function(){
+	DatesRowRenderer.getClass = function(oDatesRow){
 
-		return "sapUiCalDatesRow sapUiCalRow";
+		var sClasses = "sapUiCalDatesRow sapUiCalRow";
+
+		if (!oDatesRow.getShowDayNamesLine()) {
+			sClasses = sClasses + " sapUiCalNoNameLine";
+		}
+
+		return sClasses;
 
 	};
 
@@ -40,9 +46,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/unified/cale
 		}
 
 		sWidth = ( 100 / iDays ) + "%";
-		oRm.write("<div id=\"" + sId + "-Names\" style=\"display: inline;\">");
-		this.renderDayNames(oRm, oDatesRow, oLocaleData, oDate.getUTCDay(), iDays, false, sWidth);
-		oRm.write("</div>");
+		if (oDatesRow.getShowDayNamesLine()) {
+			oRm.write("<div id=\"" + sId + "-Names\" style=\"display: inline;\">");
+			this.renderDayNames(oRm, oDatesRow, oLocaleData, oDate.getUTCDay(), iDays, false, sWidth);
+			oRm.write("</div>");
+		}
 
 	};
 
@@ -50,7 +58,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/unified/cale
 
 		var sId = oDatesRow.getId();
 		var iDays = oDatesRow.getDays();
-		var oDay = new UniversalDate(oDate.getTime());
+		var oDay = oDatesRow._newUniversalDate(oDate);
 		var sWidth = "";
 		var iMonth = 0;
 		var aMonthDays = [];
@@ -81,16 +89,27 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/unified/cale
 
 		var iDays = oDatesRow.getDays();
 		var sWidth = ( 100 / iDays ) + "%";
+		var bShowDayNamesLine = oDatesRow.getShowDayNamesLine();
 
 		if (!oDate) {
 			oDate = oDatesRow._getFocusedDate();
 		}
 
 		var oHelper = this.getDayHelper(oDatesRow, oDate);
-		var oDay = new UniversalDate(oDate.getTime());
+
+		if (!bShowDayNamesLine) {
+			if (oDatesRow._bLongWeekDays || !oDatesRow._bNamesLengthChecked) {
+				oHelper.aWeekDays = oHelper.oLocaleData.getDaysStandAlone("abbreviated");
+			} else {
+				oHelper.aWeekDays = oHelper.oLocaleData.getDaysStandAlone("narrow");
+			}
+			oHelper.aWeekDaysWide = oHelper.oLocaleData.getDaysStandAlone("wide");
+		}
+
+		var oDay = oDatesRow._newUniversalDate(oDate);
 
 		for (var i = 0; i < iDays; i++) {
-			this.renderDay(oRm, oDatesRow, oDay, oHelper, false, false, i, sWidth);
+			this.renderDay(oRm, oDatesRow, oDay, oHelper, false, false, i, sWidth, !bShowDayNamesLine);
 			oDay.setUTCDate(oDay.getUTCDate() + 1);
 		}
 

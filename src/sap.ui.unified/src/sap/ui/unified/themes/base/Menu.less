@@ -6,12 +6,16 @@
 	top: -10000px;
 	display: block;
 	min-width: 80px;
-	border: 1px solid @sapUiMediumBorder; /* the regular popup menu border */
-	background-color: @sapUiLightBG; /* the popup menu's main background */
+	border: 1px solid @sapUiContentForegroundBorderColor;
+	background-color: @sapUiListBackground;
 	cursor: default;
 	outline: none;
 	overflow: hidden;
 	padding: 1px;
+}
+
+.sapUiMnu:focus {
+	outline: none;
 }
 
 .sapUiMnuLst {
@@ -19,7 +23,7 @@
 	margin: 0;
 	display: block;
 	cursor: default;
-	color: @sapUiBaseText;
+	color: @sapUiListTextColor;
 	font-size: @sapUiFontSize;
 	font-family: @sapUiFontFamily;
 }
@@ -39,16 +43,16 @@
 }
 
 .sapUiMnuItm.sapUiMnuItmHov {
-	color: @sapUiTextSelection;
-	background-color: @sapUiHighlight;
+	color: @sapUiHighlightTextColor;
+	background-color: @sapUiListHighlightColor;
 }
 
 .sapUiMnuItm.sapUiMnuTfItm.sapUiMnuItmHov .sapUiMnuTfItemLbl {
-	color: @sapUiTextSelection;
+	color: @sapUiHighlightTextColor;
 }
 
 .sapUiMnuItm.sapUiMnuItmDsbl.sapUiMnuItmHov {
-	background-color: darken(@sapUiWhiteBG, 24.7);
+	background-color: darken(@sapUiBaseBG, 24.7);
 	color: @sapUiContentDisabledTextColor;
 }
 
@@ -125,8 +129,6 @@
 }
 
 .sapUiMnuItm.sapUiMnuTfItm .sapUiMnuTfItemTf {
-	-moz-box-sizing: border-box;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 	vertical-align: top;
 	font-family: @sapUiFontFamily;
@@ -152,7 +154,7 @@
 }
 
 .sapUiMnuItm.sapUiMnuTfItm .sapUiMnuTfItemTf.sapUiMnuTfItemTfDsbl {
-	background-color: @sapUiFieldReadOnlyBackground;
+	background-color: @sapUiFieldDisabledBackground;
 	color: @sapUiContentDisabledTextColor;
 	/* Avoid text selection in disabled TextFields */
 	-moz-user-select: none;
@@ -224,7 +226,7 @@
 	margin-top: 1px;
 	margin-bottom: 1px;
 	border-width: 0;
-	border-top: 1px solid @sapUiMediumBorder;
+	border-top: 1px solid @sapUiContentForegroundBorderColor;
 	height: 1px;
 }
 

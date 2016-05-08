@@ -2,32 +2,34 @@
  * ${copyright}
  */
 sap.ui.require([
+	"jquery.sap.global",
 	"sap/ui/model/FormatException",
 	"sap/ui/model/ParseException",
 	"sap/ui/model/ValidateException",
 	"sap/ui/model/odata/type/Boolean",
 	"sap/ui/model/odata/type/ODataType",
 	"sap/ui/test/TestUtils"
-], function (FormatException, ParseException, ValidateException, Boolean, ODataType, TestUtils) {
+], function (jQuery, FormatException, ParseException, ValidateException, BooleanType, ODataType,
+		TestUtils) {
 	/*global QUnit */
 	"use strict";
 
 	var sDefaultLanguage = sap.ui.getCore().getConfiguration().getLanguage();
 
 	//*********************************************************************************************
-	QUnit.module("Boolean", {
-		beforeEach: function () {
+	QUnit.module("sap.ui.model.odata.type.Boolean", {
+		beforeEach : function () {
 			sap.ui.getCore().getConfiguration().setLanguage("en-US");
 		},
-		afterEach: function () {
+		afterEach : function () {
 			sap.ui.getCore().getConfiguration().setLanguage(sDefaultLanguage);
 		}
 	});
 
 	QUnit.test("basics", function (assert) {
-		var oType = new Boolean();
+		var oType = new BooleanType();
 
-		assert.ok(oType instanceof Boolean, "is a Boolean");
+		assert.ok(oType instanceof BooleanType, "is a Boolean");
 		assert.ok(oType instanceof ODataType, "is an ODataType");
 		assert.strictEqual(oType.getName(), "sap.ui.model.odata.type.Boolean", "type name");
 		assert.strictEqual(oType.oFormatOptions, undefined, "no format options");
@@ -36,7 +38,7 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("format", function (assert) {
-		var oType = new Boolean();
+		var oType = new BooleanType();
 
 		assert.strictEqual(oType.formatValue(undefined, "foo"), null, "undefined");
 		assert.strictEqual(oType.formatValue(null, "foo"), null, "null");
@@ -58,7 +60,7 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("parse", function (assert) {
-		var oType = new Boolean();
+		var oType = new BooleanType();
 
 		assert.strictEqual(oType.parseValue(true, "boolean"), true, "true, boolean");
 		assert.strictEqual(oType.parseValue(false, "boolean"), false, "false, boolean");
@@ -81,7 +83,7 @@ sap.ui.require([
 	//*********************************************************************************************
 	QUnit.test("parse: user error", function (assert) {
 		TestUtils.withNormalizedMessages(function () {
-			var oType = new Boolean();
+			var oType = new BooleanType();
 
 			try {
 				oType.parseValue("foo", "string");
@@ -95,7 +97,7 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("validate", function (assert) {
-		var oType = new Boolean();
+		var oType = new BooleanType();
 
 		[false, true, null].forEach(function (sValue) {
 			oType.validateValue(sValue);
@@ -110,7 +112,7 @@ sap.ui.require([
 		}
 
 		TestUtils.withNormalizedMessages(function () {
-			oType = new Boolean({}, {nullable: false});
+			oType = new BooleanType({}, {nullable : false});
 			try {
 				oType.validateValue(null);
 				assert.ok(false);
@@ -123,25 +125,25 @@ sap.ui.require([
 
 	//*********************************************************************************************
 	QUnit.test("setConstraints", function (assert) {
-		var oType = new Boolean();
+		var oType = new BooleanType();
 
 		this.mock(jQuery.sap.log).expects("warning")
 			.once()
 			.withExactArgs("Illegal nullable: foo", null, "sap.ui.model.odata.type.Boolean");
 
-		oType = new Boolean({}, {nullable: false});
-		assert.deepEqual(oType.oConstraints, {nullable: false}, "nullable false");
+		oType = new BooleanType({}, {nullable : false});
+		assert.deepEqual(oType.oConstraints, {nullable : false}, "nullable false");
 
-		oType = new Boolean({}, {nullable: "false"});
-		assert.deepEqual(oType.oConstraints, {nullable: false}, 'nullable "false"');
+		oType = new BooleanType({}, {nullable : "false"});
+		assert.deepEqual(oType.oConstraints, {nullable : false}, 'nullable "false"');
 
-		oType = new Boolean({}, {nullable: true});
+		oType = new BooleanType({}, {nullable : true});
 		assert.strictEqual(oType.oConstraints, undefined, "nullable true");
 
-		oType = new Boolean({}, {nullable: "true"});
+		oType = new BooleanType({}, {nullable : "true"});
 		assert.strictEqual(oType.oConstraints, undefined, 'nullable "true"');
 
-		oType = new Boolean({}, {nullable: "foo"});
+		oType = new BooleanType({}, {nullable : "foo"});
 		assert.strictEqual(oType.oConstraints, undefined, "illegal nullable -> ignored");
 	});
 });

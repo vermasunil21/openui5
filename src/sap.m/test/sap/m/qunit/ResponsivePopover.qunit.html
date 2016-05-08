@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>qUnit Page for sap.m.ResponsivePopover</title>
 
 		<script id="sap-ui-bootstrap"
@@ -12,7 +12,7 @@
 			data-sap-ui-libs="sap.m">
 		</script>
 
-		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
@@ -27,8 +27,8 @@
 		</script>
 
 		<script language="javascript">
-		// this is needed because the loading the input invalidates the static UI area which make the test case fail
-		jQuery.sap.require("sap.m.Input");
+			// this is needed because the loading the input invalidates the static UI area which make the test case fail
+			jQuery.sap.require("sap.m.Input");
 
 			// mockup data
 			var data = {
@@ -147,7 +147,7 @@
 		QUnit.test("Desktop and tablet mode", function(assert) {
 
 			// Act and Arrange
-			
+
 			this.stub(sap.ui.Device, "system", {desktop: true});
 			this.oResponsivePopover = new sap.m.ResponsivePopover(this.oControlProps);
 			this.oResponsivePopover.addContent(this.oList);
@@ -209,6 +209,15 @@
 			assert.ok(jQuery.sap.byId(this.oResponsivePopover.getId() + "-closeButton").length === 1, "CloseButton should be rendered");
 		});
 
+		QUnit.test("Getter for begin/end button", function(assert) {
+			// Act and Arrange
+			this.stub(sap.ui.Device, "system", { phone: true });
+			this.oResponsivePopover = new sap.m.ResponsivePopover(this.oControlProps);
+
+			assert.ok(this.oResponsivePopover.getBeginButton(), "Should be executed without any errors");
+			assert.ok(this.oResponsivePopover.getEndButton(), "Should be executed without any errors");
+		});
+
 		QUnit.test("Clone method", function(assert) {
 
 			// Act and Arrange
@@ -268,6 +277,36 @@
 			assert.ok(this.oResponsivePopover.isOpen(), "responsive popover is opened");
 			assert.strictEqual(this.oResponsivePopover.getDomRef(), this.oResponsivePopover._oControl.getDomRef(), "getDomRef call is forwarded");
 
+		});
+
+
+		QUnit.test("ResponsivepPopover should act according to value of resizing property", function(assert) {
+			// Arrange
+			this.oResponsivePopover = new sap.m.ResponsivePopover();
+			this.oResponsivePopover.setResizable(true);
+
+			// Act
+			this.oResponsivePopover.openBy(this.oButton);
+			this.clock.tick(500);
+
+			if (!sap.ui.Device.system.desktop) {
+				var domQueryLength = this.oResponsivePopover.getDomRef().querySelectorAll('.sapMPopoverResizeHandle').length;
+				assert.strictEqual(domQueryLength,  0, "Arrow not found in responsive popover because not desktop device");
+			} else {
+				// Assert when resizable
+				var domQueryLength = this.oResponsivePopover.getDomRef().querySelectorAll('.sapMPopoverResizeHandle').length;
+				assert.strictEqual(domQueryLength,  1, "Arrow found in responsive popover");
+
+				this.oResponsivePopover.close();
+
+				this.oResponsivePopover.setResizable(false);
+				this.oResponsivePopover.openBy(this.oButton);
+				this.clock.tick(500);
+
+				// Assert when not resizable
+				var domQueryLength = this.oResponsivePopover.getDomRef().querySelectorAll('.sapMPopoverResizeHandle').length;
+				assert.strictEqual(domQueryLength,  0, "Arrow not found in responsive popover");
+			}
 		});
 
 		</script>

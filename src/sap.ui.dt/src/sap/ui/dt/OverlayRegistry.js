@@ -4,14 +4,15 @@
 
 // Provides object sap.ui.dt.OverlayRegistry.
 sap.ui.define([
-	"sap/ui/core/Element"
+	"sap/ui/core/Element",
+	"sap/ui/dt/ElementUtil"
 ],
-function(Element) {
+function(Element, ElementUtil) {
 	"use strict";
 
 	/**
 	 * Class for OverlayRegistry.
-	 * 
+	 *
 	 * @class
 	 * Static registry for Overlays
 	 *
@@ -36,8 +37,15 @@ function(Element) {
 	 * @public
 	 */
 	OverlayRegistry.getOverlay = function(vElementOrId) {
-		var sId = getElementId(vElementOrId);
-		return mOverlays[sId];
+		var oElement = ElementUtil.getElementInstance(vElementOrId);
+		if (oElement) {
+			oElement = ElementUtil.fixComponentContainerElement(oElement);
+			oElement = ElementUtil.fixComponentParent(oElement);
+			if (oElement) {
+				var sId = oElement.getId();
+				return mOverlays[sId];
+			}
+		}
 	};
 
 	/**
@@ -62,8 +70,8 @@ function(Element) {
 	};
 
 	/**
-	 * Returns wether any overlay is registered in registry
-	 * @return {boolean} wether any overlay is registered in registry
+	 * Returns whether any overlay is registered in registry
+	 * @return {boolean} whether any overlay is registered in registry
 	 * @public
 	 */
 	OverlayRegistry.hasOverlays = function() {

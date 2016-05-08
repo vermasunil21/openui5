@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 SAP SE
+ * Copyright (c) 2014-2016 SAP SE
  */
 
 'use strict';
@@ -84,6 +84,10 @@ module.exports = function(grunt) {
 					path: 'src/sap.m'
 			},
 			{
+					name: 'sap.tnt',
+					path: 'src/sap.tnt'
+			},
+			{
 					name: 'sap.ui.commons',
 					path: 'src/sap.ui.commons'
 			},
@@ -104,6 +108,10 @@ module.exports = function(grunt) {
 					path: 'src/sap.ui.dt'
 			},
 			{
+					name: 'sap.uxap',
+					path: 'src/sap.uxap'
+			},
+			{
 					name: 'themelib_sap_bluecrystal',
 					path: 'src/themelib_sap_bluecrystal',
 					type: 'theme'
@@ -111,6 +119,11 @@ module.exports = function(grunt) {
 			{
 					name: 'themelib_sap_goldreflection',
 					path: 'src/themelib_sap_goldreflection',
+					type: 'theme'
+			},
+			{
+					name: 'themelib_sap_belize',
+					path: 'src/themelib_sap_belize',
 					type: 'theme'
 			},
 			{
@@ -138,7 +151,12 @@ module.exports = function(grunt) {
 				'replace': 'grunt-text-replace',
 				'openui5_connect': 'grunt-openui5',
 				'openui5_theme': 'grunt-openui5',
-				'openui5_preload': 'grunt-openui5'
+				'openui5_preload': 'grunt-openui5',
+				'gitclone': 'grunt-git',
+				'gitadd': 'grunt-git',
+				'gitcommit': 'grunt-git',
+				'gittag': 'grunt-git',
+				'gitpush': 'grunt-git'
 			}
 		},
 

@@ -8,7 +8,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		"use strict";
 
 		/**
-		 * Constructor for a new SelectList.
+		 * Constructor for a new <code>sap.m.SelectList</code>.
 		 *
 		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given.
 		 * @param {object} [mSettings] Initial settings for the new control.
@@ -56,7 +56,24 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				/**
 				 * ID of the selected item.
 				 */
-				selectedItemId: { type: "string", group: "Misc", defaultValue: "" }
+				selectedItemId: { type: "string", group: "Misc", defaultValue: "" },
+
+				/**
+				 * Indicates whether the text values of the <code>additionalText</code> property of a {@link sap.ui.core.ListItem} are shown.
+				 * @since 1.32.3
+				 */
+				showSecondaryValues: { type: "boolean", group: "Misc", defaultValue: false },
+
+				/**
+				 * Defines the keyboard navigation mode.
+				 *
+				 * <b>Note:</b> The <code>sap.m.SelectListKeyboardNavigationMode.None</code> enumeration value, is only
+				 * intended for use in some composite controls that handles keyboard navigation by themselves.
+				 *
+				 * @protected
+				 * @since 1.38
+				 */
+				keyboardNavigationMode: { type: "sap.m.SelectListKeyboardNavigationMode", group: "Behavior", defaultValue: sap.m.SelectListKeyboardNavigationMode.Delimited }
 			},
 			defaultAggregation: "items",
 			aggregations: {
@@ -95,6 +112,20 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 						 */
 						selectedItem: { type: "sap.ui.core.Item" }
 					}
+				},
+
+				/**
+				 * This event is fired when an item is pressed.
+				 * @since 1.32.4
+				 */
+				itemPress: {
+					parameters: {
+
+						/**
+						 * The pressed item.
+						 */
+						item: { type: "sap.ui.core.Item" }
+					}
 				}
 			}
 		}});
@@ -132,10 +163,23 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 *
 		 */
 		SelectList.prototype.updateItems = function(sReason) {
+			this.bItemsUpdated = false;
+
+			// note: for backward compatibility and to keep the old data binding behavior,
+			// the items should be destroyed before calling .updateAggregation("items")
 			this.destroyItems();
 			this.updateAggregation("items");
-			this._bDataAvailable = true;
-			this.synchronizeSelection();
+			this.bItemsUpdated = true;
+
+			// Try to synchronize the selection (synchronous), but if any item's key match with the value of the "selectedKey" property,
+			// don't force the first enabled item to be selected when the forceSelection property is set to true.
+			// It could be possible that the items' properties (models and bindingContext) are not propagated at this point.
+			this.synchronizeSelection({
+				forceSelection: false
+			});
+
+			// the properties (models and bindingContext) should be propagated
+			setTimeout(this.synchronizeSelection.bind(this), 0);
 		};
 
 		/**
@@ -146,7 +190,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * @see sap.ui.base.ManagedObject#bindAggregation
 		 */
 		SelectList.prototype.refreshItems = function() {
-			this._bDataAvailable = false;
+			this.bItemsUpdated = false;
 			this.refreshAggregation("items");
 		};
 
@@ -158,12 +202,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 */
 		SelectList.prototype._activateItem = function(oItem) {
 
-			if (oItem instanceof sap.ui.core.Item && (this.getSelectedItem() !== oItem)) {
+			if (oItem instanceof sap.ui.core.Item && oItem && oItem.getEnabled()) {
 
-				this.setSelection(oItem);
-				this.fireSelectionChange({
-					selectedItem: this.getSelectedItem()
+				this.fireItemPress({
+					item: oItem
 				});
+
+				if (this.getSelectedItem() !== oItem) {
+
+					this.setSelection(oItem);
+					this.fireSelectionChange({
+						selectedItem: oItem
+					});
+				}
 			}
 		};
 
@@ -175,9 +226,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * @private
 		 */
 		SelectList.prototype._queryEnabledItemsDomRefs = function(oDomRef) {
-			var CSS_CLASS = "." + this.getRenderer().CSS_CLASS + "Item";
+			var CSS_CLASS = "." + this.getRenderer().CSS_CLASS + "ItemBase";
 			oDomRef = oDomRef || this.getDomRef();
-
 			return oDomRef ? Array.prototype.slice.call(oDomRef.querySelectorAll(CSS_CLASS + ":not(" + CSS_CLASS + "Disabled)")) : [];
 		};
 
@@ -194,10 +244,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		/* Lifecycle methods                                           */
 		/* =========================================================== */
 
-		/**
-		 * Initialization hook.
-		 *
-		 */
 		SelectList.prototype.init = function() {
 
 			// timeoutID used to cancel the active state added on touchstart
@@ -209,36 +255,25 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			// track coordinates of the touch point
 			this._fStartX = 0;
 			this._fStartY = 0;
+
+			this._oItemNavigation = null;
+			this._$ItemPressed = null;
 		};
 
-		/**
-		 * This event handler is called before the rendering of the control is started.
-		 *
-		 */
 		SelectList.prototype.onBeforeRendering = function() {
 			this.synchronizeSelection();
 		};
 
-		/**
-		 * This event handler is called when the rendering of the control is completed.
-		 *
-		 */
 		SelectList.prototype.onAfterRendering = function() {
-			this.createItemNavigation();
+			if (this.getKeyboardNavigationMode() === sap.m.SelectListKeyboardNavigationMode.None) {
+				this.destroyItemNavigation();
+			} else {
+				this.createItemNavigation();
+			}
 		};
 
-		/**
-		 * Cleans up before destruction.
-		 *
-		 */
 		SelectList.prototype.exit = function() {
-
-			if (this._oItemNavigation) {
-				this.removeDelegate(this._oItemNavigation);
-				this._oItemNavigation.destroy();
-				this._oItemNavigation = null;
-			}
-
+			this.destroyItemNavigation();
 			this._$ItemPressed = null;
 		};
 
@@ -280,7 +315,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				if (oItemDomRef) {
 
 					// add the active state to the pressed item
-					oItemDomRef.addClass(this.getRenderer().CSS_CLASS + "ItemPressed");
+					oItemDomRef.addClass(this.getRenderer().CSS_CLASS + "ItemBasePressed");
 					this._$ItemPressed = oItemDomRef;
 				}
 			}.bind(this), 100);
@@ -309,7 +344,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 				// remove the active state
 				if (this._$ItemPressed) {
-					this._$ItemPressed.removeClass(this.getRenderer().CSS_CLASS + "ItemPressed");
+					this._$ItemPressed.removeClass(this.getRenderer().CSS_CLASS + "ItemBasePressed");
 					this._$ItemPressed = null;
 				}
 			}
@@ -340,7 +375,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 					// remove the active state
 					if (this._$ItemPressed) {
-						this._$ItemPressed.removeClass(this.getRenderer().CSS_CLASS + "ItemPressed");
+						this._$ItemPressed.removeClass(this.getRenderer().CSS_CLASS + "ItemBasePressed");
 						this._$ItemPressed = null;
 					}
 
@@ -445,14 +480,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this.setProperty("selectedKey", vItem ? vItem.getKey() : "", true);
 
 			if (oSelectedItem) {
-				oSelectedItem.$().removeClass(CSS_CLASS + "ItemSelected")
+				oSelectedItem.$().removeClass(CSS_CLASS + "ItemBaseSelected")
 								.attr("aria-selected", "false");
 			}
 
 			oSelectedItem = this.getSelectedItem();
 
 			if (oSelectedItem) {
-				oSelectedItem.$().addClass(CSS_CLASS + "ItemSelected")
+				oSelectedItem.$().addClass(CSS_CLASS + "ItemBaseSelected")
 								.attr("aria-selected", "true");
 			}
 		};
@@ -462,11 +497,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 *
 		 * @protected
 		 */
-		SelectList.prototype.synchronizeSelection = function() {
+		SelectList.prototype.synchronizeSelection = function(mOptions) {
 
 			// the "selectedKey" property is set and it is synchronized with the "selectedItem" association
 			if (this.isSelectionSynchronized()) {
 				return;
+			}
+
+			var bForceSelection = true;
+
+			if (mOptions) {
+				bForceSelection = !!mOptions.forceSelection;
 			}
 
 			var sKey = this.getSelectedKey(),
@@ -476,17 +517,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			// it does not have the default value
 			if (vItem && (sKey !== "")) {
 
-				// update and synchronize "selectedItem" association and
-				// "selectedKey" property
+				// update and synchronize "selectedItem" association and "selectedKey" property
 				this.setAssociation("selectedItem", vItem, true);
 				this.setProperty("selectedItemId", vItem.getId(), true);
 
 			// the aggregation items is not bound or
 			// it is bound and the data is already available
-			} else if (this.getDefaultSelectedItem() && (!this.isBound("items") || this._bDataAvailable)) {
-
-				// update and synchronize "selectedItem" association,
-				// "selectedKey" and "selectedItemId" properties
+			} else if (bForceSelection && this.getDefaultSelectedItem() && (!this.isBound("items") || this.bItemsUpdated)) {
 				this.setSelection(this.getDefaultSelectedItem());
 			}
 		};
@@ -640,6 +677,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this._oItemNavigation.setPageSize(10);
 		};
 
+		SelectList.prototype.destroyItemNavigation = function() {
+			if (this._oItemNavigation) {
+				this.removeEventDelegate(this._oItemNavigation);
+				this._oItemNavigation.destroy();
+				this._oItemNavigation = null;
+			}
+		};
+
+		SelectList.prototype.getItemNavigation = function() {
+			return this._oItemNavigation;
+		};
+
 		/* ----------------------------------------------------------- */
 		/* public methods                                              */
 		/* ----------------------------------------------------------- */
@@ -657,11 +706,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		SelectList.prototype.setSelectedItem = function(vItem) {
 
 			if (typeof vItem === "string") {
+				this.setAssociation("selectedItem", vItem, true);
 				vItem = sap.ui.getCore().byId(vItem);
 			}
 
 			if (!(vItem instanceof sap.ui.core.Item) && vItem !== null) {
-				jQuery.sap.log.warning('Warning: setSelectedItem() "vItem" has to be an instance of sap.ui.core.Item, a valid sap.ui.core.Item id, or null on', this);
 				return this;
 			}
 
@@ -812,17 +861,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 		/**
 		 * Removes all the items in the aggregation named <code>items</code>.
-		 * Additionally unregisters them from the hosting UIArea and clears the selection.
+		 * Additionally unregisters them from the hosting UIArea.
 		 *
 		 * @returns {sap.ui.core.Item[]} An array of the removed items (might be empty).
 		 * @public
 		 */
 		SelectList.prototype.removeAllItems = function() {
-			var aItems = this.removeAllAggregation("items");
-
-			// clear the selection
-			this.clearSelection();
-
+			var aItems = this.removeAllAggregation("items", true);
+			this.$().children("li").remove();
 			return aItems;
 		};
 
@@ -833,7 +879,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		 * @public
 		 */
 		SelectList.prototype.destroyItems = function() {
-			this.destroyAggregation("items");
+			this.destroyAggregation("items", true);
 			return this;
 		};
 

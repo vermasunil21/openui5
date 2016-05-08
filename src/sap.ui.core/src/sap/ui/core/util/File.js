@@ -30,11 +30,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 		 * Some file extensions on some operating systems are not working due to a bug in IE.
 		 * Therefore 'txt' will be used as file extension if the problem is occurring.</p>
 		 *
-		 * <p><b>Safari 6 / 7 (OS X)</b><br>
-		 * A new window/tab will be opened. The user has to manually save the file (CMD + S), choose "page source" and specify a filename.</p>
-		 *
-		 * <p><b>Mobile Safari (iOS)</b><br>
-		 * Not supported</p>
+		 * <p><b>Safari (OS X / iOS)</b><br>
+		 * A new window/tab will be opened. In OS X the user has to manually save the file (CMD + S), choose "page source" and specify a filename.
+		 * In iOS the content can be opened in another app (Mail, Notes, ...) or copied to the clipboard.
+		 * In case the popup blocker prevents this action, an error will be thrown which can be used to notify the user to disable it.</p>
 		 *
 		 * <p><b>Android Browser</b><br>
 		 * Not supported</p>
@@ -83,16 +82,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 
 						$link.remove();
 					} else {
-						// remove utf-8 byte-order-mark (BOM) again to prevent an exception when using btoa
-						if (sData && sCharset === 'utf-8' && sFileExtension === 'csv') {
-							sData = sData.substr(1);
-						}
+						// Make sure to encode the data to be used in data-uri
+						sData = encodeURI(sData);
+
 						// Safari (user has to save the file manually)
-						window.open(sType + ";base64," + window.btoa(sData));
+						var oWindow = window.open(sType + ";" + sData);
+						if (!oWindow) {
+							throw new Error("Could not download file. A popup blocker might be active.");
+						}
 					}
 				}
-			} else if (Device.browser.internet_explorer && Device.browser.version <= 9) {
-				// iframe fallback for IE 8/9
+			} else if (Device.browser.internet_explorer && Device.browser.version === 9) {
+				// iframe fallback for IE9
 				var $body = jQuery(document.body);
 				var $iframe = jQuery('<iframe/>', {
 					style: 'display:none'

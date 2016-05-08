@@ -100,10 +100,13 @@ li.sapMLIB.sapMLIBNoFlex.sapMObjLItem>.sapMLIBContent>.sapMLIBContentNF .sapMObj
 	color: @sapUiPositiveText;
 }
 
-.sapMLIB:hover .sapMObjLNumber {
-	color: @sapHCStandardFG;
-}
-
-.sapMLIB:hover .sapMObjLNumberUnit {
+.sapMLIBSelected .sapMObjLNumber,
+.sapMLIBSelected .sapMObjLNumberUnit,
+.sapMLIBHoverable:hover .sapMObjLNumber,
+.sapMLIBHoverable:hover .sapMObjLNumberUnit,
+.sapMLIBSelected .sapMObjectNumberText,
+.sapMLIBSelected .sapMObjectNumberUnit,
+.sapMLIBHoverable:hover .sapMObjectNumberText,
+.sapMLIBHoverable:hover .sapMObjectNumberUnit {
 	color: @sapHCStandardFG;
 }

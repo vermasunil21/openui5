@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>sap.m.OverflowToolbar</title>
 
 <script src="../../../resources/sap-ui-core.js"
@@ -220,6 +220,7 @@
 			text: "About"
 		}),
 		new sap.m.Label({
+			id: "hotelsLabel",
 			text : "Find hotels"
 		}),
 		new sap.m.ToolbarSpacer(),
@@ -393,8 +394,8 @@
 			placeholder: "Input",
 			width: "150px"
 		}),
-		new sap.m.DateTimeInput({
-			placeholder: "DateTimeInput",
+		new sap.m.DateTimePicker({
+			placeholder: "DateTimePicker",
 			width: "150px"
 		}),
 		new sap.m.CheckBox({
@@ -494,7 +495,7 @@
 	];
 
 
-	var oPage = new sap.m.Page({
+	var oPage = new sap.m.Page("toolbar-page", {
 		title : "Overflow Toolbar - the buttons that do not fit go to an action sheet",
 		enableScrolling : true,
 		subHeader: aAllToolbars[0],
@@ -568,7 +569,25 @@
 		]
 	});
 
+
+	sap.ui.getCore().byId("sf1").attachSearch(function (oParams) {
+		sap.ui.getCore().byId("hotelsLabel").setText(oParams.getParameter("query"));
+	});
+
 	oApp.addPage(oPage).placeAt("content");
+
+	var oB = new sap.m.Button("size_btn", {
+		text : "Change page size to 480px",
+		press : function() { jQuery("#toolbar-page").width("480px"); }
+	});
+
+	var oB2 = new sap.m.Button("size_btn2", {
+		text : "Change page size to 700px",
+		press : function() { jQuery("#toolbar-page").width("700px"); }
+	});
+
+	oB2.placeAt("content");
+	oB.placeAt("content");
 
 </script>
 </head>

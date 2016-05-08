@@ -3,8 +3,8 @@
  */
 
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider'],
-	function($, EventProvider) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/core/routing/async/Target', 'sap/ui/core/routing/sync/Target'],
+	function(jQuery, EventProvider, asyncTarget, syncTarget) {
 		"use strict";
 
 		/**
@@ -44,14 +44,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider'],
 				EventProvider.apply(this, arguments);
 
 				// branch by abstraction
-				var TargetStub;
-				if (this._oOptions._async) {
-					jQuery.sap.require("sap.ui.core.routing.async.Target");
-					TargetStub = sap.ui.require("sap/ui/core/routing/async/Target");
-				} else {
-					jQuery.sap.require("sap.ui.core.routing.sync.Target");
-					TargetStub = sap.ui.require("sap/ui/core/routing/sync/Target");
-				}
+				var TargetStub = this._oOptions._async ?  asyncTarget : syncTarget;
 				for (var fn in TargetStub) {
 					this[fn] = TargetStub[fn];
 				}
@@ -74,9 +67,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider'],
 			},
 
 			/**
-			 * Creates a view and puts it in an aggregation of a control that has been defined in the {@link #constructor}.
+			 * Creates a view and puts it in an aggregation of a control that has been defined in the {@link sap.ui.core.routing.Target#constructor}.
 			 *
 			 * @name sap.ui.core.routing.Target#display
+			 * @function
 			 * @param {*} [vData] an object that will be passed to the display event in the data property. If the target has parents, the data will also be passed to them.
 			 * @return {Promise} resolves with {name: *, view: *, control: *} if the target can be successfully displayed otherwise it resolves with {name: *, error: *}
 			 * @public

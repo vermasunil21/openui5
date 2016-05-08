@@ -295,7 +295,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		//Check if carousel has been initialized
 		if (this._oMobifyCarousel) {
 			//Clean up existing mobify carousel
-			this._oMobifyCarousel.destroy();
+			this._oMobifyCarousel.unbind();
 		}
 		//Create and initialize new carousel
 		this.$().carousel();
@@ -323,7 +323,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				this._changePage(iIndex + 1);
 
 				// BCP: 1580078315
-				if (sap.ui.commons && this.getParent() instanceof sap.ui.commons.layout.PositionContainer) {
+				if (sap.zen && sap.zen.commons && this.getParent() instanceof sap.zen.commons.layout.PositionContainer) {
 					if (this._isCarouselUsedWithCommonsLayout === undefined){
 						jQuery.sap.delayedCall(0, this, "invalidate");
 						this._isCarouselUsedWithCommonsLayout = true;
@@ -353,6 +353,17 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		} else {
 			jQuery(window).on("resize", this._fnAdjustAfterResize);
 		}
+
+		// Fixes wrong focusing in IE
+		// BCP: 1670008915
+		this.$().find('.sapMCrslItemTableCell').focus(function(e) {
+
+			e.preventDefault();
+
+			jQuery(e.target).parents('.sapMCrsl').focus();
+
+			return false;
+		});
 	};
 
 	/**
@@ -489,12 +500,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		//visible later on and then it should be at the right place
 		if (sap.m.PlacementType.Top === sPlacement) {
 			this.$().prepend($PageIndicator);
-			$PageIndicator.removeClass('sapMCrslBottomOffset');
-			this.$().find(Carousel._ITEM_SELECTOR).removeClass('sapMCrslBottomOffset');
+			$PageIndicator.removeClass('sapMCrslBottomOffset').addClass('sapMCrslTopOffset');
+			this.$().find(Carousel._ITEM_SELECTOR).removeClass('sapMCrslBottomOffset').addClass('sapMCrslTopOffset');
 		} else {
 			this.$().append($PageIndicator);
-			$PageIndicator.addClass('sapMCrslBottomOffset');
-			this.$().find(Carousel._ITEM_SELECTOR).addClass('sapMCrslBottomOffset');
+			$PageIndicator.addClass('sapMCrslBottomOffset').removeClass('sapMCrslTopOffset');
+			this.$().find(Carousel._ITEM_SELECTOR).addClass('sapMCrslBottomOffset').removeClass('sapMCrslTopOffset');
 		}
 		return this;
 	};
@@ -719,11 +730,18 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @param {Object} oEvent - key object
 	 */
 	Carousel.prototype.onkeydown = function(oEvent) {
+
+		if (oEvent.keyCode == jQuery.sap.KeyCodes.F7) {
+			this._handleF7Key(oEvent);
+			return;
+		}
+
+		// Exit the function if the event is not from the Carousel
+		if (oEvent.target != this.getDomRef()) {
+			return;
+		}
+
 		switch (oEvent.keyCode) {
-			// F7 key
-			case jQuery.sap.KeyCodes.F7:
-				this._handleF7Key(oEvent);
-				break;
 
 			// Minus keys
 			// TODO  jQuery.sap.KeyCodes.MINUS is not returning 189
@@ -965,13 +983,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @private
 	 */
 	Carousel.prototype._fnSkipToIndex = function(oEvent, nIndex) {
-		oEvent.preventDefault();
 		var nNewIndex = nIndex;
 
 		// Exit the function if the event is not from the Carousel
-		if (oEvent.target !== this.$()[0]) {
+		if (oEvent.target !== this.getDomRef()) {
 			return;
 		}
+
+		oEvent.preventDefault();
 
 		// Calculate the index of the next page that will be shown
 		if (nIndex !== 0) {

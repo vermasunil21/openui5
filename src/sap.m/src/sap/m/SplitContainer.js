@@ -16,7 +16,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @param {object} [mSettings] Initial settings for the new control
 	 *
 	 * @class
-	 * SplitContainer maintains two NavContainers if running on tablet and one NavContainer - on phone.
+	 * SplitContainer maintains two NavContainers if running on tablet or desktop and one NavContainer - on phone.
 	 * The display of the master NavContainer depends on the portrait/landscape mode of the device and the mode of SplitContainer.
 	 *
 	 * NOTE: This control must be rendered as a full screen control in order to make the show/hide master area work properly.
@@ -418,7 +418,9 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 					direction : {type : "string"}
 				}
 			}
-		}
+		},
+
+		designTime : true
 	}});
 
 
@@ -491,7 +493,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this.setAggregation("_navPopover", this._oPopOver, true);
 		} else {
 			//master nav and detail nav are the same in phone
-			this._oMasterNav = this._oDetailNav =  new sap.m.NavContainer();
+			this._oMasterNav = this._oDetailNav =  new sap.m.NavContainer({
+				width: "",
+				navigate: function(oEvent){
+					that._handleNavigationEvent(oEvent, false, true);
+				},
+				afterNavigate: function(oEvent){
+					that._handleNavigationEvent(oEvent, true, true);
+				}
+			});
 			this.setAggregation("_navMaster", this._oMasterNav, true);
 		}
 
@@ -572,6 +582,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	SplitContainer.prototype.onswiperight = function(oEvent) {
+		// Makes sure that the logic will work only when the device touch display
+		// BSP: 1580084594
+		if (sap.ui.Device.support.touch === false) {
+			return;
+		}
+
 		//only enabled on tablet or Windows 8
 		if ((sap.ui.Device.system.tablet || (sap.ui.Device.os.windows && sap.ui.Device.os.version >= 8))
 			&& (this._portraitHide() || this._hideMode())
@@ -1770,7 +1786,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				if ($master[0]) {
 					var rm = sap.ui.getCore().createRenderManager();
 					rm.renderControl(that._oMasterNav.addStyleClass("sapMSplitContainerMaster"));
-					rm.flush($master[0], false, 1);
+					rm.flush($master[0], false, (that.$("BG")[0]) ? 1 : 0);
 					rm.destroy();
 				}
 			};

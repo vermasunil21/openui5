@@ -10,9 +10,8 @@ sap.ui.define([
 	var PageController = Controller.extend("sap.m.sample.UploadCollection.Page", {
 
 		onInit: function () {
-
 			// set mock data
-			var sPath = jQuery.sap.getModulePath("sap.m.sample.UploadCollection", "/uploadCollection.json")
+			var sPath = jQuery.sap.getModulePath("sap.m.sample.UploadCollection", "/uploadCollection.json");
 			var oModel = new JSONModel(sPath);
 			this.getView().setModel(oModel);
 
@@ -30,8 +29,15 @@ sap.ui.define([
 			var oModelCB = new JSONModel();
 			oModelCB.setData(aDataCB);
 
-			var oSelect=sap.ui.getCore().byId(this.getView().getId() + "--tbSelect");
+			var oSelect = this.getView().byId("tbSelect");
 			oSelect.setModel(oModelCB);
+
+			// Sets the text to the label
+			this.getView().byId("UploadCollection").addEventDelegate({
+				onBeforeRendering : function () {
+					this.getView().byId("attachmentTitle").setText(this.getAttachmentTitleText());
+				}.bind(this)
+			});
 		},
 
 		formatAttribute : function (sValue) {
@@ -43,7 +49,7 @@ sap.ui.define([
 					maxIntegerDigits : 3
 				}).format(sValue);
 			} else {
-				return sValue
+				return sValue;
 			}
 		},
 
@@ -58,20 +64,42 @@ sap.ui.define([
 		},
 
 		onFileDeleted: function(oEvent) {
+			this.deleteItemById(oEvent.getParameter("documentId"));
+			MessageToast.show("FileDeleted event triggered.");
+		},
+
+		deleteItemById: function(sItemToDeleteId){
 			var oData = this.getView().byId("UploadCollection").getModel().getData();
 			var aItems = jQuery.extend(true, {}, oData).items;
-			var sDocumentId = oEvent.getParameter("documentId");
 			jQuery.each(aItems, function(index) {
-				if (aItems[index] && aItems[index].documentId === sDocumentId) {
+				if (aItems[index] && aItems[index].documentId === sItemToDeleteId) {
 					aItems.splice(index, 1);
 				};
 			});
 			this.getView().byId("UploadCollection").getModel().setData({
 				"items" : aItems
 			});
-			var oUploadCollection = oEvent.getSource();
-			oUploadCollection.setNumberOfAttachmentsText("Uploaded (" +  oUploadCollection.getItems().length + ")");
-			MessageToast.show("FileDeleted event triggered.");
+			this.getView().byId("attachmentTitle").setText(this.getAttachmentTitleText());
+		},
+
+		deleteMultipleItems: function(aItemsToDelete){
+			var oData = this.getView().byId("UploadCollection").getModel().getData();
+			var nItemsToDelete = aItemsToDelete.length;
+			var aItems = jQuery.extend(true, {}, oData).items;
+			var i = 0;
+			jQuery.each(aItems, function(index) {
+				if (aItems[index]) {
+					for (i = 0; i < nItemsToDelete; i++){
+						if (aItems[index].documentId === aItemsToDelete[i].getDocumentId()){
+							aItems.splice(index, 1);
+						}
+					}
+				};
+			});
+			this.getView().byId("UploadCollection").getModel().setData({
+				"items" : aItems
+			});
+			this.getView().byId("attachmentTitle").setText(this.getAttachmentTitleText());
 		},
 
 		onFilenameLengthExceed : function(oEvent) {
@@ -132,22 +160,31 @@ sap.ui.define([
 						}
 					]
 			};
+
+			if (this.getView().byId("modeSwitch").getState()){
+				oItem.visibleEdit = false;
+				oItem.visibleDelete = false;
+			}else{
+				oItem.visibleEdit = true;
+				oItem.visibleDelete = true;
+			}
 			aItems.unshift(oItem);
 			this.getView().byId("UploadCollection").getModel().setData({
 				"items" : aItems
 			});
-			var oUploadCollection = oEvent.getSource();
-			oUploadCollection.setNumberOfAttachmentsText("Uploaded (" +  oUploadCollection.getItems().length + ")");
+			// Sets the text to the label
+			this.getView().byId("attachmentTitle").setText(this.getAttachmentTitleText());
 			// delay the success message for to notice onChange message
 			setTimeout(function() {
 				MessageToast.show("UploadComplete event triggered.");
 			}, 4000);
 		},
 
-		onSelectChange:  function(oEvent) {
-			var oUploadCollection=sap.ui.getCore().byId(this.getView().getId() + "--UploadCollection");
+		onSeparatorsChange: function(oEvent) {
+			var oUploadCollection= this.getView().byId("UploadCollection");
 			oUploadCollection.setShowSeparators(oEvent.getParameters().selectedItem.getProperty("key"));
 		},
+
 		onBeforeUploadStarts: function(oEvent) {
 			// Header Slug
 			var oCustomerHeaderSlug = new sap.m.UploadCollectionParameter({
@@ -157,14 +194,113 @@ sap.ui.define([
 			oEvent.getParameters().addHeaderParameter(oCustomerHeaderSlug);
 			MessageToast.show("BeforeUploadStarts event triggered.");
 		},
+
 		onUploadTerminated: function(oEvent) {
 			// get parameter file name
 			var sFileName = oEvent.getParameter("fileName");
 			// get a header parameter (in case no parameter specified, the callback function getHeaderParameter returns all request headers)
 			var oRequestHeaders = oEvent.getParameters().getHeaderParameter();
+		},
+
+		onSelectAllPress: function(oEvent) {
+			var oUploadCollection = this.getView().byId("UploadCollection");
+			if (!oEvent.getSource().getPressed()){
+				this.deselectAllItems(oUploadCollection);
+				oEvent.getSource().setPressed(false);
+				oEvent.getSource().setText("Select all");
+			} else {
+				this.deselectAllItems(oUploadCollection);
+				oUploadCollection.selectAll();
+				oEvent.getSource().setPressed(true);
+				oEvent.getSource().setText("Deselect all");
+			}
+			this.onSelectionChange(oEvent);
+		},
+
+		deselectAllItems: function(oUploadCollection){
+			var aItems = oUploadCollection.getItems();
+			for (var i = 0; i < aItems.length; i++){
+				oUploadCollection.setSelectedItem(aItems[i], false);
+			}
+		},
+
+		getAttachmentTitleText: function(){
+			var aItems = this.getView().byId("UploadCollection").getItems();
+			return "Uploaded (" + aItems.length + ")";
+		},
+
+		onSwitchUploaderChange: function(oEvent){
+			var oUploadCollection = this.getView().byId("UploadCollection");
+			var bState = oEvent.getParameter("state");
+			if (bState){
+				oUploadCollection.setUploadEnabled(true);
+			} else {
+				oUploadCollection.setUploadEnabled(false);
+			}
+		},
+
+		onSwitchModeChange: function(oEvent){
+			// Sets to MultiSelect
+			if (this.getView().byId("modeSwitch").getState()){
+				this.setVisibleEditAndDelete(false);
+				this.enableToolbarItems(true);
+				this.getView().byId("UploadCollection").setMode("MultiSelect");
+			}else{
+				// Sets to SingleSelectMaster
+				this.setVisibleEditAndDelete(true);
+				this.enableToolbarItems(false);
+				this.getView().byId("UploadCollection").setMode("SingleSelectMaster");
+			}
+		},
+
+		setVisibleEditAndDelete: function(status){
+			var aItems = this.getView().byId("UploadCollection").getItems();
+			for (var i = 0; i < aItems.length; i++){
+				aItems[i].setVisibleEdit(status);
+				aItems[i].setVisibleDelete(status);
+			}
+		},
+
+		enableToolbarItems: function(status){
+			this.getView().byId("selectAllButton").setVisible(status);
+			this.getView().byId("deleteSelectedButton").setVisible(status);
+			this.getView().byId("selectAllButton").setEnabled(status);
+			// This is only enabled if there is a selected item in multi-selection mode
+			if (this.getView().byId("UploadCollection").getSelectedItems().length > 0) {
+				this.getView().byId("deleteSelectedButton").setEnabled(true);
+			}
+		},
+
+		onDeleteSelectedItems: function(){
+			var aSelectedItems = this.getView().byId("UploadCollection").getSelectedItems();
+			this.deleteMultipleItems(aSelectedItems);
+			if (this.getView().byId("UploadCollection").getSelectedItems().length < 1){
+				this.getView().byId("selectAllButton").setPressed(false);
+				this.getView().byId("selectAllButton").setText("Select all");
+			}
+			MessageToast.show("Delete selected items button press.");
+		},
+
+		onSearch: function(oEvent){
+			MessageToast.show("Search feature isn't available in this sample");
+		},
+
+		onSelectionChange: function(oEvent){
+			var oUploadCollection = this.getView().byId("UploadCollection");
+			// Only it is enabled if there is a selected item in multi-selection mode
+			if (oUploadCollection.getMode() === "MultiSelect"){
+				if (oUploadCollection.getSelectedItems().length > 0) {
+					this.getView().byId("deleteSelectedButton").setEnabled(true);
+				} else {
+					this.getView().byId("deleteSelectedButton").setEnabled(false);
+				}
+			}
+		},
+
+		onAttributePress: function(oEvent) {
+			MessageToast.show(oEvent.getSource().getTitle() + ": " + oEvent.getSource().getText());
 		}
 	});
-
 
 	return PageController;
 

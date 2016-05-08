@@ -2,6 +2,7 @@
  * ${copyright}
  */
 sap.ui.require([
+	"jquery.sap.global",
 	"sap/ui/Device",
 	"sap/ui/base/BindingParser",
 	"sap/ui/base/ManagedObject",
@@ -10,14 +11,13 @@ sap.ui.require([
 	"sap/ui/core/util/XMLPreprocessor",
 	"sap/ui/model/BindingMode",
 	"sap/ui/model/Context",
-	"sap/ui/model/json/JSONModel"
-], function(Device, BindingParser, ManagedObject, CustomizingConfiguration, XMLTemplateProcessor,
-		XMLPreprocessor, BindingMode, Context, JSONModel) {
+	"sap/ui/model/json/JSONModel",
+	"jquery.sap.xml" // needed to have jQuery.sap.parseXML
+], function (jQuery, Device, BindingParser, ManagedObject, CustomizingConfiguration,
+		XMLTemplateProcessor, XMLPreprocessor, BindingMode, Context, JSONModel/*, jQuerySapXml*/) {
 	/*global QUnit, sinon, window */
 	/*eslint consistent-this: 0, no-loop-func: 0, no-warning-comments: 0*/
 	"use strict";
-
-	jQuery.sap.require("jquery.sap.xml");
 
 	var sComponent = "sap.ui.core.util.XMLPreprocessor",
 		iOldLogLevel = jQuery.sap.log.getLevel();
@@ -58,8 +58,8 @@ sap.ui.require([
 			.replace(/ \/>/g, '/>');
 		if (Device.browser.msie || Device.browser.edge) {
 			// Microsoft shuffles attribute order
-			// remove helper, type and var, then no tag should have more that one attribute
-			sXml = sXml.replace(/ (helper|type|var)=".*?"/g, "");
+			// remove helper, type, value and var, then no tag should have more that one attribute
+			sXml = sXml.replace(/ (helper|type|value|var)=".*?"/g, "");
 		}
 		return sXml;
 	}
@@ -134,11 +134,15 @@ sap.ui.require([
 		try {
 			oSandbox.stub(ManagedObject.prototype, "bindProperty",
 				function (sName, oBindingInfo) {
+					var aParts = oBindingInfo.parts;
+
 					assert.strictEqual(sName, "any");
 					assert.strictEqual(oBindingInfo.mode, BindingMode.OneTime);
-					(oBindingInfo.parts || []).forEach(function (oInfoPart) {
-						assert.strictEqual(oInfoPart.mode, BindingMode.OneTime);
-					});
+					if (aParts) {
+						aParts.forEach(function (oInfoPart) {
+							assert.strictEqual(oInfoPart.mode, BindingMode.OneTime);
+						});
+					}
 					fnBindProperty.apply(this, arguments);
 				});
 			oSandbox.spy(ManagedObject.prototype, "unbindProperty");
@@ -267,7 +271,7 @@ sap.ui.require([
 				oLogMock.expects("warning").never();
 				aViewContent.forEach(function (sLine) {
 					if (/if test="(false|true|\{= false \})"/.test(sLine)) {
-						warn(oLogMock, sinon.match(/\[ \d\] Constant test condition/), sLine);
+						warn(oLogMock, sinon.match(/\[[ \d]\d\] Constant test condition/), sLine);
 					}
 				});
 			}
@@ -610,10 +614,10 @@ sap.ui.require([
 			'</mvc:View>'
 		],
 		aDebugMessages : [
-			{m: "[ 0] Start processing qux"},
-			{m: "[ 1] test == undefined --> false", d: 1},
-			{m: "[ 1] Finished", d: 3},
-			{m: "[ 0] Finished processing qux"}
+			{m : "[ 0] Start processing qux"},
+			{m : "[ 1] test == undefined --> false", d : 1},
+			{m : "[ 1] Finished", d : 3},
+			{m : "[ 0] Finished processing qux"}
 		]
 	}, {
 		aViewContent : [
@@ -652,8 +656,8 @@ sap.ui.require([
 						.exactly(bWarn ? 1 : 0); // do not construct arguments in vain!
 
 					window.foo = {
-						Helper: {
-							fail: function (oRawValue) {
+						Helper : {
+							fail : function (oRawValue) {
 								throw oError;
 							}
 						}
@@ -662,11 +666,11 @@ sap.ui.require([
 					if (bWarn && oFixture.aDebugMessages) {
 						checkTracing.call(oLogMock, assert, true, oFixture.aDebugMessages,
 							aViewContent, {
-								models: new JSONModel({flag: true})
+								models : new JSONModel({flag : true})
 							}, vExpected);
 					} else {
 						check.call(oLogMock, assert, aViewContent, {
-							models: new JSONModel({flag: true})
+							models : new JSONModel({flag : true})
 						}, vExpected);
 					}
 				}
@@ -748,7 +752,7 @@ sap.ui.require([
 					.exactly(bWarn ? 1 : 0); // do not construct arguments in vain!
 
 				check.call(oLogMock, assert, aViewContent, {
-					models: new JSONModel()
+					models : new JSONModel()
 				}, vExpected);
 			});
 		});
@@ -757,8 +761,8 @@ sap.ui.require([
 	//*********************************************************************************************
 	QUnit.test("Do not process nested template:ifs if not necessary", function (assert) {
 		window.foo = {
-			Helper: {
-				forbidden: function (oRawValue) {
+			Helper : {
+				forbidden : function (oRawValue) {
 					assert.ok(false, "formatter MUST not be called!");
 				}
 			}
@@ -770,7 +774,7 @@ sap.ui.require([
 			'</template:if>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({flag: true})
+			models : new JSONModel({flag : true})
 		});
 	});
 
@@ -1022,11 +1026,11 @@ sap.ui.require([
 	//*********************************************************************************************
 	QUnit.test("binding resolution", function (assert) {
 		window.foo = {
-			Helper: {
-				help: function (vRawValue) {
+			Helper : {
+				help : function (vRawValue) {
 					return vRawValue.String || "{" + vRawValue.Path + "}";
 				},
-				nil: function () {
+				nil : function () {
 					return null;
 				}
 			}
@@ -1034,6 +1038,7 @@ sap.ui.require([
 
 		check.call(this, assert, [
 			mvcView().replace(">", ' xmlns:html="http://www.w3.org/1999/xhtml">'),
+			'<!-- some comment node -->', // to test skipping of none ELEMENT_NODES while visiting
 			'<Label text="{formatter: \'foo.Helper.help\','
 				+ ' path: \'/com.sap.vocabularies.UI.v1.HeaderInfo/Title/Label\'}"/>',
 			'<Text maxLines="{formatter: \'foo.Helper.nil\','
@@ -1049,21 +1054,22 @@ sap.ui.require([
 			'</mvc:View>'
 		], {
 			models: new JSONModel({
-				"com.sap.vocabularies.UI.v1.HeaderInfo": {
-					"TypeImageUrl": {
-						"String": "/coco/apps/main/img/Icons/product_48.png"
+				"com.sap.vocabularies.UI.v1.HeaderInfo" : {
+					"TypeImageUrl" : {
+						"String" : "/coco/apps/main/img/Icons/product_48.png"
 					},
-					"Title": {
-						"Label": {
-							"String": "Customer"
+					"Title" : {
+						"Label" : {
+							"String" : "Customer"
 						},
-						"Value": {
-							"Path": "CustomerName"
+						"Value" : {
+							"Path" : "CustomerName"
 						}
 					}
 				}
 			})
 		}, [ // Note: XML serializer outputs &gt; encoding...
+			'<!-- some comment node -->',
 			'<Label text="Customer"/>',
 			'<Text text="{CustomerName}"/>', // "maxLines" has been removed
 			'<Label text="A \\{ is a special character"/>',
@@ -1079,14 +1085,14 @@ sap.ui.require([
 		QUnit.test(
 				"binding resolution: interface to formatter, debug = " + bDebug, function (assert) {
 			var oModel = new JSONModel({
-					"somewhere": {
-						"com.sap.vocabularies.UI.v1.HeaderInfo": {
-							"Title": {
-								"Label": {
-									"String": "Customer"
+					"somewhere" : {
+						"com.sap.vocabularies.UI.v1.HeaderInfo" : {
+							"Title" : {
+								"Label" : {
+									"String" : "Customer"
 								},
-								"Value": {
-									"Path": "CustomerName"
+								"Value" : {
+									"Path" : "CustomerName"
 								}
 							}
 						}
@@ -1311,24 +1317,24 @@ sap.ui.require([
 			other.requiresIContext = "ignored";
 
 			window.foo = {
-				Helper: {
-					formatParts: formatParts,
-					help: help,
-					other: other
+				Helper : {
+					formatParts : formatParts,
+					help : help,
+					other : other
 				}
 			};
 
 			checkTracing.call(this, assert, bDebug, [
-				{m: "[ 0] Start processing qux"},
-				{m: "[ 0] undefined = /somewhere/com.sap.vocabularies.UI.v1.HeaderInfo"},
-				{m: "[ 0] Removed attribute text", d: 1},
-				{m: "[ 0] text = Customer", d: 2},
-				{m: "[ 0] text = Value: {CustomerName}", d: 3},
-				{m: "[ 0] text = Customer: {CustomerName}", d: 4},
-				{m: "[ 0] Binding not ready for attribute text", d: 5},
-				{m: "[ 0] text = [Customer] {CustomerName}", d: 6},
-				{m: "[ 0] text = [Customer]", d: 7},
-				{m: "[ 0] Finished processing qux"}
+				{m : "[ 0] Start processing qux"},
+				{m : "[ 0] undefined = /somewhere/com.sap.vocabularies.UI.v1.HeaderInfo"},
+				{m : "[ 0] Removed attribute text", d : 1},
+				{m : "[ 0] text = Customer", d : 2},
+				{m : "[ 0] text = Value: {CustomerName}", d : 3},
+				{m : "[ 0] text = Customer: {CustomerName}", d : 4},
+				{m : "[ 0] Binding not ready for attribute text", d : 5},
+				{m : "[ 0] text = [Customer] {CustomerName}", d : 6},
+				{m : "[ 0] text = [Customer]", d : 7},
+				{m : "[ 0] Finished processing qux"}
 			], [
 				mvcView(),
 				'<Text text="{formatter: \'foo.Helper.other\', path: \'Title/Label\'}"/>',
@@ -1342,10 +1348,10 @@ sap.ui.require([
 				'<Text text="{formatter: \'foo.Helper.formatParts\', path: \'Title/Label\'}"/>',
 				'</mvc:View>'
 			], {
-				models: oModel,
-				bindingContexts: oModel.createBindingContext(
+				models : oModel,
+				bindingContexts : oModel.createBindingContext(
 						"/somewhere/com.sap.vocabularies.UI.v1.HeaderInfo"),
-				bindTexts: true
+				bindTexts : true
 			}, [
 				'<Text/>',
 				'<Text text="Customer"/>',
@@ -1365,18 +1371,20 @@ sap.ui.require([
 				var oError = new Error("deliberate failure");
 
 				window.foo = {
-						Helper: {
-							fail: function (oRawValue) {
+						Helper : {
+							fail : function (oRawValue) {
 								throw oError;
 							}
 						}
 					};
 
 				checkTracing.call(this, assert, bDebug, [
-					{m: "[ 0] Start processing qux"},
-					{m: sinon.match(/\[ 0\] Error in formatter: Error: deliberate failure/), d: 1},
-					{m: sinon.match(/\[ 0\] Error in formatter: Error: deliberate failure/), d: 2},
-					{m: "[ 0] Finished processing qux"}
+					{m : "[ 0] Start processing qux"},
+					{m : sinon.match(/\[ 0\] Error in formatter: Error: deliberate failure/),
+						d : 1},
+					{m : sinon.match(/\[ 0\] Error in formatter: Error: deliberate failure/),
+						d : 2},
+					{m : "[ 0] Finished processing qux"}
 				], [
 					mvcView(),
 					'<In text="{formatter: \'foo.Helper.fail\','
@@ -1385,14 +1393,14 @@ sap.ui.require([
 						+ ' path: \'/com.sap.vocabularies.UI.v1.HeaderInfo/Title/Value\'}"/>',
 					'</mvc:View>'
 				], {
-					models: new JSONModel({
-						"com.sap.vocabularies.UI.v1.HeaderInfo": {
-							"Title": {
-								"Label": {
-									"String": "Customer"
+					models : new JSONModel({
+						"com.sap.vocabularies.UI.v1.HeaderInfo" : {
+							"Title" : {
+								"Label" : {
+									"String" : "Customer"
 								},
-								"Value": {
-									"Path": "CustomerName"
+								"Value" : {
+									"Path" : "CustomerName"
 								}
 							}
 						}
@@ -1413,11 +1421,11 @@ sap.ui.require([
 			'</template:with>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({
-				some: {
-					random: {
-						path: {
-							flag: true
+			models : new JSONModel({
+				some : {
+					random : {
+						path : {
+							flag : true
 						}
 					}
 				}
@@ -1446,11 +1454,11 @@ sap.ui.require([
 					'</template:with>',
 					'</mvc:View>'
 				], {
-					models: new JSONModel({
-						some: {
-							random: {
-								path: {
-									flag: true
+					models : new JSONModel({
+						some : {
+							random : {
+								path : {
+									flag : true
 								}
 							}
 						}
@@ -1485,7 +1493,7 @@ sap.ui.require([
 			'<template:with path="some/random/place" var="place"/>',
 			'</mvc:View>'
 		], "Cannot resolve path for {0}", {
-			models: new JSONModel()
+			models : new JSONModel()
 		});
 	});
 
@@ -1493,8 +1501,8 @@ sap.ui.require([
 	[false, true].forEach(function (bWithVar) {
 		QUnit.test("template:with and helper, with var = " + bWithVar, function (assert) {
 			var oModel = new JSONModel({
-					target: {
-						flag: true
+					target : {
+						flag : true
 					}
 				});
 
@@ -1518,7 +1526,7 @@ sap.ui.require([
 				'</template:with>',
 				'</mvc:View>'
 			], {
-				models: oModel
+				models : oModel
 			});
 		});
 	});
@@ -1528,8 +1536,8 @@ sap.ui.require([
 		QUnit.test("template:with and helper changing the model, with var = " + bWithVar,
 			function (assert) {
 				var oMetaModel = new JSONModel({
-						target: {
-							flag: true
+						target : {
+							flag : true
 						}
 					}),
 					oModel = new JSONModel();
@@ -1554,9 +1562,9 @@ sap.ui.require([
 					'</template:with>',
 					'</mvc:View>'
 				], {
-					models: {
-						meta: oMetaModel,
-						"undefined": oModel
+					models : {
+						meta : oMetaModel,
+						"undefined" : oModel
 					}
 				});
 			}
@@ -1572,7 +1580,7 @@ sap.ui.require([
 				'<template:with path="/unused" var="target" helper="foo"/>',
 				'</mvc:View>'
 			], "Cannot resolve helper for {0}", {
-				models: new JSONModel()
+				models : new JSONModel()
 			});
 		});
 	});
@@ -1584,7 +1592,7 @@ sap.ui.require([
 			'<template:with path="/unused" var="target" helper="."/>',
 			'</mvc:View>'
 		], "Cannot resolve helper for {0}", {
-			models: new JSONModel()
+			models : new JSONModel()
 		});
 	});
 
@@ -1599,7 +1607,7 @@ sap.ui.require([
 				'<template:with path="/unused" var="target" helper="foo"/>',
 				'</mvc:View>'
 			], "Illegal helper result '" + vResult + "' in {0}", {
-				models: new JSONModel()
+				models : new JSONModel()
 			});
 		});
 	});
@@ -1627,9 +1635,9 @@ sap.ui.require([
 			sTemplate3,
 			'</mvc:View>'
 		], {
-			models: {bar: oModel},
-			bindingContexts: {
-				bar: oModel.createBindingContext("/my/path")
+			models : {bar : oModel},
+			bindingContexts : {
+				bar : oModel.createBindingContext("/my/path")
 			}
 		});
 	});
@@ -1643,13 +1651,13 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({
-				items: [{
-					src: "A"
+			models : new JSONModel({
+				items : [{
+					src : "A"
 				}, {
-					src: "B"
+					src : "B"
 				}, {
-					src: "C"
+					src : "C"
 				}]
 			})
 		}, [
@@ -1668,15 +1676,15 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({
-				items: [{
-					src: "A"
+			models : new JSONModel({
+				items : [{
+					src : "A"
 				}, {
-					src: "B"
+					src : "B"
 				}, {
-					src: "C"
+					src : "C"
 				}, {
-					src: "D"
+					src : "D"
 				}]
 			})
 		}, [
@@ -1694,14 +1702,14 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: {
-				modelName: new JSONModel({
-					items: [{
-						src: "A"
+			models : {
+				modelName : new JSONModel({
+					items : [{
+						src : "A"
 					}, {
-						src: "B"
+						src : "B"
 					}, {
-						src: "C"
+						src : "C"
 					}]
 				})
 			}
@@ -1748,7 +1756,7 @@ sap.ui.require([
 			'<template:repeat list="{/unsupported/path}"/>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel()
+			models : new JSONModel()
 		});
 	});
 
@@ -1762,14 +1770,14 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: {
-				modelName: new JSONModel({
-					items: [{
-						src: "A"
+			models : {
+				modelName : new JSONModel({
+					items : [{
+						src : "A"
 					}, {
-						src: "B"
+						src : "B"
 					}, {
-						src: "C"
+						src : "C"
 					}]
 				})
 			}
@@ -1792,21 +1800,21 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: {
-				customer: new JSONModel({
-					orders: [{
-						id: "A",
-						items: [{
-							no: "A1"
+			models : {
+				customer : new JSONModel({
+					orders : [{
+						id : "A",
+						items : [{
+							no : "A1"
 						}, {
-							no: "A2"
+							no : "A2"
 						}]
 					}, {
-						id: "B",
-						items: [{
-							no: "B1"
+						id : "B",
+						items : [{
+							no : "B1"
 						}, {
-							no: "B2"
+							no : "B2"
 						}]
 					}]
 				})
@@ -1830,14 +1838,14 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: {
-				modelName: new JSONModel({
-					items: [{
-						src: "A"
+			models : {
+				modelName : new JSONModel({
+					items : [{
+						src : "A"
 					}, {
-						src: "B"
+						src : "B"
 					}, {
-						src: "C"
+						src : "C"
 					}]
 				})
 			}
@@ -1928,12 +1936,7 @@ sap.ui.require([
 		var oXMLTemplateProcessorMock = this.mock(XMLTemplateProcessor);
 
 		// BEWARE: use fresh XML document for each call because liftChildNodes() makes it empty!
-		oXMLTemplateProcessorMock.expects("loadTemplate")
-			.withExactArgs("myFragment", "fragment")
-			.returns(xml(assert, ['<In xmlns="sap.ui.core" src="{src}" />']));
-		oXMLTemplateProcessorMock.expects("loadTemplate")
-			.withExactArgs("myFragment", "fragment")
-			.returns(xml(assert, ['<In xmlns="sap.ui.core" src="{src}" />']));
+		// load template is called only once, because it is cached
 		oXMLTemplateProcessorMock.expects("loadTemplate")
 			.withExactArgs("myFragment", "fragment")
 			.returns(xml(assert, ['<In xmlns="sap.ui.core" src="{src}" />']));
@@ -1945,13 +1948,13 @@ sap.ui.require([
 			'</template:repeat>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({
-				items: [{
-					src: "A"
+			models : new JSONModel({
+				items : [{
+					src : "A"
 				}, {
-					src: "B"
+					src : "B"
 				}, {
-					src: "C"
+					src : "C"
 				}]
 			})
 		}, [
@@ -2012,16 +2015,13 @@ sap.ui.require([
 		oXMLTemplateProcessorMock.expects("loadTemplate")
 			.withExactArgs("B", "fragment")
 			.returns(xml(assert, ['<Fragment xmlns="sap.ui.core" fragmentName="A" type="XML"/>']));
-		oXMLTemplateProcessorMock.expects("loadTemplate")
-			.withExactArgs("A", "fragment")
-			.returns(xml(assert, aFragmentContent));
 
 		checkError.call(oLogMock, assert, [
 				mvcView(),
 				'<Fragment fragmentName="A" type="XML"/>',
 				'</mvc:View>'
 			], "Cyclic reference to fragment 'B' {0}", {
-				models: new JSONModel()
+				models : new JSONModel()
 			}, aFragmentContent[3]);
 	});
 
@@ -2029,22 +2029,22 @@ sap.ui.require([
 	[false, true].forEach(function (bDebug) {
 		QUnit.test("tracing, debug=" + bDebug, function (assert) {
 			var oBarModel = new JSONModel({
-					"com.sap.vocabularies.UI.v1.HeaderInfo": {
-						"Title": {
-							"Label": {
-								"String": "Customer"
+					"com.sap.vocabularies.UI.v1.HeaderInfo" : {
+						"Title" : {
+							"Label" : {
+								"String" : "Customer"
 							},
-							"Value": {
-								"Path": "CustomerName"
+							"Value" : {
+								"Path" : "CustomerName"
 							}
 						}
 					},
-					"com.sap.vocabularies.UI.v1.Identification": [{
-						Value: { Path: "A"}
+					"com.sap.vocabularies.UI.v1.Identification" : [{
+						Value : { Path : "A"}
 					}, {
-						Value: { Path: "B"}
+						Value : { Path : "B"}
 					}, {
-						Value: { Path: "C"}
+						Value : { Path : "C"}
 					}]
 				}),
 				oBazModel = new JSONModel({}),
@@ -2085,37 +2085,37 @@ sap.ui.require([
 			delete sap.ui.core.CustomizingConfiguration;
 
 			checkTracing.call(oLogMock, assert, bDebug, [
-				{m: "[ 0] Start processing qux"},
-				{m: "[ 0] bar = /com.sap.vocabularies.UI.v1.HeaderInfo/Title"},
-				{m: "[ 0] baz = /"},
-				{m: "[ 1] foo = /com.sap.vocabularies.UI.v1.HeaderInfo/Title/Label", d: 1},
-				{m: "[ 2] test == \"false\" --> false", d: 2},
-				{m: "[ 2] test == [object Object] --> true", d: 6},
-				{m: "[ 3] fragmentName = myFragment", d: 8},
-				{m: "[ 3] Finished", d: "</Fragment>"},
-				{m: "[ 2] Finished", d: 10},
-				{m: "[ 1] Finished", d: 11},
-				{m: "[ 1] Starting", d: 12},
-				{m: "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/0", d: 12},
-				{m: "[ 1] src = A", d: 13},
-				{m: "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/1", d: 12},
-				{m: "[ 1] src = B", d: 13},
-				{m: "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/2", d: 12},
-				{m: "[ 1] src = C", d: 13},
-				{m: "[ 1] Finished", d: 14},
-				{m: "[ 1] test == [object Array] --> true", d: 15},
-				{m: "[ 1] Finished", d: "</t:if>"},
-				{m: "[ 1] test == undefined --> false", d: 16},
-				{m: "[ 1] Finished", d: "</t:if>"},
-				{m: "[ 0] name = dynamicName", d: 18},
-				{m: "[ 0] Binding not ready for attribute name", d: 19},
-				{m: "[ 0] Finished processing qux"}
+				{m : "[ 0] Start processing qux"},
+				{m : "[ 0] bar = /com.sap.vocabularies.UI.v1.HeaderInfo/Title"},
+				{m : "[ 0] baz = /"},
+				{m : "[ 1] foo = /com.sap.vocabularies.UI.v1.HeaderInfo/Title/Label", d : 1},
+				{m : "[ 2] test == \"false\" --> false", d : 2},
+				{m : "[ 2] test == [object Object] --> true", d : 6},
+				{m : "[ 3] fragmentName = myFragment", d : 8},
+				{m : "[ 3] Finished", d : "</Fragment>"},
+				{m : "[ 2] Finished", d : 10},
+				{m : "[ 1] Finished", d : 11},
+				{m : "[ 1] Starting", d : 12},
+				{m : "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/0", d : 12},
+				{m : "[ 1] src = A", d : 13},
+				{m : "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/1", d : 12},
+				{m : "[ 1] src = B", d : 13},
+				{m : "[ 1] foo = /com.sap.vocabularies.UI.v1.Identification/2", d : 12},
+				{m : "[ 1] src = C", d : 13},
+				{m : "[ 1] Finished", d : 14},
+				{m : "[ 1] test == [object Array] --> true", d : 15},
+				{m : "[ 1] Finished", d : "</t:if>"},
+				{m : "[ 1] test == undefined --> false", d : 16},
+				{m : "[ 1] Finished", d : "</t:if>"},
+				{m : "[ 0] name = dynamicName", d : 18},
+				{m : "[ 0] Binding not ready for attribute name", d : 19},
+				{m : "[ 0] Finished processing qux"}
 			], aViewContent, {
-				models: { bar: oBarModel, baz: oBazModel },
-				bindingContexts: {
-					bar: oBarModel.createBindingContext(
+				models : { bar : oBarModel, baz : oBazModel },
+				bindingContexts : {
+					bar : oBarModel.createBindingContext(
 							"/com.sap.vocabularies.UI.v1.HeaderInfo/Title"),
-					baz: oBazModel.createBindingContext("/")
+					baz : oBazModel.createBindingContext("/")
 				}
 			}, [
 				'<In />',
@@ -2290,13 +2290,13 @@ sap.ui.require([
 			fnGetObject = jQuery.sap.getObject;
 
 		window.foo = {
-			Helper: {
-				bar: function () {
+			Helper : {
+				bar : function () {
 					assert.ok(!this || !("bar" in this), "no jQuery.proxy(..., oScope) used");
 					// return absolute path so this function serves as helper & formatter!
 					return "/bar";
 				},
-				foo: function () {
+				foo : function () {
 					assert.ok(!this || !("foo" in this), "no jQuery.proxy(..., oScope) used");
 					return "/foo";
 				}
@@ -2350,7 +2350,7 @@ sap.ui.require([
 			'</template:alias>',
 			'</mvc:View>'
 		], {
-			models: new JSONModel({/*don't care*/})
+			models : new JSONModel({/*don't care*/})
 		}, [ // Note: XML serializer outputs &gt; encoding...
 			"<Label text=\"{formatter: '.bar', path: '/'}\"/>",
 			"<Label text=\"{formatter: '.foo', path: '/'}\"/>",
@@ -2396,6 +2396,91 @@ sap.ui.require([
 				'</mvc:View>'
 			], "Invalid value in {0}");
 		});
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Test console log for two digit nesting level", function (assert) {
+		check.call(this, assert, [
+			mvcView(),
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<template:if test="true">',
+			'<In id="true"/>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</template:if>',
+			'</mvc:View>'
+		]);
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Performance measurement points", function (assert) {
+		var aContent = [
+				mvcView(),
+				'<Fragment fragmentName="myFragment" type="XML"/>',
+				'<Text text="{CustomerName}"/>',
+				'</mvc:View>'
+			],
+			oAverageSpy = this.spy(jQuery.sap.measure, "average"),
+			oEndSpy = this.spy(jQuery.sap.measure, "end")
+				.withArgs("sap.ui.core.util.XMLPreprocessor.process"),
+			oCountSpy = oAverageSpy.withArgs("sap.ui.core.util.XMLPreprocessor.process", "",
+				["sap.ui.core.util.XMLPreprocessor"]),
+			oCountEndSpy = oEndSpy.withArgs("sap.ui.core.util.XMLPreprocessor.process"),
+			oInsertSpy = oAverageSpy.withArgs("sap.ui.core.util.XMLPreprocessor/insertFragment",
+				"", ["sap.ui.core.util.XMLPreprocessor"]),
+			oInsertEndSpy = oEndSpy.withArgs("sap.ui.core.util.XMLPreprocessor/insertFragment"),
+			oResolvedSpy = oAverageSpy.withArgs(
+				"sap.ui.core.util.XMLPreprocessor/getResolvedBinding",
+				"", ["sap.ui.core.util.XMLPreprocessor"]),
+			oResolvedEndSpy = oEndSpy.withArgs(
+				"sap.ui.core.util.XMLPreprocessor/getResolvedBinding");
+
+		this.mock(XMLTemplateProcessor).expects("loadTemplate")
+			.returns(xml(assert, ['<In xmlns="sap.ui.core"/>']));
+
+		process(xml(assert, aContent));
+		assert.strictEqual(oCountSpy.callCount, 1, "process");
+		assert.strictEqual(oInsertSpy.callCount, 1, "insertFragment");
+		assert.strictEqual(oResolvedSpy.callCount, 6, "getResolvedBinding");
+		assert.strictEqual(oCountEndSpy.callCount, 1, "process end");
+		assert.strictEqual(oInsertEndSpy.callCount, 1, "insertFragment end");
+		assert.strictEqual(oResolvedEndSpy.callCount, 6, "getResolvedBinding end");
+	});
+
+	//*********************************************************************************************
+	QUnit.test("Performance measurement end point for incomplete bindings", function (assert) {
+		var aContent = [
+				mvcView(),
+				'<Text text="{unrelated>/some/path}"/>',
+				'</mvc:View>'
+			],
+			oAverageSpy = this.spy(jQuery.sap.measure, "average"),
+			oEndSpy = this.spy(jQuery.sap.measure, "end")
+				.withArgs("sap.ui.core.util.XMLPreprocessor.process"),
+			oResolvedSpy = oAverageSpy.withArgs(
+				"sap.ui.core.util.XMLPreprocessor/getResolvedBinding",
+				"", ["sap.ui.core.util.XMLPreprocessor"]),
+			oResolvedEndSpy = oEndSpy.withArgs(
+				"sap.ui.core.util.XMLPreprocessor/getResolvedBinding");
+
+		process(xml(assert, aContent));
+		assert.strictEqual(oResolvedSpy.callCount, 4, "getResolvedBinding");
+		assert.strictEqual(oResolvedEndSpy.callCount, 4, "getResolvedBinding end");
 	});
 });
 //TODO we have completely missed support for unique IDs in fragments via the "id" property!

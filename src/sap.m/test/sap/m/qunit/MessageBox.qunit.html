@@ -1,8 +1,8 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta charset="utf-8">
 	<title>qUnit Page for sap.m.MessageBox</title>
 
 	<script id="sap-ui-bootstrap"
@@ -13,7 +13,7 @@
 			data-sap-ui-libs="sap.m">
 	</script>
 
-	<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen"/>
+	<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 
@@ -75,6 +75,32 @@
 			sap.ui.getCore().applyChanges();
 			var oMessageBox = sap.ui.getCore().byId(jQuery(".sapMMessageDialog")[0].getAttribute("id"));
 			ok(oMessageBox, "Dialog should be created");
+			oMessageBox.destroy();
+		});
+
+		test("show with control as content", function () {
+			var oMessageBox, $TextArea,
+				sTextAreaId = "myTextArea",
+				oTextArea = new sap.m.TextArea(sTextAreaId, {
+					value: sMessageText
+				});
+
+			sap.m.MessageBox.show(oTextArea, {
+				title: sMessageTitle,
+				actions: [sap.m.MessageBox.Action.OK, sap.m.MessageBox.Action.NO, "Custom Text"],
+				onClose: callback,
+				id: "messagebox1",
+				styleClass: sClassName
+			});
+			sap.ui.getCore().applyChanges();
+			oMessageBox = sap.ui.getCore().byId("messagebox1");
+			ok(oMessageBox, "Dialog should be created");
+			equal(oMessageBox.getType(), sap.m.DialogType.Message, "Dialog should have type Message");
+			equal(oMessageBox.getButtons().length, 3, "All three buttons are added to dialog");
+			equal(oMessageBox.getTitle(), sMessageTitle, "Title is assigned");
+			ok(oMessageBox.$().hasClass(sClassName));
+			$TextArea = jQuery.sap.byId(sTextAreaId);
+			equal($TextArea.length, 1, "TextArea should be created");
 			oMessageBox.destroy();
 		});
 
@@ -325,6 +351,27 @@
 			oMessageBox.destroy();
 		});
 
+		test("show with OLD API and control as content", function () {
+			var oMessageBox, $TextArea,
+				sTextAreaId = "myTextArea",
+				oTextArea = new sap.m.TextArea(sTextAreaId, {
+					value: sMessageText
+				});
+
+			// MessageBox.show(message, icon, title, [oActions], fnCallback, oDefaultAaction, sDialogId, sClassName)
+			sap.m.MessageBox.show(oTextArea, null, sMessageTitle, [sap.m.MessageBox.Action.OK, "Custom Text", sap.m.MessageBox.Action.NO], callback, "messagebox1", sClassName);
+			sap.ui.getCore().applyChanges();
+			oMessageBox = sap.ui.getCore().byId("messagebox1");
+			ok(oMessageBox, "Dialog should be created");
+			equal(oMessageBox.getType(), sap.m.DialogType.Message, "Dialog should have type Message");
+			equal(oMessageBox.getButtons().length, 3, "All three buttons are added to dialog");
+			equal(oMessageBox.getTitle(), sMessageTitle, "Title is assigned");
+			ok(oMessageBox.$().hasClass(sClassName));
+			$TextArea = jQuery.sap.byId(sTextAreaId);
+			equal($TextArea.length, 1, "TextArea should be created");
+			oMessageBox.destroy();
+		});
+
 		test("alert with OLD API", function () {
 			// MessageBox.alert(vMessage, fnCallback, sTitle, sDialogId, sStyleClass)
 			sap.m.MessageBox.alert(sMessageText, callback, sMessageTitle, "alertbox1", sClassName);
@@ -429,18 +476,20 @@
 		jQuery.sap.require("sap.ui.layout.VerticalLayout");
 
 		test("add details within control content", function () {
-			var oLayout = new sap.ui.layout.VerticalLayout({
-				width: "100%",
-				content: [
-					new sap.m.Text({
-						text: "Do you want to see the status of the CheckBox in an additional MessageBox?"
-					}),
-					new sap.m.CheckBox("checkBoxId", {
-						text: "The CheckBox this checked",
-						selected: false
-					})
-				]
-			});
+			var oMessageBox, $Layout,
+				sLayoutId = "myLayout",
+				oLayout = new sap.ui.layout.VerticalLayout(sLayoutId, {
+					width: "100%",
+					content: [
+						new sap.m.Text({
+							text: "Do you want to see the status of the CheckBox in an additional MessageBox?"
+						}),
+						new sap.m.CheckBox("checkBoxId", {
+							text: "The CheckBox this checked",
+							selected: false
+						})
+					]
+				});
 			sap.m.MessageBox.show(oLayout, {
 				id: "messagedialog2",
 				title: sMessageTitle,
@@ -458,6 +507,8 @@
 			equal(oMessageBox.getTitle(), sMessageTitle, "Title is assigned");
 			ok(oMessageBox.getContent()[0] instanceof sap.ui.core.Control, "Content is control");
 			ok(oMessageBox.$().hasClass(sClassName));
+			$Layout = jQuery.sap.byId(sLayoutId);
+			equal($Layout.length, 1, "Layout should be created");
 			oMessageBox.destroy();
 		});
 
@@ -548,6 +599,60 @@
 			equal(oMessageBox.getButtons().length, 2, "Buttons aggregation is used.");
 			oMessageBox.destroy();
 		});
+
+		test("Aria-labelledby attrbute:", function () {
+			sap.m.MessageBox.show(sMessageText, {
+				title: sMessageTitle,
+				id: "messagebox6",
+			});
+
+			this.clock.tick(500);
+			var oMessageBox = sap.ui.getCore().byId("messagebox6");
+			var sExpectedAriaLabelledBy = oMessageBox.$("header").attr("id") + " " + oMessageBox.$().find(".sapMMsgBoxText").attr("id");
+			var sActualAriaLabelledBy = oMessageBox.$().attr("aria-labelledby");
+			equal(sActualAriaLabelledBy, sExpectedAriaLabelledBy, "should point to the header and to the text.");
+			oMessageBox.destroy();
+		});
+
+		test("When used with undefined message aria-labelledby attrbute", function () {
+			sap.m.MessageBox.show(undefined, {
+				title: sMessageTitle,
+				id: "messagebox7",
+			});
+
+			this.clock.tick(500);
+			var oMessageBox = sap.ui.getCore().byId("messagebox7");
+			var sExpectedAriaLabelledBy = oMessageBox.$("header").attr("id");
+			var sActualAriaLabelledBy = oMessageBox.$().attr("aria-labelledby");
+			equal(sActualAriaLabelledBy, sExpectedAriaLabelledBy, "should point to the header.");
+			oMessageBox.destroy();
+		});
+
+		test("When used with details aria-labelledby attrbute:", function () {
+			sap.m.MessageBox.show(sMessageText, {
+				title: sMessageTitle,
+				details: "Some details",
+				id: "messagebox8",
+			});
+
+			this.clock.tick(500);
+			var oMessageBox = sap.ui.getCore().byId("messagebox8");
+			var sExpectedAriaLabelledBy = oMessageBox.$("header").attr("id") + " " + oMessageBox.$().find(".sapMMsgBoxText").attr("id");
+			var sActualAriaLabelledBy = oMessageBox.$().attr("aria-labelledby");
+			equal(sActualAriaLabelledBy, sExpectedAriaLabelledBy, "should point to the header and to the text.");
+			oMessageBox.destroy();
+		});
+
+        test("Language change", function () {
+            sap.ui.getCore().getConfiguration().setLanguage("de");
+            notEqual(sap.ui.getCore().getLibraryResourceBundle("sap.m"), sap.m.MessageBox._rb, "The MessageBox should have a different resource bundle before opening");
+            sap.m.MessageBox.show(sMessageText, {
+                title: sMessageTitle,
+                details: "Some details",
+                id: "messagebox8"
+            });
+            equal(sap.ui.getCore().getLibraryResourceBundle("sap.m"), sap.m.MessageBox._rb, "The ResourceBundle should be the same.");
+        });
 
 	</script>
 </head>

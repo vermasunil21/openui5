@@ -22,8 +22,8 @@ sap.ui.define(['jquery.sap.global'],
 	 * @param {sap.ui.core.Control} oControl An object representation of the control that should be rendered.
 	 */
 	DialogRenderer.render = function(rm, oControl) {
-		var heightSet = sap.ui.commons.Dialog._isSizeSet(oControl.getHeight());
-		var widthSet = sap.ui.commons.Dialog._isSizeSet(oControl.getWidth());
+		var heightSet = oControl._isSizeSet(oControl.getHeight());
+		var widthSet = oControl._isSizeSet(oControl.getWidth());
 
 		var rb = sap.ui.getCore().getLibraryResourceBundle("sap.ui.commons");
 

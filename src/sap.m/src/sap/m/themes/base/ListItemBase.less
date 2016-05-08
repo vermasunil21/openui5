@@ -23,9 +23,9 @@
 .sapMLIBContent{
 	-webkit-box-flex: 1;
 	-moz-box-flex: 1;
-	-ms-flex: auto;
-	flex: 1;
-	-ms-flex-negative: 1; /* IE10 does not shrink by auto */
+	-ms-flex: 1 1 auto;
+	flex: 1 1 auto;
+	max-width: 100%;
 }
 
 .sapMLIBTypeNavigation{
@@ -40,6 +40,23 @@
 	outline: none;
 }
 
+/* IE ignores outline-offset. Use an overlay: */
+.sapMLIBLegacyOutline:focus {
+  outline: none;
+  position: relative;
+}
+
+.sapMLIBLegacyOutline:focus::before {
+  content: "";
+  border: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
 .sapMLIBSelectS,
 .sapMLIBSelectSL,
 .sapMLIBSelectM,
@@ -47,8 +64,7 @@
 	width:2.75em;
 }
 
-.sap-desktop .sapMLIBCursor,
-.sap-desktop .sapMLIBCursor + .sapMListTblSubRow {
+.sapMLIBActionable {
 	cursor: pointer;
 }
 
@@ -60,8 +76,7 @@
 .sapMLIBSelectSL,
 .sapMLIBSelectM,
 .sapMLIBSelectD,
-.sapMLIBCounter,
-.sapMLIBContent ~ .sapMLIBCursor {
+.sapMLIBCounter {
 	-webkit-box-flex: 0;
 	-moz-box-flex: 0;
 	-ms-flex: none;

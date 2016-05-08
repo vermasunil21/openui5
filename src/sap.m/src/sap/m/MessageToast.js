@@ -247,7 +247,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 			}
 
 			this._aPopups.forEach(function(oPopup) {
-				oPopup && oPopup.getAutoClose() && oPopup.close();
+				oPopup && oPopup.__bAutoClose && oPopup.close();
 			});
 		};
 
@@ -289,7 +289,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 			var sCssTransition = "opacity " + mSettings.animationTimingFunction + " " + mSettings.animationDuration + "ms",
 				sTransitionEnd = "webkitTransitionEnd." + CSSCLASS + " transitionend." + CSSCLASS;
 
-			if (mSettings.animationDuration > 0) {
+			if (sap.ui.getCore().getConfiguration().getAnimation() && mSettings.animationDuration > 0) {
 				$MessageToastDomRef[0].style.webkitTransition = sCssTransition;
 				$MessageToastDomRef[0].style.transition = sCssTransition;
 				$MessageToastDomRef[0].style.opacity = 0;
@@ -340,7 +340,9 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 				oPopup = new Popup(),
 				iPos,
 				oMessageToastDomRef,
-				iCloseTimeoutId;
+				sPointerEvents = "mousedown." + CSSCLASS + " touchstart." + CSSCLASS,
+				iCloseTimeoutId,
+				iMouseLeaveTimeoutId;
 
 			mOptions = normalizeOptions(mOptions);
 
@@ -374,7 +376,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 			}
 
 			oPopup.setShadow(false);
-			oPopup.setAutoClose(mSettings.autoClose);
+			oPopup.__bAutoClose = mSettings.autoClose;
 
 			if (mSettings.closeOnBrowserNavigation) {
 
@@ -387,8 +389,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 
 				// bind to the resize event to handle orientation change and resize events
 				jQuery(window).on("resize." + CSSCLASS, this._handleResizeEvent.bind(this));
-				jQuery(document).on("mousedown." + CSSCLASS, this._handleMouseDownEvent.bind(this));
-
+				jQuery(document).on(sPointerEvents, this._handleMouseDownEvent.bind(this));
 				this._bBoundedEvents = true;
 			}
 
@@ -407,7 +408,7 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 				if (that._iOpenedPopups === 0) {
 					that._aPopups = [];
 					jQuery(window).off("resize." + CSSCLASS);
-					jQuery(document).off("mousedown." + CSSCLASS);
+					jQuery(document).off(sPointerEvents);
 
 					that._bBoundedEvents = false;
 				}
@@ -422,10 +423,18 @@ sap.ui.define(['jquery.sap.global', './InstanceManager', 'sap/ui/core/Popup'],
 
 			// close the message toast
 			iCloseTimeoutId = jQuery.sap.delayedCall(mSettings.duration, oPopup, "close");
-
 			function fnClearTimeout() {
 				jQuery.sap.clearDelayedCall(iCloseTimeoutId);
 				iCloseTimeoutId = null;
+
+				function fnMouseLeave() {
+					iMouseLeaveTimeoutId = jQuery.sap.delayedCall(mSettings.duration, oPopup, "close");
+					oPopup.getContent().removeEventListener("mouseleave", fnMouseLeave);
+				}
+
+				oPopup.getContent().addEventListener("mouseleave", fnMouseLeave);
+				jQuery.sap.clearDelayedCall(iMouseLeaveTimeoutId);
+				iMouseLeaveTimeoutId = null;
 			}
 
 			oPopup.getContent().addEventListener("touchstart", fnClearTimeout);

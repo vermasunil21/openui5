@@ -297,22 +297,22 @@
 // [Label "Shell Background Color"]
 // [Description "The background color of the shell."]
 // [Tags "Base", "Shell", "Color"]
-@sapShell_Background: @sapLightestBackground;
+@sapShell_Background: @sapExtraLightBackground;
 
 // [Label "Shell Border Color"]
 // [Description "The color of the borders of the shell."]
 // [Tags "Base", "Shell", "Color"]
-@sapShell_BorderColor: @sapExtraDarkBorderColor;
+@sapShell_BorderColor: @sapLightBorderColor;
 
 // [Label "Shell Text Color"]
 // [Description "The color of texts in the shell."]
 // [Tags "Base", "Shell", "Color", "Font"]
-@sapShell_TextColor: contrast(@sapShell_Background, @sapTextColor, @sapContent_ContrastTextColor, @sapContent_ContrastTextThreshold);
+@sapShell_TextColor: contrast(@sapShell_Background, @sapLightTextColor, @sapContent_ContrastTextColor, @sapContent_ContrastTextThreshold);
 
 // [Label "Button Border Thickness"]
 // [Description "The thickness of button borders."]
 // [Tags "Base", "Button", "Dimension"]
-@sapButton_BorderWitdh: 1px;
+@sapButton_BorderWidth: 1px;
 
 // [Label "Button Corner Radius"]
 // [Description "Defines whether a button has rounded corners."]
@@ -408,7 +408,7 @@
 // [Label "Field Border Thickness"]
 // [Description "The thickness of an input field's borders."]
 // [Tags "Base", "Field", "Dimension"]
-@sapField_BorderWitdh: 1px;
+@sapField_BorderWidth: 1px;
 
 // [Label "Field Corner Radius"]
 // [Description "Defines whether an input field has rounded corners."]
@@ -480,7 +480,7 @@
 // [Label "Required Field Color"]
 // [Description "The color of the asterisk next to required input fields."]
 // [Tags "Base", "Field", "Color"]
-@sapField_RequiredColor: @sapHighlightColor;
+@sapField_RequiredColor: @sapAccentColor7;
 
 // [Label "Invalid Field Color"]
 // [Description "The base color of input fields with an invalid value."]
@@ -535,7 +535,7 @@
 // [Label "Group Content Background Color"]
 // [Description "The background color of the content area of a group."]
 // [Tags "Base", "Group", "Color", "Protected"]
-@sapGroup_ContentBackground: @sapField_Background;
+@sapGroup_ContentBackground: @sapLightestBackground;
 
 // [Label "Group Content Border Color"]
 // [Description "The color of the borders of a group's content area."]

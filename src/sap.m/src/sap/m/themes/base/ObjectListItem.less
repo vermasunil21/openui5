@@ -4,7 +4,7 @@
 /* ============================================= */
 
 .sapMObjLItem {
-	box-sizing: border-box;	
+	box-sizing: border-box;
 	vertical-align: baseline;
 }
 
@@ -24,7 +24,7 @@
 
 .sapMObjLTopRow {
 	float: left;
-	width: 100%
+	width: 100%;
 }
 
 .sapMObjLIntro {
@@ -58,7 +58,7 @@ html[data-sap-ui-browser="ie9"] .sapMText.sapMObjLTitle {
 	padding-left: 1rem;
 }
 
-.sapMObjLNumber {	
+.sapMObjLNumber {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -89,27 +89,27 @@ html[dir=rtl] .sapMObjLNumberUnit {
 }
 
 .sapMObjLAttrRow {
-	font-size: .875rem;	
+	font-size: .875rem;
 	padding-top: .313rem;
 }
 
 .sapMObjLAttrDiv {
 	box-sizing: border-box;
 	display: inline-block;
-	width: 65%;
+	width: 50%;
 	text-align: left;
-	vertical-align: top;	
+	vertical-align: top;
 }
 
 html[dir=rtl] .sapMObjLAttrDiv {
 	text-align: right;
 }
 
-.sapMObjLAttrDiv .sapMObjectAttributeDiv { 
+.sapMObjLAttrDiv .sapMObjectAttributeDiv {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
-	width: 100%;	
+	width: 100%;
 }
 
 
@@ -120,7 +120,7 @@ html[dir=rtl] .sapMObjLAttrDiv {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	width: 100%;
-} 
+}
 
 .sapMObjLAttrDiv .sapMObjectAttributeDiv {
 	display: inline-block;
@@ -128,8 +128,8 @@ html[dir=rtl] .sapMObjLAttrDiv {
 
 .sapMObjLStatusDiv {
 	box-sizing: border-box;
-	display: inline-block; 
-	width: 35%;
+	display: inline-block;
+	width: 50%;
 	text-align: right;
 	vertical-align: top;
 }
@@ -178,4 +178,21 @@ html[dir=rtl] .sapMObjStatusMarker > .sapUiIcon.sapUiIconMirrorInRTL {
 	-ms-transform: none; /* IE 9 */
 	-webkit-transform: none; /* Chrome, Safari, Opera */
 	transform: none;
+}
+
+html[data-sap-ui-browser="ie9"] li.sapMLIB.sapMLIBNoFlex.sapMObjLItem>.sapMLIBContent>.sapMLIBContentNF >div {
+	display: block;
+}
+
+html[data-sap-ui-browser="ie9"] li.sapMLIB.sapMLIBNoFlex.sapMObjLItem>.sapMLIBContent>.sapMLIBContentNF >.sapMObjLTopRow:first-child {
+	padding-top: 1rem;
+}
+
+html[data-sap-ui-browser="ie9"] li.sapMLIB.sapMLIBNoFlex.sapMObjLItem>.sapMLIBContent>.sapMLIBContentNF >.sapMObjLTopRow:last-child {
+	padding-bottom: 1rem;
+}
+
+html[data-sap-ui-browser="ie9"] li.sapMLIB.sapMLIBNoFlex.sapMObjLItem>.sapMLIBContent>.sapMLIBContentNF >.sapMObjLTopRow {
+	padding-top: 0px;
+	padding-bottom: 0px;
 }

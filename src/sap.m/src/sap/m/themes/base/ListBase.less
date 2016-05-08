@@ -4,7 +4,6 @@
 .sapMList {
 	position: relative;	/* This should not break the list but help swipe list content position calculation */
 	box-sizing: border-box;
-	overflow: hidden;
 }
 
 .sapMListUl {
@@ -36,6 +35,10 @@
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
+}
+
+.sapMListDummyArea {
+	position: fixed; /* keep it in the visible viewport, so that IE does not scroll on focus */
 }
 
 /* swipe animations */
@@ -117,25 +120,19 @@
 }
 
 /* Growing feature */
-.sapMGrowingListTrigger,
-.sapMGrowingListLoading {
+.sapMGrowingListTrigger {
 	display: block;
 	text-align: center;
 	overflow: hidden;
 }
-.sapMGrowingListBusyIndicator {
-	float: left;
-	overflow: hidden;
+
+.sapMGrowingListDescription{
+	display: none;
+}
+
+.sapMGrowingListBusyIndicatorVisible .sapMGrowingListTriggerText,
+.sapMGrowingListBusyIndicatorVisible .sapMGrowingListDescription {
 	visibility: hidden;
-	width: 2.0em;
-	height: 2.0em;
-}
-.sapMGrowingListBusyIndicatorVisible {
-	visibility: visible;
-}
-.sapMGrowingListLoading > .sapMGrowingListBusyIndicator {
-	float: none;
-	visibility: visible;
 }
 
 /* mixin call for creating container content padding classes (arguments: rootContainer, contentSelector) */

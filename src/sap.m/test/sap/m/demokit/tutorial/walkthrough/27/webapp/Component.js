@@ -7,26 +7,23 @@ sap.ui.define([
 
 	return UIComponent.extend("sap.ui.demo.wt.Component", {
 
-		metadata: {
+		metadata : {
 			manifest: "json"
 		},
 
-		init: function () {
+		init : function () {
 
 			// call the init function of the parent
 			UIComponent.prototype.init.apply(this, arguments);
 
 			// set data model
 			var oData = {
-				recipient: {
-					name: "World"
+				recipient : {
+					name : "World"
 				}
 			};
 			var oModel = new JSONModel(oData);
 			this.setModel(oModel);
-
-			// disable batch grouping for v2 API of the northwind service
-			this.getModel("invoice").setUseBatch(false);
 
 			// set dialog
 			this.helloDialog = new HelloDialog();

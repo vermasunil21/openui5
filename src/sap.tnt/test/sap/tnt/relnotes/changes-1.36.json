@@ -1,0 +1,26 @@
+{
+  "1.36.1": {
+    "date": "February 2016",
+    "notes": [
+      {
+        "id": "3a91b31344fdd066a7f9f20237b008f3c63aff7c",
+        "author": "I312031 \u003cteodor.taushanov@sap.com\u003e",
+        "type": "FIX",
+        "text": "sap.tnt.NavigationList: Focus is now styled correctly",
+        "references": []
+      }
+    ]
+  },
+  "1.36.5": {
+    "date": "March 2016",
+    "notes": [
+      {
+        "id": "4aa146730c7326bbee55fe95d3c8203ec8cd8bfb",
+        "author": "Lidiya Georgieva \u003clidiya.georgieva@sap.com\u003e",
+        "type": "FIX",
+        "text": "sap.tnt.SideNavigation: Blinking effect on collapse is not visible anymore",
+        "references": []
+      }
+    ]
+  }
+}

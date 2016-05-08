@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>Test Page for sap.ui.dt.Plugin</title>
 
 		<style>
@@ -22,40 +22,49 @@
 				data-sap-ui-libs="sap.ui.dt,sap.m,sap.ui.layout"
 				src="../../../../../resources/sap-ui-core.js">
 		</script>
-		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 		<script type="text/javascript">
 
+		jQuery.sap.require("sap.ui.qunit.qunit-coverage");
+
 		jQuery.sap.require("sap.ui.dt.DesignTime");
 		jQuery.sap.require("sap.ui.dt.Plugin");
 
 		QUnit.module("Given that an Plugin is initialized with register methods", {
-			beforeEach : function() {
+			beforeEach : function(assert) {
+				var done = assert.async();
+
 				this.oButton = new sap.m.Button();
 				this.oLayout = new sap.ui.layout.VerticalLayout({
 					content : [
 						this.oButton
 					]
-				});
+				}).placeAt("content");
 
 				this.oDesignTime = new sap.ui.dt.DesignTime({
 					rootElements : [this.oLayout]
 				});
 
+				this.oDesignTime.attachEventOnce("synced", function() {
+					sap.ui.getCore().applyChanges();
+					done();
+				});
+
 				this.oPlugin = new sap.ui.dt.Plugin();
-				this.iRegisterOverlayCalls = 0;
+				this.iregisterElementOverlayCalls = 0;
 				this.iRegisterAggregationOverlayCalls = 0;
 				var that = this;
-				this.oPlugin.registerOverlay = function() {
-					that.iRegisterOverlayCalls += 1;
+				this.oPlugin.registerElementOverlay = function() {
+					that.iregisterElementOverlayCalls += 1;
 				};
 				this.oPlugin.registerAggregationOverlay = function() {
 					that.iRegisterAggregationOverlayCalls += 1;
 				};
-				this.oPlugin.deregisterOverlay = function() {
-					that.iRegisterOverlayCalls -= 1;
+				this.oPlugin.deregisterElementOverlay = function() {
+					that.iregisterElementOverlayCalls -= 1;
 				};
 				this.oPlugin.deregisterAggregationOverlay = function() {
 					that.iRegisterAggregationOverlayCalls -= 1;
@@ -71,21 +80,35 @@
 
 		QUnit.test("when the plugin is added to designTime with two controls", function(assert) {
 			this.oDesignTime.addPlugin(this.oPlugin);
-			assert.strictEqual(this.iRegisterOverlayCalls, 2, "register was called for two overlays");
+			assert.strictEqual(this.iregisterElementOverlayCalls, 2, "register was called for two overlays");
 			var iAggregationCount = Object.keys(this.oLayout.getMetadata().getAllAggregations()).length + Object.keys(this.oButton.getMetadata().getAllAggregations()).length;
 			assert.strictEqual(this.iRegisterAggregationOverlayCalls, iAggregationCount, "register was called for all aggregation overlays");
 		});
 
-		QUnit.test("when the plugin is added to designTime and new control is added to designTime", function(assert) {
-			var oLayout = new sap.ui.layout.VerticalLayout();
+		QUnit.test("when the plugin is added to designTime and new controls are added to designTime", function(assert) {
+			var done = assert.async();
+			var that = this;
+
+			var oButton = new sap.m.Button();
+			var oLayout = new sap.ui.layout.VerticalLayout({
+				content : oButton
+			});
 
 			this.oDesignTime.addPlugin(this.oPlugin);
-			this.iRegisterOverlayCalls = 0;
+			this.iregisterElementOverlayCalls = 0;
 			this.iRegisterAggregationOverlayCalls = 0;
 
+			oLayout.placeAt("content");
+			sap.ui.getCore().applyChanges();
+
 			this.oDesignTime.addRootElement(oLayout);
-			assert.strictEqual(this.iRegisterOverlayCalls, 1, "register was called for a new control");
-			assert.strictEqual(this.iRegisterAggregationOverlayCalls, Object.keys(oLayout.getMetadata().getAllAggregations()).length , "register was called for all new aggregations");
+
+			this.oDesignTime.attachEventOnce("synced", function() {
+				assert.strictEqual(that.iregisterElementOverlayCalls, 2, "register was called for all new control");
+				assert.strictEqual(that.iRegisterAggregationOverlayCalls, Object.keys(oLayout.getMetadata().getAllAggregations()).length + Object.keys(oButton.getMetadata().getAllAggregations()).length , "register was called for all new aggregations");
+
+				done();
+			});
 		});
 
 		QUnit.test("when the plugin is added to designTime and then removed from DT", function(assert) {
@@ -93,7 +116,7 @@
 
 			this.oDesignTime.addPlugin(this.oPlugin);
 			this.oDesignTime.removePlugin(this.oPlugin);
-			assert.strictEqual(this.iRegisterOverlayCalls, 0, "registered overlays are deregistered");
+			assert.strictEqual(this.iregisterElementOverlayCalls, 0, "registered overlays are deregistered");
 			assert.strictEqual(this.iRegisterAggregationOverlayCalls, 0, "registered aggregations are deregistered");
 		});
 

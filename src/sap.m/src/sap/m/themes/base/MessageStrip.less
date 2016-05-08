@@ -6,11 +6,21 @@
 	font-weight: normal;
 	padding: 0.4375rem 1rem;
 	position: relative;
-	-webkit-transition: opacity 0.2s;
-	transition: opacity 0.2s;
 
 	&[data-sap-ui-ms-closable='true'] > .sapMMsgStripMessage {
 		margin-right: 1rem;
+	}
+}
+
+html[data-sap-ui-animation='on'] {
+	.sapMMsgStrip {
+		-webkit-transition: opacity 0.2s;
+		transition: opacity 0.2s;
+	}
+
+	.sapMMsgStripCloseButton {
+		-webkit-transition: color 0.1s;
+		transition: color 0.1s;
 	}
 }
 
@@ -59,13 +69,6 @@
 	font-family: 'SAP-icons';
 	font-size: 0.75rem;
 	cursor: pointer;
-	opacity: 0.6;
-	-webkit-transition: opacity 0.1s;
-	transition: opacity 0.1s;
-
-	&:hover {
-		opacity: 1;
-	}
 
 	&:focus {
 		outline: 0;

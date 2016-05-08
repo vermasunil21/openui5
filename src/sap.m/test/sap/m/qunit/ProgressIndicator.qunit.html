@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>QUnit ProgressIndicator</title>
 
 <link rel="stylesheet"
@@ -76,6 +76,23 @@
 		equal(oDomRefPIBar.style.width, "30%", "width should be the same");
 	});
 
+	test("tooltip", function() {
+		var sTooltipText = "Some tooltip";
+		var oProgressIndicator = new sap.m.ProgressIndicator({
+			percentValue: 50,
+			width: "100%",
+			tooltip: sTooltipText
+		});
+
+		oProgressIndicator.placeAt("qunit-fixture");
+		sap.ui.getCore().applyChanges();
+
+		strictEqual(oProgressIndicator.$().attr("title"), sTooltipText, "Tooltip is in the DOM");
+
+		sTooltipText = undefined;
+		oProgressIndicator.destroy();
+	});
+
 	test("percentValue greater half", function() {
 		equal(jQuery.sap.byId("pi1").hasClass("sapMPIValueGreaterHalf"), false, "css-class sapMPIValueGreaterHalf should not be set");
 		equal(jQuery.sap.byId("pi2").hasClass("sapMPIValueGreaterHalf"), true, "css-class sapMPIValueGreaterHalf should be set");
@@ -96,14 +113,14 @@
 		var iPercentTest = 120;
 		oProgInd.setPercentValue(iPercentTest);
 		var iPercentAfter = oProgInd.getPercentValue();
-		equal(iPercentAfter, 30, "we expect value to be the same as before");
+		equal(iPercentAfter, 0, "the value should be set to the default one");
 	});
 
 	test("setPercentValue wrong input (int out of range, too small)", function() {
 		var iPercentTest = -20;
 		oProgInd.setPercentValue(iPercentTest);
 		var iPercentAfter = oProgInd.getPercentValue();
-		equal(iPercentAfter, 30, "we expect value to be the same as before");
+		equal(iPercentAfter, 0, "the value should be set to the default one");
 	});
 
 	test("text should not be rendered when displayValue is not set", function() {
@@ -225,6 +242,25 @@
 		equal(bDirAttributeExists, true, "the attribute 'dir' should exist");
 	});
 
+	test("getAccessibilityInfo", function() {
+		var oControl = new sap.m.ProgressIndicator({percentValue: 50});
+		ok(!!oControl.getAccessibilityInfo, "ProgressIndicator has a getAccessibilityInfo function");
+		var oInfo = oControl.getAccessibilityInfo();
+		ok(!!oInfo, "getAccessibilityInfo returns a info object");
+		strictEqual(oInfo.role, "progressbar", "AriaRole");
+		strictEqual(oInfo.type, sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_PROGRESS"), "Type");
+		strictEqual(oInfo.description, sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_STATE_PROGRESS", [50]), "Description");
+		strictEqual(oInfo.focusable, true, "Focusable");
+		strictEqual(oInfo.enabled, true, "Enabled");
+		ok(oInfo.editable === undefined || oInfo.editable === null, "Editable");
+		oControl.setPercentValue(10);
+		oControl.setEnabled(false);
+		oInfo = oControl.getAccessibilityInfo();
+		strictEqual(oInfo.description, sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_STATE_PROGRESS", [10]), "Description");
+		strictEqual(oInfo.focusable, false, "Focusable");
+		strictEqual(oInfo.enabled, false, "Enabled");
+		oControl.destroy();
+	});
 </script>
 
 </head>

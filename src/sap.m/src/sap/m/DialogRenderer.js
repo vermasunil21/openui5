@@ -30,7 +30,7 @@ sap.ui.define(['jquery.sap.global', './BarRenderer'],
 				bVerticalScrolling = oControl.getVerticalScrolling(),
 				sState = oControl.getState(),
 				bStretch = oControl.getStretch(),
-				bStretchOnPhone = oControl.getStretchOnPhone(),
+				bStretchOnPhone = oControl.getStretchOnPhone() && sap.ui.Device.system.phone,
 				bResizable = oControl.getResizable(),
 				bDraggable = oControl.getDraggable();
 
@@ -45,10 +45,9 @@ sap.ui.define(['jquery.sap.global', './BarRenderer'],
 			// write the HTML into the render manager
 			// the initial size of the dialog have to be 0, because if there is a large dialog content the initial size can be larger then the html's height (scroller)
 			// The scroller will make the initial window width smaller and in the next recalculation the maxWidth will be larger.
-			var initialSmallSize = bStretch ? '' : 'max-height: auto; max-width: auto;';
 			var initialWidth = oControl.getContentWidth() ? ' width: ' + oControl.getContentWidth() + ';' : '';
 			var initialHeight = oControl.getContentHeight() ? ' height: ' + oControl.getContentHeight() + ';' : '';
-			var initialStyles = "style='" + initialSmallSize + initialWidth + initialHeight + "'";
+			var initialStyles = "style='" + initialWidth + initialHeight + "'";
 
 			oRm.write('<div ' + initialStyles);
 			oRm.writeControlData(oControl);
@@ -56,7 +55,19 @@ sap.ui.define(['jquery.sap.global', './BarRenderer'],
 			oRm.addClass("sapMDialog-CTX");
 			oRm.addClass("sapMPopup-CTX");
 
-			if (bStretch || bStretchOnPhone) {
+			if (oControl.isOpen()) {
+				oRm.addClass("sapMDialogOpen");
+			}
+
+			if (window.devicePixelRatio > 1) {
+				oRm.addClass("sapMDialogHighPixelDensity");
+			}
+
+			if (oControl._bDisableRepositioning) {
+				oRm.addClass("sapMDialogTouched");
+			}
+
+			if (bStretch || (bStretchOnPhone)) {
 				oRm.addClass("sapMDialogStretched");
 			}
 
@@ -84,17 +95,11 @@ sap.ui.define(['jquery.sap.global', './BarRenderer'],
 				});
 			}
 
-			if (oHeader) {
-				oRm.writeAccessibilityState(oControl, {
-					labelledby: oHeader.getId()
-				});
-			}
-
 			if (oControl._forceDisableScrolling) {
 				oRm.addClass("sapMDialogWithScrollCont");
 			}
 
-			if (oSubHeader) {
+			if (oSubHeader && oSubHeader.getVisible()) {
 				oRm.addClass("sapMDialogWithSubHeader");
 			}
 

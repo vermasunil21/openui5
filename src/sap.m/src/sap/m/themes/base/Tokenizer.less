@@ -58,12 +58,12 @@
 	width: calc(~"100% - 2rem");
 }
 
-.sap-phone .sapMTokenizerMultiLine {
+html.sap-phone .sapMTokenizerMultiLine {
 	padding-left: 1rem;
 	padding-right: 1rem;
 }
 
-.sap-phone .sapMTokenizerMultiLine > .sapMTokenizerScrollContainer > .sapMToken {
+html.sap-phone .sapMTokenizerMultiLine > .sapMTokenizerScrollContainer > .sapMToken {
 	display: table;
 }
 
@@ -76,7 +76,7 @@
 }
 
 .sapUiSizeCompact .sapMTokenizer .sapMToken{
-	height: 1.25rem;	
+	height: 1.25rem;
 	margin-top: 0.125rem;
 	margin-bottom: 0.125rem;
 	margin-right: 0.125rem;
@@ -91,13 +91,14 @@
 	width: calc(~"100% - 1.25rem");
 }
 
-.sapMTokenizer:focus{
-	outline: none;
-}
-
 .sapMTokenizerScrollContainer{
 	display: inline-block;
-	-moz-user-select: none; 
-	-webkit-user-select: none; 
+	-moz-user-select: none;
+	-webkit-user-select: none;
 	-ms-user-select: none;
+}
+
+.sapMMultiInputMultiModeBorder .sapMTokenizerEmpty {
+	height: 0;
+	display: block;
 }

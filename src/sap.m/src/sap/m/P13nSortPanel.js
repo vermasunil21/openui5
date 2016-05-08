@@ -10,7 +10,7 @@ sap.ui.define([
 
 	/**
 	 * Constructor for a new P13nSortPanel.
-	 * 
+	 *
 	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 * @class The P13nSortPanel control is used to define settings for sorting in table personalization.
@@ -31,7 +31,7 @@ sap.ui.define([
 				/**
 				 * defines if the mediaQuery or a ContainerResize will be used for layout update. When the ConditionPanel is used on a dialog the
 				 * property should be set to true!
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				containerQuery: {
@@ -43,7 +43,7 @@ sap.ui.define([
 				/**
 				 * can be used to control the layout behavior. Default is "" which will automatically change the layout. With "Desktop", "Table"
 				 * or"Phone" you can set a fixed layout.
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				layoutMode: {
@@ -66,7 +66,7 @@ sap.ui.define([
 
 				/**
 				 * defined Sort Items
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				sortItems: {
@@ -80,31 +80,61 @@ sap.ui.define([
 
 				/**
 				 * event raised when a SortItem was added
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				addSortItem: {},
 
 				/**
 				 * remove a sort item
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				removeSortItem: {},
 
 				/**
 				 * update a sort item
-				 * 
+				 *
 				 * @since 1.26
 				 */
 				updateSortItem: {}
 			}
+		},
+		renderer: function(oRm, oControl) {
+			// Return immediately if control is invisible
+			if (!oControl.getVisible()) {
+				return;
+			}
+
+			// start SortPanel
+			oRm.write("<section");
+			oRm.writeControlData(oControl);
+			oRm.addClass("sapMSortPanel");
+			oRm.writeClasses();
+			oRm.writeStyles();
+			oRm.write(">");
+
+			// render content
+			oRm.write("<div");
+			oRm.addClass("sapMSortPanelContent");
+			oRm.addClass("sapMSortPanelBG");
+
+			oRm.writeClasses();
+			oRm.write(">");
+			var aChildren = oControl.getAggregation("content");
+			var iLength = aChildren.length;
+			for (var i = 0; i < iLength; i++) {
+				oRm.renderControl(aChildren[i]);
+			}
+			oRm.write("</div>");
+
+			oRm.write("</section>");
 		}
 	});
 
 	/**
 	 * returns the array of conditions.
-	 * 
+	 *
 	 * @private
 	 */
 	P13nSortPanel.prototype._getConditions = function() {
@@ -126,7 +156,7 @@ sap.ui.define([
 	/**
 	 * check if the entered/modified conditions are correct, marks invalid fields yellow (Warning state) and opens a popup message dialog to give the
 	 * user the feedback that some values are wrong or missing.
-	 * 
+	 *
 	 * @public
 	 * @since 1.26
 	 */
@@ -136,7 +166,7 @@ sap.ui.define([
 
 	/**
 	 * removes all invalid sort conditions.
-	 * 
+	 *
 	 * @public
 	 * @since 1.28
 	 */
@@ -146,7 +176,7 @@ sap.ui.define([
 
 	/**
 	 * removes all errors/warning states from of all sort conditions.
-	 * 
+	 *
 	 * @public
 	 * @since 1.28
 	 */
@@ -164,7 +194,7 @@ sap.ui.define([
 
 	/**
 	 * setter for the supported operations array
-	 * 
+	 *
 	 * @public
 	 * @since 1.26
 	 * @param {array} array of operations [sap.m.P13nConditionOperation.BT, sap.m.P13nConditionOperation.EQ]
@@ -179,10 +209,12 @@ sap.ui.define([
 
 	/**
 	 * Initialize the control
-	 * 
+	 *
 	 * @private
 	 */
 	P13nSortPanel.prototype.init = function() {
+		this.setType(sap.m.P13nPanelType.sort);
+
 		sap.ui.getCore().loadLibrary("sap.ui.layout");
 		jQuery.sap.require("sap.ui.layout.Grid");
 
@@ -203,6 +235,7 @@ sap.ui.define([
 			dataChange: this._handleDataChange()
 		});
 		this._oSortPanel.setOperations(this._aOperations);
+		this._oSortPanel._sAddRemoveIconTooltipKey = "SORT";
 
 		this.addAggregation("content", this._oSortPanel);
 	};
@@ -220,57 +253,84 @@ sap.ui.define([
 		this._aOperations = destroyHelper(this._aOperations);
 	};
 
+	P13nSortPanel.prototype.onBeforeRendering = function() {
+		// P13nPanel.prototype.onBeforeRendering.apply(this, arguments); does not exist!!!!
+
+		if (this._bUpdateRequired) {
+			this._bUpdateRequired = false;
+
+			var aKeyFields = [];
+			var sModelName = (this.getBindingInfo("items") || {}).model;
+			var fGetValueOfProperty = function(sName, oContext, oItem) {
+				var oBinding = oItem.getBinding(sName);
+				if (oBinding && oContext) {
+					return oContext.getObject()[oBinding.getPath()];
+				}
+				return oItem.getMetadata().getProperty(sName) ? oItem.getProperty(sName) : oItem.getAggregation(sName);
+			};
+			this.getItems().forEach(function(oItem_) {
+				var oContext = oItem_.getBindingContext(sModelName);
+				// Update key of model (in case of 'restore' the key in model gets lost because it is overwritten by Restore Snapshot)
+				if (oItem_.getBinding("key")) {
+					oContext.getObject()[oItem_.getBinding("key").getPath()] = oItem_.getKey();
+				}
+				aKeyFields.push({
+					key: oItem_.getColumnKey(),
+					text: fGetValueOfProperty("text", oContext, oItem_),
+					tooltip: fGetValueOfProperty("tooltip", oContext, oItem_)
+				});
+			});
+			aKeyFields.splice(0, 0, {
+				key: null,
+				text: sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("P13NDIALOG_SELECTION_NONE")
+			});
+			this._oSortPanel.setKeyFields(aKeyFields);
+
+			var aConditions = [];
+			sModelName = (this.getBindingInfo("sortItems") || {}).model;
+			this.getSortItems().forEach(function(oSortItem_) {
+				// Note: current implementation assumes that the length of sortItems aggregation is equal
+				// to the number of corresponding model items.
+				// Currently the model data is up-to-date so we need to resort to the Binding Context;
+				// the "sortItems" aggregation data - obtained via getSortItems() - has the old state !
+				var oContext = oSortItem_.getBindingContext(sModelName);
+				// Update key of model (in case of 'restore' the key in model gets lost because it is overwritten by Restore Snapshot)
+				if (oSortItem_.getBinding("key")) {
+					oContext.getObject()[oSortItem_.getBinding("key").getPath()] = oSortItem_.getKey();
+				}
+				aConditions.push({
+					key: oSortItem_.getKey(),
+					keyField: fGetValueOfProperty("columnKey", oContext, oSortItem_),
+					operation: fGetValueOfProperty("operation", oContext, oSortItem_)
+				});
+			});
+			this._oSortPanel.setConditions(aConditions);
+		}
+	};
+
 	P13nSortPanel.prototype.addItem = function(oItem) {
 		P13nPanel.prototype.addItem.apply(this, arguments);
 
-		var oKeyField = {
-			key: oItem.getColumnKey(),
-			text: oItem.getText(),
-			tooltip: oItem.getTooltip()
-		};
-
-		if (!this._bKeyFieldsChanged) {
-			setTimeout(jQuery.proxy( function() { 
-				this._bKeyFieldsChanged = false;
-				if (this._oSortPanel) {
-					this._oSortPanel.setKeyFields(this._aKeyFields);
-				}
-			}, this), 0);			
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
 		}
-		this._bKeyFieldsChanged = true;
-		this._aKeyFields.push(oKeyField);
 	};
 
 	P13nSortPanel.prototype.removeItem = function(oItem) {
 		P13nPanel.prototype.removeItem.apply(this, arguments);
 
-		var foundIndex = -1;
-		this._aKeyFields.some(function(item, index) {
-			if (item.key === oItem.getColumnKey()) {
-				foundIndex = index;
-				return true;
-			}
-		});
-		
-		if (foundIndex != -1) {
-			if (!this._bKeyFieldsChanged) {
-				setTimeout(jQuery.proxy( function() { 
-					this._bKeyFieldsChanged = false;
-					if (this._oSortPanel) {
-						this._oSortPanel.setKeyFields(this._aKeyFields);
-					}
-				}, this), 0);			
-			}
-			this._bKeyFieldsChanged = true;
-			this._aKeyFields.splice(foundIndex, 1);
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
 		}
 	};
 
 	P13nSortPanel.prototype.destroyItems = function() {
 		this.destroyAggregation("items");
-		if (this._oSortPanel) {
-			this._oSortPanel.removeAllKeyFields();
+
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
 		}
+
 		return this;
 	};
 
@@ -278,51 +338,34 @@ sap.ui.define([
 		this.addAggregation("sortItems", oSortItem);
 
 		if (!this._bIgnoreBindCalls) {
-			var aConditions = [];
-			this.getSortItems().forEach(function(oSortItem_) {
-				aConditions.push({
-					key: oSortItem_.getKey(),
-					keyField: oSortItem_.getColumnKey(),
-					operation: oSortItem_.getOperation()
-				});
-			});
-			this._oSortPanel.setConditions(aConditions);
+			this._bUpdateRequired = true;
 		}
 	};
 
-	P13nSortPanel.prototype.insertSortItem = function(oSortItem) {
-		this.insertAggregation("sortItems", oSortItem);
-		// TODO: implement this
+	P13nSortPanel.prototype.insertSortItem = function(oSortItem, iIndex) {
+		this.insertAggregation("sortItems", oSortItem, iIndex);
+
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
+		}
+
 		return this;
 	};
 
 	P13nSortPanel.prototype.updateSortItems = function(sReason) {
 		this.updateAggregation("sortItems");
 
-		if (sReason !== "change") {
-			return;
-		}
-		if (!this._bIgnoreBindCalls) {
-			var aConditions = [];
-			this.getSortItems().forEach(function(oSortItem_) {
-				// Note: current implementation assumes that the length of sortItems aggregation is equal
-				// to the number of corresponding model items.
-				// Currently the model data is up-to-date so we need to resort to the Binding Context;
-				// the "sortItems" aggregation data - obtained via getSortItems() - has the old state !
-				var oContext = oSortItem_.getBindingContext();
-				var oModelItem = oContext.getObject();
-				aConditions.push({
-					key: oSortItem_.getKey(),
-					keyField: oModelItem.columnKey,
-					operation: oModelItem.operation
-				});
-			});
-			this._oSortPanel.setConditions(aConditions);
+		if (sReason == "change" && !this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
 		}
 	};
 
 	P13nSortPanel.prototype.removeSortItem = function(oSortItem) {
 		oSortItem = this.removeAggregation("sortItems", oSortItem);
+
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
+		}
 
 		return oSortItem;
 	};
@@ -330,7 +373,9 @@ sap.ui.define([
 	P13nSortPanel.prototype.removeAllSortItems = function() {
 		var aSortItems = this.removeAllAggregation("sortItems");
 
-		this._oSortPanel.setConditions([]);
+		if (!this._bIgnoreBindCalls) {
+			this._bUpdateRequired = true;
+		}
 
 		return aSortItems;
 	};
@@ -339,7 +384,7 @@ sap.ui.define([
 		this.destroyAggregation("sortItems");
 
 		if (!this._bIgnoreBindCalls) {
-			this._oSortPanel.setConditions([]);
+			this._bUpdateRequired = true;
 		}
 
 		return this;
@@ -353,18 +398,10 @@ sap.ui.define([
 			var sOperation = oEvent.getParameter("operation");
 			var sKey = oEvent.getParameter("key");
 			var iIndex = oEvent.getParameter("index");
-
-			var oSortItemData = null;
-			if (oNewData) {
-				var oSortItemData = new sap.m.P13nSortItem({
-					key: sKey,
-					columnKey: oNewData.keyField,
-					operation: oNewData.operation
-				});
-			}
+			var oSortItem;
 
 			if (sOperation === "update") {
-				var oSortItem = that.getSortItems()[iIndex];
+				oSortItem = that.getSortItems()[iIndex];
 				if (oSortItem) {
 					oSortItem.setColumnKey(oNewData.keyField);
 					oSortItem.setOperation(oNewData.operation);
@@ -372,25 +409,42 @@ sap.ui.define([
 				that.fireUpdateSortItem({
 					key: sKey,
 					index: iIndex,
-					sortItemData: oSortItemData
+					sortItemData: oSortItem
 				});
+				that._notifyChange();
 			}
 			if (sOperation === "add") {
+				oSortItem = new sap.m.P13nSortItem({
+					key: sKey,
+					columnKey: oNewData.keyField,
+					operation: oNewData.operation
+				});
 				that._bIgnoreBindCalls = true;
 				that.fireAddSortItem({
 					key: sKey,
 					index: iIndex,
-					sortItemData: oSortItemData
+					sortItemData: oSortItem
 				});
 				that._bIgnoreBindCalls = false;
+				that._notifyChange();
 			}
 			if (sOperation === "remove") {
+				that._bIgnoreBindCalls = true;
 				that.fireRemoveSortItem({
 					key: sKey,
 					index: iIndex
 				});
+				that._bIgnoreBindCalls = false;
+				that._notifyChange();
 			}
 		};
+	};
+
+	P13nSortPanel.prototype._notifyChange = function() {
+		var fListener = this.getChangeNotifier();
+		if (fListener) {
+			fListener(this);
+		}
 	};
 
 	return P13nSortPanel;

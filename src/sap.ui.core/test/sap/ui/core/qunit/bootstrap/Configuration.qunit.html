@@ -1,12 +1,12 @@
 <!DOCTYPE HTML>
-<!-- 
+<!--
   Tested class: sap.ui.core.Configuration
   Author: d020684
   -->
 <html>
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta charset="utf-8">
 
 	<!-- Initialization -->
 	<script>
@@ -14,8 +14,8 @@
 			theme : "sap_bluecrystal"
 		}
 	</script>
-	
-	<script id="sap-ui-bootstrap" 
+
+	<script id="sap-ui-bootstrap"
 		src="../../../../../../resources/sap-ui-core.js"
 		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-calendarType="islamic"
@@ -23,8 +23,8 @@
 		data-sap-ui-noConflict="true"
 		data-sap-ui-libs="sap.ui.core">
 	</script>
-	
-	<link rel="stylesheet" href="../../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+
+	<link rel="stylesheet" href="../../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 	<script src="../../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 	<script src="../../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 	<script src="../../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
@@ -86,9 +86,22 @@
 			oCfg.setCalendarType(null);
 			oFormatSettings.setLegacyDateFormat("B");
 			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Islamic, "The legacy date format 'B' changes the calendar type to islamic");
+
+			oFormatSettings.setLegacyDateFormat("7");
+			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Japanese, "The legacy date format '7' changes the calendar type to japanese");
+
+			oFormatSettings.setLegacyDateFormat("A");
+			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Islamic, "The legacy date format 'A' changes the calendar type to islamic");
+			oFormatSettings.setLegacyDateFormat("8");
+			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Japanese, "The legacy date format '8' changes the calendar type to japanese");
+
+			oFormatSettings.setLegacyDateFormat("A");
+			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Islamic, "The legacy date format 'A' changes the calendar type to islamic");
+			oFormatSettings.setLegacyDateFormat("9");
+			assert.equal(oCfg.getCalendarType(), sap.ui.core.CalendarType.Japanese, "The legacy date format '9' changes the calendar type to japanese");
 		});
 	</script>
-  
+
 </head>
 <body>
 	<div id="qunit"></div>

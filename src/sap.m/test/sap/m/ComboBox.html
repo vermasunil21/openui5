@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta charset="UTF-8">
+		<meta charset="utf-8">
 		<title>sap.m.ComboBox</title>
 		<script id="sap-ui-bootstrap"
 				src="../../../resources/sap-ui-core.js"
@@ -385,9 +385,10 @@
 		oModel.setData(mData);
 		sap.ui.getCore().setModel(oModel);
 
-		var oItemTemplate = new sap.ui.core.Item({
+		var oItemTemplate = new sap.ui.core.ListItem({
 			key: "{key}",
-			text: "{text}"
+			text: "{text}",
+			additionalText: "{key}"
 		});
 
 		var oComboBox = new sap.m.ComboBox({
@@ -404,10 +405,16 @@
 
 			selectionChange: function(oControlEvent) {
 				var oSelectedItem = oControlEvent.getParameter("selectedItem");
+				oSelectedItem = oSelectedItem ? oSelectedItem.getText() : oSelectedItem;
+				jQuery.sap.log.info('Event fired: "selectionChange" selected item change to ' + oSelectedItem + " on", this);
+			}
+		});
 
-				if (oSelectedItem) {
-					jQuery.sap.log.info('Event fired: "selectionChange" selected item change to ' + oSelectedItem.getText() + " on", this);
-				}
+		var oComboBoxTwoColumn = new sap.m.ComboBox({
+			showSecondaryValues: true,
+			items: {
+				path: "/items",
+				template: oItemTemplate
 			}
 		});
 
@@ -488,6 +495,10 @@
 			content: [
 				new sap.ui.core.HTML({ content: "<h3>Default</h3>" }),
 				oComboBox,
+				new sap.ui.core.HTML({ content: "<hr>" }),
+
+				new sap.ui.core.HTML({ content: "<h3>Two column layout</h3>" }),
+				oComboBoxTwoColumn,
 				new sap.ui.core.HTML({ content: "<hr>" }),
 
 				new sap.ui.core.HTML({ content: "<h3>Placeholder</h3>" }),

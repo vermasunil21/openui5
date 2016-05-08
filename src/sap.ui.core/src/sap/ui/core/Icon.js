@@ -7,6 +7,8 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 	function(jQuery, Device, Control, IconPool, library) {
 	"use strict";
 
+	// shortcut
+	var IconColor = library.IconColor;
 
 	/**
 	 * Constructor for a new Icon.
@@ -136,9 +138,6 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 	 * @private
 	 */
 	Icon.prototype.onmousedown = function(oEvent) {
-
-		this._bPressFired = false;
-
 		if (this.hasListeners("press") || this.hasListeners("tap")) {
 
 			// mark the event for components that needs to know if the event was handled
@@ -169,14 +168,6 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 	};
 
 	/**
-	 * Handle the touchstart event on the Icon.
-	 *
-	 * @param {jQuery.Event} oEvent The event object.
-	 * @private
-	 */
-	Icon.prototype.ontouchstart = Icon.prototype.onmousedown;
-
-	/**
 	 * Handle the mouseup event on the Icon.
 	 *
 	 * @param {jQuery.Event} oEvent The event object.
@@ -191,22 +182,6 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 			this._restoreColors();
 		}
 	};
-
-	/**
-	 * Handle the touchend event on the Icon.
-	 *
-	 * @param {jQuery.Event} oEvent The event object.
-	 * @private
-	 */
-	Icon.prototype.ontouchend = Icon.prototype.onmouseup;
-
-	/**
-	 * Handle the touchcancel event on the Icon.
-	 *
-	 * @param {jQuery.Event} oEvent The event object.
-	 * @private
-	 */
-	Icon.prototype.ontouchcancel = Icon.prototype.onmouseup;
 
 	/**
 	 * Handle the mouseover event on the Icon.
@@ -247,10 +222,7 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 		}
 
 		this.firePress({/* no parameters */});
-		this._bPressFired = true;
 	};
-
-	Icon.prototype.ontap = Icon.prototype.onclick;
 
 	/* ----------------------------------------------------------- */
 	/* Keyboard handling                                           */
@@ -315,20 +287,34 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 	/* =========================================================== */
 
 	Icon.prototype.setSrc = function(sSrc) {
-		var oIconInfo = IconPool.getIconInfo(sSrc),
-			bTextNeeded = Device.browser.internet_explorer && Device.browser.version < 9,
-			$Icon = this.$();
+		var oIconInfo = IconPool.getIconInfo(sSrc);
 
 		if (oIconInfo) {
+			var $Icon = this.$();
 			$Icon.css("font-family", oIconInfo.fontFamily);
+			$Icon.attr("data-sap-ui-icon-content", oIconInfo.content);
+			$Icon.toggleClass("sapUiIconMirrorInRTL", !oIconInfo.suppressMirroring);
 
-			if (bTextNeeded) {
-				$Icon.text(oIconInfo.content);
+			var sTooltip = this.getTooltip_AsString(),
+				alabelledBy = this.getAriaLabelledBy(),
+				sAlt = this.getAlt(),
+				bUseIconTooltip = this.getUseIconTooltip();
+
+			if (sTooltip || bUseIconTooltip) {
+				$Icon.attr("title", sTooltip || oIconInfo.text || oIconInfo.name);
 			} else {
-				$Icon.attr("data-sap-ui-icon-content", oIconInfo.content);
+				$Icon.attr("title", null);
 			}
 
-			$Icon.toggleClass("sapUiIconMirrorInRTL", !oIconInfo.suppressMirroring);
+			// Only adopt "aria-label" if there is no "labelledby" as this is managed separately
+			if (alabelledBy.length === 0) {
+				if (sAlt || sTooltip || bUseIconTooltip) {
+					$Icon.attr("aria-label", sAlt || sTooltip || oIconInfo.text || oIconInfo.name);
+				} else {
+					$Icon.attr("aria-label", null);
+				}
+			}
+
 		}
 
 		// when the given sSrc can't be found in IconPool, rerender the icon is needed.
@@ -381,11 +367,11 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 			return;
 		}
 
-		jQuery.each(sap.ui.core.IconColor, function(sPropertyName, sPropertyValue) {
+		jQuery.each(IconColor, function(sPropertyName, sPropertyValue) {
 			that.removeStyleClass(sCSSClassNamePrefix + sPropertyValue);
 		});
 
-		if (sColor in sap.ui.core.IconColor) {
+		if (sColor in IconColor) {
 			// reset the relevant css property
 			$Icon.css(sCSSPropName, "");
 			this.addStyleClass(sCSSClassNamePrefix + sColor);
@@ -477,6 +463,26 @@ sap.ui.define(['jquery.sap.global', '../Device', './Control', './IconPool', './l
 		}
 
 		return mAccAttributes;
+	};
+
+	/**
+	 * @see {sap.ui.core.Control#getAccessibilityInfo}
+	 * @protected
+	 */
+	Icon.prototype.getAccessibilityInfo = function() {
+		if (this.getDecorative()) {
+			return null;
+		}
+
+		var bHasPressListeners = this.hasListeners("press");
+		var oIconInfo = IconPool.getIconInfo(this.getSrc());
+
+		return {
+			role: bHasPressListeners ? "button" : "img",
+			type: sap.ui.getCore().getLibraryResourceBundle("sap.ui.core").getText(bHasPressListeners ? "ACC_CTR_TYPE_BUTTON" : "ACC_CTR_TYPE_IMAGE"),
+			description: this.getAlt() || this.getTooltip_AsString() || (oIconInfo ? oIconInfo.text || oIconInfo.name : ""),
+			focusable: bHasPressListeners
+		};
 	};
 
 	return Icon;

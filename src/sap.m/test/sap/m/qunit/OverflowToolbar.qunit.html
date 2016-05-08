@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta charset="UTF-8">
+	<meta charset="utf-8">
 	<title>Test Page for sap.m.OverflowToolbar</title>
 	<script id="sap-ui-bootstrap"
 			data-sap-ui-noConflict="true"
@@ -193,6 +193,43 @@
 			strictEqual(oPopover.$().is(":visible"), false, "The overflow area is not visible after restoring to full size");
 			iVisibleButtons = getVisibleControls(oOverflowTB, "sap.m.Button");
 			strictEqual(iVisibleButtons, aDefaultContent.length, "Again all buttons should be visible");
+
+			oOverflowTB.destroy();
+		});
+
+		testAllFlexBoxModes("Shrinking a toolbar should also move custom buttons to the overflow", function () {
+
+			var MyButton = sap.m.Button.extend("sap.m.MyButton", {
+				renderer: sap.m.ButtonRenderer.render
+			});
+
+			// Create a toolbar 550px wide with 5 buttons x 100px each, so all can fit (button margins included)
+			var aDefaultContent = [
+						new MyButton({text: "1", width: "100px"}),
+						new MyButton({text: "2", width: "100px"}),
+						new MyButton({text: "3", width: "100px"}),
+						new MyButton({text: "4", width: "100px"}),
+						new MyButton({text: "5", width: "100px"})
+					],
+					oOverflowTB = createOverflowToolbar({
+						width: "550px"
+					}, aDefaultContent);
+
+			// Before the resize, all buttons are visible
+			var iVisibleButtons = getVisibleControls(oOverflowTB, "sap.m.MyButton");
+			strictEqual(iVisibleButtons, aDefaultContent.length, "Initially all buttons should be visible");
+
+			// Resize the toolbar
+			oOverflowTB.setWidth('400px');
+			sap.ui.getCore().applyChanges();
+
+			// After the resize there should be less buttons visible on the toolbar
+			iVisibleButtons = getVisibleControls(oOverflowTB, "sap.m.MyButton");
+			strictEqual(iVisibleButtons < aDefaultContent.length, true, "After the resize, the number of visible buttons should have decreased");
+
+			// There should be an overflow button and it should be visible
+			var oOverflowButton = oOverflowTB._getOverflowButton();
+			strictEqual(oOverflowButton.$().is(":visible"), true, "The overflow button is visible");
 
 			oOverflowTB.destroy();
 		});
@@ -1267,7 +1304,9 @@
 
 				// There should be an overflow button and it should be visible
 				var oOverflowButton = oOverflowTB._getOverflowButton();
-				strictEqual(oOverflowButton.$().is(":visible"), true, "The overflow button is visible");
+				if (sWidth > 0) {
+					strictEqual(oOverflowButton.$().is(":visible"), true, "The overflow button is visible when size > 0");
+				}
 
 				oOverflowTB.destroy();
 			}, this);
@@ -1507,6 +1546,61 @@
 
 			oOverflowTB.destroy();
 		});
+
+		test("Sliders work inside an overflow toolbar", function () {
+			var aContent = getDefaultContent(),
+					oOverflowTB,
+					spy,
+					oSlider = new sap.m.Slider({width: "200px"});
+
+			aContent.push(oSlider);
+
+			spy = this.spy(sap.m.OverflowToolbar.prototype, "_resetAndInvalidateToolbar");
+
+			oOverflowTB = createOverflowToolbar({width: 'auto'}, aContent);
+			this.clock.tick(1000);
+
+			var iInvalidationCountBefore = spy.callCount;
+
+			// Change the value of the slider
+			oSlider.setValue(1);
+
+			this.clock.tick(1000);
+
+			var iInvalidationCountAfter = spy.callCount;
+
+			strictEqual(iInvalidationCountAfter - iInvalidationCountBefore, 0, "Changing the value of the sliderLayout does not trigger recalculation (_resetAndInvalidateToolbar not called)");
+
+			oOverflowTB.destroy();
+		});
+
+		module("Control size measurement");
+
+		test("Size of a visible control reported correctly", function () {
+			var oTestButton = new sap.m.Button({width: "200px"});
+			oTestButton.placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+
+			var sSize = sap.m.OverflowToolbar._getOptimalControlWidth(oTestButton);
+			strictEqual(sSize, 200);
+		});
+
+		test("Size of an invisible control reported correctly", function () {
+			var oTestButton = new sap.m.Button({width: "200px", visible: false});
+			oTestButton.placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+
+			var sSize = sap.m.OverflowToolbar._getOptimalControlWidth(oTestButton);
+			strictEqual(sSize, 0);
+		});
+
+		test("Size of a control that was measured before, but now not in the DOM, reported correctly", function () {
+			var oTestButton = new sap.m.Button();
+
+			var sSize = sap.m.OverflowToolbar._getOptimalControlWidth(oTestButton, 333);
+			strictEqual(sSize, 333);
+		});
+
 
 	})();
 	</script>

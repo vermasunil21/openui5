@@ -278,7 +278,7 @@ if (typeof window.sap.ui !== "object") {
 	 * Windows Phone operating system name.
 	 *
 	 * @see sap.ui.Device.os#name
-	 * @alias sap.ui.Device.os.OS#WINDOWS_PHONE
+	 * @name sap.ui.Device.os.OS#WINDOWS_PHONE
 	 * @public
 	 */
 
@@ -361,6 +361,13 @@ if (typeof window.sap.ui !== "object") {
 			} else if (result[0].match(bbDevices)) {
 				return ({"name": OS.BLACKBERRY, "versionStr": result[4]});
 			}
+		}
+
+		//Firefox on Android
+		platform = /\((Android)[\s]?([\d][.\d]*)?;.*Firefox\/[\d][.\d]*/;
+		result = userAgent.match(platform);
+		if (result) {
+			return ({"name": OS.ANDROID, "versionStr": result.length == 3 ? result[2] : ""});
 		}
 
 		// Desktop
@@ -480,7 +487,9 @@ if (typeof window.sap.ui !== "object") {
 	/**
 	 * If this flag is set to <code>true</code>, the Apple Safari browser is used.
 	 *
-	 * <b>Note:</b> Please also note the flag {@link sap.ui.Device.browser#fullscreen}.
+	 * <b>Note:</b>
+	 * This flag is also <code>true</code> when the standalone (fullscreen) mode or webview is used on iOS devices.
+	 * Please also note the flags {@link sap.ui.Device.browser#fullscreen} and {@link sap.ui.Device.browser#webview}.
 	 *
 	 * @name sap.ui.Device.browser#safari
 	 * @type boolean
@@ -498,10 +507,22 @@ if (typeof window.sap.ui !== "object") {
 	 * If this flag is set to <code>true</code>, the Safari browser runs in standalone fullscreen mode on iOS.
 	 *
 	 * <b>Note:</b> This flag is only available if the Safari browser was detected. Furthermore, if this mode is detected,
-	 * technically a WebView is used and not a standard Safari. There might be slight differences in behavior and detection, e.g.
+	 * technically not a standard Safari is used. There might be slight differences in behavior and detection, e.g.
 	 * the availability of {@link sap.ui.Device.browser#version}.
 	 *
 	 * @name sap.ui.Device.browser#fullscreen
+	 * @type boolean
+	 * @since 1.31.0
+	 * @public
+	 */
+	/**
+	 * If this flag is set to <code>true</code>, the Safari browser runs in webview mode on iOS.
+	 *
+	 * <b>Note:</b> This flag is only available if the Safari browser was detected. Furthermore, if this mode is detected,
+	 * technically not a standard Safari is used. There might be slight differences in behavior and detection, e.g.
+	 * the availability of {@link sap.ui.Device.browser#version}.
+	 *
+	 * @name sap.ui.Device.browser#webview
 	 * @type boolean
 	 * @since 1.31.0
 	 * @public
@@ -570,7 +591,7 @@ if (typeof window.sap.ui !== "object") {
 	 * Android stock browser name.
 	 *
 	 * @see sap.ui.Device.browser#name
-	 * @alias sap.ui.Device.browser.BROWSER#ANDROID
+	 * @name sap.ui.Device.browser.BROWSER#ANDROID
 	 * @public
 	 */
 
@@ -624,9 +645,10 @@ if (typeof window.sap.ui !== "object") {
 		return res;
 	}
 
-	function getBrowser(customUa) {
+	function getBrowser(customUa, customNav) {
 		var b = calcBrowser(customUa);
 		var _ua = customUa || ua;
+		var _navigator = customNav || window.navigator;
 
 		// jQuery checks for user agent strings. We differentiate between browsers
 		var oExpMobile;
@@ -667,6 +689,16 @@ if (typeof window.sap.ui !== "object") {
 					webkit: true,
 					webkitVersion: webkitVersion
 				};
+			} else if ( _ua.match(/FxiOS\/(\d+\.\d+)/)) {
+				var version = parseFloat(RegExp.$1);
+				return {
+					name: BROWSER.FIREFOX,
+					versionStr: "" + version,
+					version: version,
+					mobile: true,
+					webkit: true,
+					webkitVersion: webkitVersion
+				};
 			} else if ( _ua.match(/Android .+ Version\/(\d+\.\d+)/) ) {
 				var version = parseFloat(RegExp.$1);
 				return {
@@ -679,6 +711,7 @@ if (typeof window.sap.ui !== "object") {
 				};
 			} else { // Safari might have an issue with _ua.match(...); thus changing
 				var oExp = /(Version|PhantomJS)\/(\d+\.\d+).*Safari/;
+				var bStandalone = _navigator.standalone;
 				if (oExp.test(_ua)) {
 					var aParts = oExp.exec(_ua);
 					var version = parseFloat(aParts[2]);
@@ -686,17 +719,26 @@ if (typeof window.sap.ui !== "object") {
 						name: BROWSER.SAFARI,
 						versionStr: "" + version,
 						fullscreen: false,
+						webview: false,
 						version: version,
 						mobile: oExpMobile.test(_ua),
 						webkit: true,
 						webkitVersion: webkitVersion,
 						phantomJS: aParts[1] === "PhantomJS"
 					};
-				} else { // other webkit based browser
-					var bFullScreenSafari = window.navigator.standalone && /iPhone|iPad|iPod/.test(_ua) && !(/CriOS/.test(_ua));
+				} else if (/iPhone|iPad|iPod/.test(_ua) && !(/CriOS/.test(_ua)) && !(/FxiOS/.test(_ua)) && (bStandalone === true || bStandalone === false)) {
+					//WebView or Standalone mode on iOS
 					return {
-						name: bFullScreenSafari ? BROWSER.SAFARI : undefined,
-						fullscreen: bFullScreenSafari ? bFullScreenSafari : undefined,
+						name: BROWSER.SAFARI,
+						version: -1,
+						fullscreen: bStandalone,
+						webview: !bStandalone,
+						mobile: oExpMobile.test(_ua),
+						webkit: true,
+						webkitVersion: webkitVersion
+					};
+				} else { // other webkit based browser
+					return {
 						mobile: oExpMobile.test(_ua),
 						webkit: true,
 						webkitVersion: webkitVersion,
@@ -851,7 +893,7 @@ if (typeof window.sap.ui !== "object") {
 	device.support.matchmedia = !!window.matchMedia;
 	var m = device.support.matchmedia ? window.matchMedia("all and (max-width:0px)") : null; //IE10 doesn't like empty string as argument for matchMedia, FF returns null when running within an iframe with display:none
 	device.support.matchmedialistener = !!(m && m.addListener);
-	if (device.browser.safari && device.browser.version < 6) {
+	if (device.browser.safari && device.browser.version < 6 && !device.browser.fullscreen && !device.browser.webview) {
 		//Safari seems to have addListener but no events are fired ?!
 		device.support.matchmedialistener = false;
 	}
@@ -1455,7 +1497,7 @@ if (typeof window.sap.ui !== "object") {
 	 * <b>Note:</b> This property is mainly for Microsoft Windows 8 (and following) devices where the mouse and touch event may be supported
 	 * natively by the browser being used. This property is set to <code>true</code> only when both mouse and touch event are natively supported.
 	 *
-	 * @alias sap.ui.Device.system#combi
+	 * @name sap.ui.Device.system#combi
 	 * @type boolean
 	 * @public
 	 */
@@ -1482,10 +1524,10 @@ if (typeof window.sap.ui !== "object") {
 		var isWin7 = device.os.windows && device.os.version === 7;
 
 		var s = {};
-		s.tablet = ((device.support.touch && !isWin7) || isWin8Upwards || !!_simMobileOnDesktop) && t;
-		s.phone = device.os.windows_phone || ((device.support.touch && !isWin7) || !!_simMobileOnDesktop) && !t;
-		s.desktop = (!s.tablet && !s.phone) || isWin8Upwards || isWin7;
-		s.combi = (s.desktop && s.tablet);
+		s.tablet = !!(((device.support.touch && !isWin7) || isWin8Upwards || !!_simMobileOnDesktop) && t);
+		s.phone = !!(device.os.windows_phone || ((device.support.touch && !isWin7) || !!_simMobileOnDesktop) && !t);
+		s.desktop = !!((!s.tablet && !s.phone) || isWin8Upwards || isWin7);
+		s.combi = !!(s.desktop && s.tablet);
 		s.SYSTEMTYPE = SYSTEMTYPE;
 
 		for (var type in SYSTEMTYPE) {

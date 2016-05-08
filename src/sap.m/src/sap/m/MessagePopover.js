@@ -6,10 +6,10 @@
 sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolbar", "./ToolbarSpacer", "./Bar", "./List",
 		"./StandardListItem", "./library", "sap/ui/core/Control", "./PlacementType", "sap/ui/core/IconPool",
 		"sap/ui/core/HTML", "./Text", "sap/ui/core/Icon", "./SegmentedButton", "./Page", "./NavContainer",
-		"./semantic/SemanticPage", "./Popover", "jquery.sap.dom"],
+		"./semantic/SemanticPage", "./Popover", "./MessagePopoverItem", "jquery.sap.dom"],
 	function (jQuery, ResponsivePopover, Button, Toolbar, ToolbarSpacer, Bar, List,
 			  StandardListItem, library, Control, PlacementType, IconPool,
-			  HTML, Text, Icon, SegmentedButton, Page, NavContainer, SemanticPage, Popover) {
+			  HTML, Text, Icon, SegmentedButton, Page, NavContainer, SemanticPage, Popover, MessagePopoverItem) {
 		"use strict";
 
 		/**
@@ -74,7 +74,12 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 					/**
 					 * A list with message items
 					 */
-					items: {type: "sap.m.MessagePopoverItem", multiple: true, singularName: "item"}
+					items: {type: "sap.m.MessagePopoverItem", multiple: true, singularName: "item"},
+
+					/**
+					 * A custom header button
+					 */
+					headerButton: {type: "sap.m.Button", multiple: false}
 				},
 				events: {
 					/**
@@ -154,7 +159,17 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 							 */
 							messageTypeFilter: {type: "sap.ui.core.MessageType"}
 						}
-					}
+					},
+
+					/**
+					 * This event will be fired when the long text description data from a remote URL is loaded
+					 */
+					longtextLoaded: {},
+
+					/**
+					 * This event will be fired when a validation of a URL from long text description is ready
+					 */
+					urlValidated: {}
 				}
 			}
 		});
@@ -172,7 +187,26 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			// Property names array
 			ASYNC_HANDLER_NAMES = ["asyncDescriptionHandler", "asyncURLHandler"],
 			// Private class variable used for static method below that sets default async handlers
-			DEFAULT_ASYNC_HANDLERS = {};
+			DEFAULT_ASYNC_HANDLERS = {
+				asyncDescriptionHandler: function (config) {
+					var sLongTextUrl = config.item.getLongtextUrl();
+					if (sLongTextUrl) {
+						jQuery.ajax({
+							type: "GET",
+							url: sLongTextUrl,
+							success: function (data) {
+								config.item.setDescription(data);
+								config.promise.resolve();
+							},
+							error: function() {
+								var sError = "A request has failed for long text data. URL: " + sLongTextUrl;
+								jQuery.sap.log.error(sError);
+								config.promise.reject(sError);
+							}
+						});
+					}
+				}
+			};
 
 		/**
 		 * Setter for default description and URL validation callbacks across all instances of MessagePopover
@@ -283,6 +317,17 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 * @private
 		 */
 		MessagePopover.prototype.onBeforeRenderingPopover = function () {
+
+			var headerButton = this.getHeaderButton();
+			if (headerButton) {
+				this._oListHeader.insertContent(headerButton, 2);
+			}
+
+			// Bind automatically to the MessageModel if no items are bound
+			if (!this.getItems().length) {
+				this._makeAutomaticBinding();
+			}
+
 			// Update lists only if 'items' aggregation is changed
 			if (this._bItemsChanged) {
 				this._clearLists();
@@ -293,6 +338,26 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			}
 
 			this._setInitialFocus();
+		};
+
+		/**
+		 * Makes automatic binding to the Message Model with default template
+		 *
+		 * @private
+		 */
+		MessagePopover.prototype._makeAutomaticBinding = function () {
+			this.setModel(sap.ui.getCore().getMessageManager().getMessageModel(), "message");
+			this.bindAggregation("items",
+					{
+						path: "message>/",
+						template: new MessagePopoverItem({
+							type: "{message>type}",
+							title: "{message>title}",
+							description: "{message>description}",
+							longtextUrl: "{message>longtextUrl}"
+						})
+					}
+			);
 		};
 
 		/**
@@ -780,6 +845,8 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 							// Adapt the link style
 							$link.removeClass('sapMMsgPopoverItemPendingLink');
 							$link.toggleClass('sapMMsgPopoverItemDisabledLink', !result.allowed);
+
+							that.fireUrlValidated();
 						})
 						.catch(function () {
 							jQuery.sap.log.warning("Async URL validation could not be performed.");
@@ -823,6 +890,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 				this._setTitle(oMessagePopoverItem);
 				this._sanitizeDescription(oMessagePopoverItem);
 				this._setIcon(oMessagePopoverItem, oListItem);
+				this.fireLongtextLoaded();
 
 				if (!suppressNavigate) {
 					this._navContainer.to(this._detailsPage);
@@ -986,16 +1054,11 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 * @private
 		 */
 		MessagePopover.prototype._restoreExpansionDefaults = function () {
-			if (sap.ui.Device.system.phone) {
+			if (this.getInitiallyExpanded()) {
 				this._fnFilterList("all");
-			} else  if (this.getInitiallyExpanded()) {
-				this._expandMsgPopover();
-				this._fnFilterList("all");
+				this._oSegmentedButton.setSelectedButton(null);
 			} else {
 				this._collapseMsgPopover();
-				LIST_TYPES.forEach(function (sListName) {
-					this._oLists[sListName].setVisible(false);
-				}, this);
 			}
 		};
 
@@ -1015,6 +1078,10 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 		 * @private
 		 */
 		MessagePopover.prototype._collapseMsgPopover = function () {
+			LIST_TYPES.forEach(function (sListName) {
+				this._oLists[sListName].setVisible(false);
+			}, this);
+
 			this._oPopover
 				.addStyleClass(CSS_CLASS + "-init")
 				.setContentHeight("auto");
@@ -1038,6 +1105,7 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			if (oResponsivePopoverControl instanceof Popover) {
 				if ((oParent instanceof Toolbar || oParent instanceof Bar || oParent instanceof SemanticPage)) {
 					oResponsivePopoverControl.setShowArrow(false);
+					oResponsivePopoverControl.setResizable(true);
 				} else {
 					oResponsivePopoverControl.setShowArrow(true);
 				}
@@ -1112,11 +1180,13 @@ sap.ui.define(["jquery.sap.global", "./ResponsivePopover", "./Button", "./Toolba
 			return this._oPopover && this._oPopover.getAggregation("_popup").getDomRef(sSuffix);
 		};
 
-		["addStyleClass", "removeStyleClass", "toggleStyleClass", "hasStyleClass"].forEach(function(sName){
+		["addStyleClass", "removeStyleClass", "toggleStyleClass", "hasStyleClass", "getBusyIndicatorDelay",
+			"setBusyIndicatorDelay", "getVisible", "setVisible", "getBusy", "setBusy"].forEach(function(sName){
 				MessagePopover.prototype[sName] = function() {
 					if (this._oPopover && this._oPopover[sName]) {
-						var res = this._oPopover[sName].apply(this._oPopover, arguments);
-						return res === this._oPopover ? this : res;
+						var oPopover = this._oPopover;
+						var res = oPopover[sName].apply(oPopover, arguments);
+						return res === oPopover ? this : res;
 					}
 				};
 			});

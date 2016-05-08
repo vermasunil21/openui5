@@ -3,11 +3,9 @@
  */
 
 // Provides control sap.ui.table.TreeTable.
-sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBindingAdapter', './library'],
-	function(jQuery, Table, ODataTreeBindingAdapter, library) {
+sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBindingAdapter', 'sap/ui/model/ClientTreeBindingAdapter', 'sap/ui/model/TreeBindingCompatibilityAdapter', './library'],
+	function(jQuery, Table, ODataTreeBindingAdapter, ClientTreeBindingAdapter, TreeBindingCompatibilityAdapter, library) {
 	"use strict";
-
-
 
 	/**
 	 * Constructor for a new TreeTable.
@@ -16,7 +14,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
-	 * The TreeTable Control.
+	 * The TreeTable control provides a comprehensive set of features to display hierarchical data.
 	 * @extends sap.ui.table.Table
 	 * @version ${version}
 	 *
@@ -46,13 +44,13 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			 * The property name of the rows data which will be displayed as a group header if the group mode is enabled
 			 */
 			groupHeaderProperty : {type : "string", group : "Data", defaultValue : null},
-			
+
 			/**
 			 * Setting collapseRecursive to true means, that when collapsing a node all subsequent child nodes will also be collapsed.
 			 * This property is only supported with sap.ui.model.odata.v2.ODataModel
 			 */
 			collapseRecursive : {type: "boolean", defaultValue: true},
-			
+
 			/**
 			 * The root level is the level of the topmost tree nodes, which will be used as an entry point for OData services.
 			 * This property is only supported when the TreeTable uses an underlying odata services with hierarchy annotations.
@@ -96,19 +94,6 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype.init = function() {
 		Table.prototype.init.apply(this, arguments);
 		this._iLastFixedColIndex = 0;
-
-		// adopting properties and load icon fonts for bluecrystal
-		if (sap.ui.getCore().getConfiguration().getTheme() === "sap_bluecrystal" ||
-			sap.ui.getCore().getConfiguration().getTheme() === "sap_hcb") {
-
-			// add the icon fonts
-			jQuery.sap.require("sap.ui.core.IconPool");
-			sap.ui.core.IconPool.insertFontFaceStyle();
-
-			// defaulting the rowHeight
-			// this.setRowHeight(32); --> is done via CSS
-
-		}
 	};
 
 	TreeTable.prototype.bindRows = function(oBindingInfo, vTemplate, aSorters, aFilters) {
@@ -116,7 +101,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			oTemplate,
 			aSorters,
 			aFilters;
-		
+
 		// Old API compatibility (sName, sPath, oTemplate, oSorter, aFilters)
 		if (typeof oBindingInfo == "string") {
 			sPath = arguments[0];
@@ -125,7 +110,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			aFilters = arguments[3];
 			oBindingInfo = {path: sPath, sorter: aSorters, filters: aFilters, template: oTemplate};
 		}
-		
+
 		if (typeof oBindingInfo === "object") {
 			oBindingInfo.parameters = oBindingInfo.parameters || {};
 			oBindingInfo.parameters.rootLevel = this.getRootLevel();
@@ -135,11 +120,11 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			oBindingInfo.parameters.numberOfExpandedLevels = oBindingInfo.parameters.numberOfExpandedLevels || (this.getExpandFirstLevel() ? 1 : 0);
 			oBindingInfo.parameters.rootNodeID = oBindingInfo.parameters.rootNodeID;
 		}
-		
+
 		//return Table.prototype.bindRows.call(this, oBindingInfo, vTemplate, oSorter, aFilters);
 		return this.bindAggregation("rows", oBindingInfo);
 	};
-	
+
 	/**
 	 * Sets the selection mode. The current selection is lost.
 	 * @param {string} sSelectionMode the selection mode, see sap.ui.table.SelectionMode
@@ -156,27 +141,19 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 		return this;
 	};
-	
+
 	/**
 	 * refresh rows
 	 * @private
 	 */
 	TreeTable.prototype.refreshRows = function(sReason) {
-		this._bBusyIndicatorAllowed = true;
-		this._attachBindingListener();
+		Table.prototype.refreshRows.apply(this, arguments);
 		var oBinding = this.getBinding("rows");
 		if (oBinding && this.isTreeBinding("rows") && !oBinding.hasListeners("selectionChanged")) {
 			oBinding.attachSelectionChanged(this._onSelectionChanged, this);
 		}
-		
-		//needs to be called here to reset the firstVisible row so that the correct data is fetched
-		this._bRefreshing = true;
-		this._onBindingChange(sReason);
-		this._updateBindingContexts(true);
-		//this.getBinding()._init();
-		this._bRefreshing = false;
 	};
-	
+
 	/**
 	 * Setter for property <code>fixedRowCount</code>.
 	 *
@@ -195,15 +172,6 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	};
 
 
-	/**
-	 * Rerendering handling
-	 * @private
-	 */
-	TreeTable.prototype.onAfterRendering = function() {
-		Table.prototype.onAfterRendering.apply(this, arguments);
-		this.$().find("[role=grid]").attr("role", "treegrid");
-	};
-
 	TreeTable.prototype.isTreeBinding = function(sName) {
 		sName = sName || "rows";
 		if (sName === "rows") {
@@ -215,250 +183,51 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype.getBinding = function(sName) {
 		sName = sName || "rows";
 		var oBinding = sap.ui.core.Element.prototype.getBinding.call(this, sName);
-		
-		// the check for the tree binding is only relevant becuase of the DataTable migration
-		//  --> once the DataTable is deleted after the deprecation period this check can be deleted
-		if (oBinding && this.isTreeBinding(sName) && sName === "rows" && !oBinding.getLength) {
-			
-			if (oBinding instanceof sap.ui.model.ClientTreeBinding || oBinding.getModel() instanceof sap.ui.model.odata.ODataModel) {
-				// Code necessary for ClientTreeBinding
-				var that = this;
-				jQuery.extend(oBinding, {
-					_init: function(bExpandFirstLevel) {
-						this._bExpandFirstLevel = bExpandFirstLevel;
-						// load the root contexts and create the context info map
-						this.mContextInfo = {};
-						this._initContexts();
-						// expand the first level if required
-						if (bExpandFirstLevel && !this._bFirstLevelExpanded) {
-							this._expandFirstLevel();
-						}
-					},
-	
-					_initContexts: function(bSkipFirstLevelLoad) {
-						// load the root contexts and create the context info map entry (if missing)
-						this.aContexts = this.getRootContexts();
-						for (var i = 0, l = this.aContexts.length; i < l; i++) {
-							var oldContextInfo = this._getContextInfo(this.aContexts[i]);
-							this._setContextInfo({
-								oContext: this.aContexts[i],
-								iLevel: 0,
-								bExpanded: oldContextInfo ? oldContextInfo.bExpanded : false
-							});
-						}
-	
-						if (this._bExpandFirstLevel && !this._bFirstLevelExpanded) {
-							this._expandFirstLevel(bSkipFirstLevelLoad);
-						}
-					},
-	
-					_expandFirstLevel: function (bSkipFirstLevelLoad) {
-						var that = this;
-						if (this.aContexts && this.aContexts.length > 0) {
-							jQuery.each(this.aContexts.slice(), function(iIndex, oContext) {
-								if (!bSkipFirstLevelLoad) {
-									that._loadChildContexts(oContext);
-								}
-								that._getContextInfo(oContext).bExpanded = true;
-							});
-	
-							this._bFirstLevelExpanded = true;
-						}
-					},
-	
-					_fnFireFilter: oBinding._fireFilter,
-					_fireFilter: function() {
-						this._fnFireFilter.apply(this, arguments);
-						this._initContexts(true);
-						this._restoreContexts(this.aContexts);
-					},
-					_fnFireChange: oBinding._fireChange,
-					_fireChange: function() {
-						this._fnFireChange.apply(this, arguments);
-						this._initContexts(true);
-						this._restoreContexts(this.aContexts);
-					},
-					_restoreContexts: function(aContexts) {
-						var that = this;
-						var aNewChildContexts = [];
-						jQuery.each(aContexts.slice(), function(iIndex, oContext) {
-							var oContextInfo = that._getContextInfo(oContext);
-							if (oContextInfo && oContextInfo.bExpanded) {
-								aNewChildContexts.push.apply(aNewChildContexts, that._loadChildContexts(oContext));
-							}
-						});
-						if (aNewChildContexts.length > 0) {
-							this._restoreContexts(aNewChildContexts);
-						}
-					},
-					_loadChildContexts: function(oContext) {
-						var oContextInfo = this._getContextInfo(oContext);
-						var iIndex = jQuery.inArray(oContext, this.aContexts);
-						var aNodeContexts = this.getNodeContexts(oContext);
-						for (var i = 0, l = aNodeContexts.length; i < l; i++) {
-							this.aContexts.splice(iIndex + i + 1, 0, aNodeContexts[i]);
-							var oldContextInfo = this._getContextInfo(aNodeContexts[i]);
-							this._setContextInfo({
-								oParentContext: oContext,
-								oContext: aNodeContexts[i],
-								iLevel: oContextInfo.iLevel + 1,
-								bExpanded: oldContextInfo ? oldContextInfo.bExpanded : false
-							});
-						}
-						return aNodeContexts;
-					},
-					_getContextInfo: function(oContext) {
-						return oContext ? this.mContextInfo[oContext.getPath()] : undefined;
-					},
-					_setContextInfo: function(mData) {
-						if (mData && mData.oContext) {
-							this.mContextInfo[mData.oContext.getPath()] = mData;
-						}
-					},
-					getLength: function() {
-						return this.aContexts ? this.aContexts.length : 0;
-					},
-					getContexts: function(iStartIndex, iLength) {
-						return this.aContexts.slice(iStartIndex, iStartIndex + iLength);
-					},
-					getContextByIndex: function (iRowIndex) {
-						return this.aContexts[iRowIndex];
-					},
-					getLevel: function(oContext) {
-						var oContextInfo = this._getContextInfo(oContext);
-						return oContextInfo ? oContextInfo.iLevel : -1;
-					},
-					isExpanded: function(iRowIndex) {
-						var oContext = this.getContextByIndex(iRowIndex); 
-						var oContextInfo = this._getContextInfo(oContext);
-						return oContextInfo ? oContextInfo.bExpanded : false;
-					},
-					expandContext: function(oContext) {
-						var oContextInfo = this._getContextInfo(oContext);
-						if (oContextInfo && !oContextInfo.bExpanded) {
-							this.storeSelection();
-							this._loadChildContexts(oContext);
-							oContextInfo.bExpanded = true;
-							this._fireChange();
-							this.restoreSelection();
-						}
-					},
-					expand: function (iRowIndex) {
-						this.expandContext(this.getContextByIndex(iRowIndex));
-					},
-					collapseContext: function(oContext, bSupressChanges) {
-						var oContextInfo = this._getContextInfo(oContext);
-						if (oContextInfo && oContextInfo.bExpanded) {
-							this.storeSelection();
-							for (var i = this.aContexts.length - 1; i > 0; i--) {
-								if (this._getContextInfo(this.aContexts[i]).oParentContext === oContext) {
-									this.aContexts.splice(i, 1);
-								}
-							}
-							oContextInfo.bExpanded = false;
-							if (!bSupressChanges) {
-								this._fireChange();
-							}
-							this.restoreSelection();
-						}
-					},
-					collapse: function (iRowIndex) {
-						this.collapseContext(this.getContextByIndex(iRowIndex));
-					},
-					collapseToLevel: function (iLevel) {
-						if (!iLevel || iLevel < 0) {
-							iLevel = 0;
-						}
-						
-						var aContextsCopy = this.aContexts.slice();
-						for (var i = aContextsCopy.length - 1; i >= 0; i--) {
-							var iContextLevel = this.getLevel(aContextsCopy[i]);
-							if (iContextLevel != -1 && iContextLevel >= iLevel) {
-								this.collapseContext(aContextsCopy[i], true);
-							}
-						}
-						
-						this._fireChange();
-					},
-					toggleContext: function(oContext) {
-						var oContextInfo = this._getContextInfo(oContext);
-						if (oContextInfo) {
-							if (oContextInfo.bExpanded) {
-								this.collapseContext(oContext);
-							} else {
-								this.expandContext(oContext);
-							}
-						}
-					},
-					toggleIndex: function (iRowIndex) {
-						this.toggleContext(this.getContextByIndex(iRowIndex));
-					},
-					storeSelection: function() {
-						var aSelectedIndices = that.getSelectedIndices();
-						var aSelectedContexts = [];
-						jQuery.each(aSelectedIndices, function(iIndex, iValue) {
-							aSelectedContexts.push(that.getContextByIndex(iValue));
-						});
-						this._aSelectedContexts = aSelectedContexts;
-					},
-					restoreSelection: function() {
-						that.clearSelection();
-						var _aSelectedContexts = this._aSelectedContexts;
-						jQuery.each(this.aContexts, function(iIndex, oContext) {
-							if (jQuery.inArray(oContext, _aSelectedContexts) >= 0) {
-								that.addSelectionInterval(iIndex, iIndex);
-							}
-						});
-						this._aSelectedContexts = undefined;
-					},
-					attachSelectionChanged: function() {
-						// for compatibility reasons (OData Tree Binding)
-						return undefined;
-					},
-					clearSelection: function () {
-						that._oSelection.clearSelection();
-					},
-					attachSort: function() {},
-					detachSort: function() {}
-				});
-				// initialize the binding
-				oBinding._init(this.getExpandFirstLevel());
-			
+
+		if (oBinding && sName === "rows" && !oBinding.getLength) {
+			if (sap.ui.model.odata.ODataTreeBinding && oBinding instanceof sap.ui.model.odata.ODataTreeBinding) {
+				// use legacy tree binding adapter
+				TreeBindingCompatibilityAdapter(oBinding, this);
+			} else if (sap.ui.model.odata.v2.ODataTreeBinding && oBinding instanceof sap.ui.model.odata.v2.ODataTreeBinding) {
+				//ODataTreeBindingAdapter.apply(oBinding);
+				oBinding.applyAdapter();
+			} else if (sap.ui.model.ClientTreeBinding && oBinding instanceof sap.ui.model.ClientTreeBinding) {
+				ClientTreeBindingAdapter.apply(oBinding);
+				//TreeBindingCompatibilityAdapter(oBinding, this);
 			} else {
-				//Use the ODataTreeBindingAdapter to enhance the TreeBinding with a ListBinding API
-				ODataTreeBindingAdapter.apply(oBinding);
+				jQuery.sap.log.error("Binding not supported by sap.ui.table.TreeTable");
 			}
 		}
-		
+
 		return oBinding;
 	};
 
 	TreeTable.prototype._updateTableContent = function() {
-		Table.prototype._updateTableContent.apply(this, arguments);
-		
-		//If group mode is enabled nodes which have children are visualized as if they were group header
 		var oBinding = this.getBinding("rows"),
 			iFirstRow = this.getFirstVisibleRow(),
-			iCount = this.getVisibleRowCount(),
+			aRows = this.getRows(),
+			iCount = aRows.length,
 			iFixedBottomRowCount = this.getFixedBottomRowCount(),
 			iFirstFixedBottomRowIndex = iCount - iFixedBottomRowCount;
 
 		var iIndex = iFirstRow;
 		if (oBinding) {
+			var iBindingLength = oBinding.getLength();
 			for (var iRow = 0; iRow < iCount; iRow++) {
 				if (iFixedBottomRowCount > 0 && iRow >= iFirstFixedBottomRowIndex) {
-					iIndex = oBinding.getLength() - iCount + iRow;
+					iIndex = iBindingLength - iCount + iRow;
 				} else {
 					iIndex = iFirstRow + iRow;
 				}
 
 				var oContext = this.getContextByIndex(iIndex),
-					$DomRefs = this.getRows()[iRow].getDomRefs(true),
+					$DomRefs = aRows[iRow].getDomRefs(true),
 					$row = $DomRefs.rowFixedPart || $DomRefs.rowScrollPart;
 
-				this._updateExpandIcon($row, oContext, iIndex);
+				this._updateExpandState(aRows[iRow], $row);
 
 				if (this.getUseGroupMode()) {
+					//If group mode is enabled nodes which have children are visualized as if they were group header
 					var $rowHdr = this.$().find("div[data-sap-ui-rowindex='" + $row.attr("data-sap-ui-rowindex") + "']");
 					if (oBinding.hasChildren && oBinding.hasChildren(oContext)) {
 						// modify the rows
@@ -482,49 +251,38 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype._updateTableCell = function () {
 		return true;
 	};
-	
-	TreeTable.prototype._updateExpandIcon = function($row, oContext, iAbsoluteRowIndex) {
 
-		var oBinding = this.getBinding("rows");
-
-		if (oBinding) {
-			var iLevel = 0,
-				bIsExpanded = false;
-			
-			if (oBinding.getLevel) {
-				//used by the "mini-adapter" in the TreeTable ClientTreeBindings
-				iLevel = oBinding.getLevel(oContext);
-				bIsExpanded = oBinding.isExpanded(iAbsoluteRowIndex);
-			} else if (oBinding.findNode) { // the ODataTreebinding(Adapter) provides the hasChildren method for Tree
-				var oNode = oBinding.findNode(iAbsoluteRowIndex);
-				iLevel = oNode ? oNode.level : 0;
-				bIsExpanded = oNode && oNode.nodeState ? oNode.nodeState.expanded : false;
-			}
-			
-			var $TreeIcon = $row.find(".sapUiTableTreeIcon");
-			var sTreeIconClass = "sapUiTableTreeIconLeaf";
-			var $FirstTd = $row.children("td.sapUiTableTdFirst");
-			if (!this.getUseGroupMode()) {
-				if (this._bRtlMode === true) {
-					$TreeIcon.css("marginRight", iLevel * 17);
-				} else {
-					$TreeIcon.css("marginLeft", iLevel * 17);
-				}
-			}
-			if (oBinding.hasChildren && oBinding.hasChildren(oContext)) {
-				sTreeIconClass = bIsExpanded ? "sapUiTableTreeIconNodeOpen" : "sapUiTableTreeIconNodeClosed";
-				$FirstTd.attr('aria-expanded', bIsExpanded);
-				var sNodeText = bIsExpanded ? this._oResBundle.getText("TBL_COLLAPSE") : this._oResBundle.getText("TBL_EXPAND");
-				$TreeIcon.attr('title', sNodeText);
-			} else {
-				$FirstTd.attr('aria-expanded', false);
-				$TreeIcon.attr('aria-label', this._oResBundle.getText("TBL_LEAF"));
-			}
-			$TreeIcon.removeClass("sapUiTableTreeIconLeaf sapUiTableTreeIconNodeOpen sapUiTableTreeIconNodeClosed").addClass(sTreeIconClass);
-			$row.attr("data-sap-ui-level", iLevel);
-			$FirstTd.attr('aria-level', iLevel + 1);
+	TreeTable.prototype._updateExpandState = function(oRow, $Row) {
+		var $TreeIcon = $Row.find(".sapUiTableTreeIcon");
+		var aLevelIndentCSS = this._getLevelIndentCSS(oRow);
+		if (aLevelIndentCSS) {
+			$TreeIcon.css.apply($TreeIcon, aLevelIndentCSS);
 		}
+		$TreeIcon.removeClass("sapUiTableTreeIconLeaf sapUiTableTreeIconNodeOpen sapUiTableTreeIconNodeClosed").addClass(oRow._sTreeIconClass);
+		this._getAccExtension().updateAriaExpandState(oRow, $Row, $TreeIcon);
+		$Row.attr("data-sap-ui-level", oRow._iLevel);
+	};
 
+	TreeTable.prototype._getLevelIndentCSS = function(oRow) {
+		if (!this.getUseGroupMode()) {
+			var sPropertyName = "";
+			if (this._bRtlMode === true) {
+				sPropertyName = "margin-right";
+			} else {
+				sPropertyName = "margin-left";
+			}
+			return [sPropertyName, (oRow._iLevel * 17) + "px"];
+		}
+	};
+
+	TreeTable.prototype._getContexts = function(iStartIndex, iLength, iThreshold) {
+		var oBinding = this.getBinding("rows");
+		if (oBinding) {
+			// first call getContexts to trigger data load but return nodes instead of contexts
+			return oBinding.getNodes(iStartIndex, iLength, iThreshold);
+		} else {
+			return [];
+		}
 	};
 
 	TreeTable.prototype.onclick = function(oEvent) {
@@ -539,38 +297,12 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 	};
 
-	TreeTable.prototype.onsapselect = function(oEvent) {
-		if (jQuery(oEvent.target).hasClass("sapUiTableTreeIcon")) {
-			this._onNodeSelect(oEvent);
-		} else {
-			if (Table.prototype.onsapselect) {
-				Table.prototype.onsapselect.apply(this, arguments);
-			}
-		}
-	};
-
-	TreeTable.prototype.onkeydown = function(oEvent) {
-		Table.prototype.onkeydown.apply(this, arguments);
-		var $Target = jQuery(oEvent.target),
-			$TargetTD = $Target.closest('td');
-		if (oEvent.keyCode == jQuery.sap.KeyCodes.TAB && this._bActionMode && $TargetTD.find('.sapUiTableTreeIcon').length > 0) {
-			//If node icon has focus set tab to control else set tab to node icon
-			if ($Target.hasClass('sapUiTableTreeIcon')) {
-				if (!$Target.hasClass("sapUiTableTreeIconLeaf")) {
-					$TargetTD.find(':sapFocusable:not(.sapUiTableTreeIcon)').first().focus();
-				}
-			} else {
-				$TargetTD.find('.sapUiTableTreeIcon:not(.sapUiTableTreeIconLeaf)').focus();
-			}
-			oEvent.preventDefault();
-		}
-	};
-
 	TreeTable.prototype._onNodeSelect = function(oEvent) {
 
 		var $parent = jQuery(oEvent.target).parents("tr");
 		if ($parent.length > 0) {
-			var iRowIndex = this.getFirstVisibleRow() + parseInt($parent.attr("data-sap-ui-rowindex"), 10);
+			var iIndex = parseInt($parent.attr("data-sap-ui-rowindex"), 10);
+			var iRowIndex = this.getFirstVisibleRow() + iIndex;
 			var oContext = this.getContextByIndex(iRowIndex);
 			this.fireToggleOpenState({
 				rowIndex: iRowIndex,
@@ -578,11 +310,16 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 				expanded: !this.getBinding().isExpanded(iRowIndex)
 			});
 			//this.getBinding("rows").toggleContext(oContext);
-			this.getBinding("rows").toggleIndex(iRowIndex);
+			var aRows = this.getRows();
+			var oBindingInfo = this.mBindingInfos["rows"];
+			if (aRows[iIndex] && aRows[iIndex].getBindingContext(oBindingInfo && oBindingInfo.model)) {
+				this.getBinding("rows").toggleIndex(iRowIndex);
+			}
 		}
 
 		oEvent.preventDefault();
 		oEvent.stopPropagation();
+
 
 	};
 
@@ -622,10 +359,10 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	 */
 	TreeTable.prototype.expand = function(iRowIndex) {
 		var oBinding = this.getBinding("rows");
-		if (oBinding) {
+		if (oBinding && iRowIndex >= 0) {
 			oBinding.expand(iRowIndex);
 		}
-		
+
 		return this;
 	};
 
@@ -640,16 +377,16 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	 */
 	TreeTable.prototype.collapse = function(iRowIndex) {
 		var oBinding = this.getBinding("rows");
-		if (oBinding) {
+		if (oBinding && iRowIndex >= 0) {
 			oBinding.collapse(iRowIndex);
 		}
-		
+
 		return this;
 	};
-	
+
 	/**
 	 * Collapses all nodes (and lower if collapseRecursive is activated)
-	 * 
+	 *
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -660,33 +397,35 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			oBinding.collapseToLevel(0);
 			this.setFirstVisibleRow(0);
 		}
-		
+
 		return this;
 	};
 
 	/**
-	 * Collapses all nodes on level 'iLevel' (and lower if collapseRecursive is activated)
-	 * If no parameter is given, all nodes will be collapsed to the topmost level.
-	 * 
-	 * Only supported with ODataModel v2.
-	 * 
-	 * @param {int} iLevel the level to which all nodes shall be collapsed
+	 * Expands all nodes starting from the root level to the given level 'iLevel'.
+	 *
+	 * Only supported with ODataModel v2, when running in OperationMode.Client or OperationMode.Auto.
+	 * Fully supported for <code>sap.ui.model.ClientTreeBinding</code>, e.g. if you are using a <code>sap.ui.model.json.JSONModel</code>.
+	 *
+	 * Please also see <code>sap.ui.model.odata.OperationMode</code>.
+	 *
+	 * @param {int} iLevel the level to which the trees shall be expanded
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	TreeTable.prototype.expandToLevel = function (iLevel) {
 		var oBinding = this.getBinding("rows");
-		
+
 		jQuery.sap.assert(oBinding && oBinding.expandToLevel, "TreeTable.expandToLevel is not supported with your current Binding. Please check if you are running on an ODataModel V2.");
-		
+
 		if (oBinding && oBinding.expandToLevel) {
 			oBinding.expandToLevel(iLevel);
 		}
-		
+
 		return this;
 	};
-	
+
 	/**
 	 * Returns whether the row is expanded or collapsed.
 	 *
@@ -705,7 +444,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 
 	/**
 	 * Checks if the row at the given index is selected.
-	 * 
+	 *
 	 * @param {int} iRowIndex The row index for which the selection state should be retrieved
 	 * @return {boolean} true if the index is selected, false otherwise
 	 * @public
@@ -720,13 +459,13 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			return Table.prototype.isIndexSelected.call(this, iRowIndex);
 		}
 	};
-	
+
 	/**
 	 * Overriden from Table.js base class.
 	 * In a TreeTable you can only select indices, which correspond to the currently visualized tree.
 	 * Invisible tree nodes (e.g. collapsed child nodes) can not be selected via Index, because they do not
 	 * correspond to a TreeTable row.
-	 * 
+	 *
 	 * @param {int} iRowIndex The row index which will be selected (if existing)
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
 	 * @public
@@ -738,10 +477,10 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			//SelectionModel doesn't know that -1 means no selection
 			this.clearSelection();
 		}
-		
+
 		//when using the treebindingadapter, check if the node is selected
 		var oBinding = this.getBinding("rows");
-		
+
 		if (oBinding && oBinding.findNode && oBinding.setNodeSelection) {
 			// set the found node as selected
 			oBinding.setSelectedIndex(iRowIndex);
@@ -751,15 +490,15 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 		return this;
 	};
-	
+
 	/**
 	 * Returns an array containing the row indices of all selected tree nodes (ordered ascending).
-	 * 
+	 *
 	 * Please be aware of the following:
 	 * Due to performance/network traffic reasons, the getSelectedIndices function returns only all indices
 	 * of actually selected rows/tree nodes. Unknown rows/nodes (as in "not yet loaded" to the client), will not be
 	 * returned.
-	 * 
+	 *
 	 * @return {int[]} an array containing all selected indices
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -767,21 +506,21 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype.getSelectedIndices = function () {
 		//when using the treebindingadapter, check if the node is selected
 		var oBinding = this.getBinding("rows");
-		
+
 		if (oBinding && oBinding.findNode && oBinding.getSelectedIndices) {
-			/*jQuery.sap.log.warning("When using a TreeTable on a V2 ODataModel, you can also use 'getSelectedContexts' on the underlying TreeBinding," + 
+			/*jQuery.sap.log.warning("When using a TreeTable on a V2 ODataModel, you can also use 'getSelectedContexts' on the underlying TreeBinding," +
 					" for an optimised retrieval of the binding contexts of the all selected rows/nodes.");*/
 			return oBinding.getSelectedIndices();
 		} else {
 			return Table.prototype.getSelectedIndices.call(this);
 		}
 	};
-	
+
 	/**
 	 * Sets the selection of the TreeTable to the given range (including boundaries).
 	 * Beware: The previous selection will be lost/overriden. If this is not wanted, please use "addSelectionInterval" and
 	 * "removeSelectionIntervall".
-	 * 
+	 *
 	 * @param {int} iFromIndex the start index of the selection range
 	 * @param {int} iToIndex the end index of the selection range
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
@@ -791,25 +530,25 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype.setSelectionInterval = function (iFromIndex, iToIndex) {
 		//when using the treebindingadapter, check if the node is selected
 		var oBinding = this.getBinding("rows");
-		
+
 		if (oBinding && oBinding.findNode && oBinding.setSelectionInterval) {
 			oBinding.setSelectionInterval(iFromIndex, iToIndex);
 		} else {
 			Table.prototype.setSelectionInterval.call(this, iFromIndex, iToIndex);
 		}
-		
+
 		return this;
 	};
-	
+
 	/**
 	 * Marks a range of tree nodes as selected, starting with iFromIndex going to iToIndex.
 	 * The TreeNodes are referenced via their absolute row index.
 	 * Please be aware, that the absolute row index only applies to the the tree which is visualized by the TreeTable.
 	 * Invisible nodes (collapsed child nodes) will not be regarded.
-	 * 
+	 *
 	 * Please also take notice of the fact, that "addSelectionInterval" does not change any other selection.
 	 * To override the current selection, please use "setSelctionInterval" or for a single entry use "setSelectedIndex".
-	 * 
+	 *
 	 * @param {int} iFromIndex The starting index of the range which will be selected.
 	 * @param {int} iToIndex The starting index of the range which will be selected.
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
@@ -826,13 +565,13 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 		return this;
 	};
-	
+
 	/**
 	 * All rows/tree nodes inside the range (including boundaries) will be deselected.
-	 * Tree nodes are referenced with theit absolute row index inside the tree- 
+	 * Tree nodes are referenced with theit absolute row index inside the tree-
 	 * Please be aware, that the absolute row index only applies to the the tree which is visualized by the TreeTable.
 	 * Invisible nodes (collapsed child nodes) will not be regarded.
-	 * 
+	 *
 	 * @param {int} iFromIndex The starting index of the range which will be deselected.
 	 * @param {int} iToIndex The starting index of the range which will be deselected.
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
@@ -849,15 +588,15 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 		return this;
 	};
-	
+
 	/**
 	 * Selects all available nodes/rows.
-	 * 
+	 *
 	 * Explanation of the SelectAll function and what to expect from its behavior:
 	 * All rows/tree nodes locally stored on the client are selected.
 	 * In addition all subsequent rows/tree nodes, which will be paged into view are also immediatly selected.
 	 * However, due to obvious performance/network traffic reasons, the SelectAll function will NOT retrieve any data from the backend.
-	 * 
+	 *
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -868,7 +607,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		if (!this.getEnableSelectAll() || (oSelMode != "Multi" && oSelMode != "MultiToggle") || !this._getSelectableRowCount()) {
 			return this;
 		}
-		
+
 		//The OData TBA exposes a selectAll function
 		var oBinding = this.getBinding("rows");
 		if (oBinding.selectAll) {
@@ -881,11 +620,11 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 
 		return this;
 	};
-	
+
 	/**
 	 * Retrieves the lead selection index. The lead selection index is, among other things, used to determine the
-	 * start/end of a selection range, when using Shift-Click to select multiple entries at once. 
-	 * 
+	 * start/end of a selection range, when using Shift-Click to select multiple entries at once.
+	 *
 	 * @return {int[]} an array containing all selected indices (ascending ordered integers)
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
@@ -893,48 +632,31 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	TreeTable.prototype.getSelectedIndex = function() {
 		//when using the treebindingadapter, check if the node is selected
 		var oBinding = this.getBinding("rows");
-		
+
 		if (oBinding && oBinding.findNode) {
 			return oBinding.getSelectedIndex();
 		} else {
 			return Table.prototype.getSelectedIndex.call(this);
 		}
 	};
-	
+
 	/**
 	 * Clears the complete selection (all tree table rows/nodes will lose their selection)
-	 * 
+	 *
 	 * @return {sap.ui.table.TreeTable} a reference on the TreeTable control, can be used for chaining
 	 * @public
 	 * @ui5-metamodel This method also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	TreeTable.prototype.clearSelection = function () {
 		var oBinding = this.getBinding("rows");
-		
+
 		if (oBinding && oBinding.clearSelection) {
 			oBinding.clearSelection();
 		} else {
 			Table.prototype.clearSelection.call(this);
 		}
-		
+
 		return this;
-	};
-	
-	TreeTable.prototype._enterActionMode = function($Tabbable) {
-		var $domRef = $Tabbable.eq(0);
-
-		Table.prototype._enterActionMode.apply(this, arguments);
-		if ($Tabbable.length > 0 && $domRef.hasClass("sapUiTableTreeIcon") && !$domRef.hasClass("sapUiTableTreeIconLeaf")) {
-			//Set tabindex to 0 to have make node icon accessible
-			$domRef.attr("tabindex", 0).focus();
-			//set action mode to true so that _leaveActionMode is called to remove the tabindex again
-			this._bActionMode = true;
-		}
-	};
-
-	TreeTable.prototype._leaveActionMode = function(oEvent) {
-		Table.prototype._leaveActionMode.apply(this, arguments);
-		this.$().find(".sapUiTableTreeIcon").attr("tabindex", -1);
 	};
 
 	TreeTable.prototype.getContextByIndex = function (iRowIndex) {
@@ -953,7 +675,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 	 */
 	TreeTable.prototype.setRootLevel = function(iRootLevel) {
 		this.setFirstVisibleRow(0);
-		
+
 		var oBinding = this.getBinding("rows");
 		if (oBinding) {
 			jQuery.sap.assert(oBinding.setRootLevel, "rootLevel is not supported by the used binding");
@@ -962,7 +684,7 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 			}
 		}
 		this.setProperty("rootLevel", iRootLevel, true);
-		
+
 		return this;
 	};
 
@@ -981,6 +703,27 @@ sap.ui.define(['jquery.sap.global', './Table', 'sap/ui/model/odata/ODataTreeBind
 		}
 		this.setProperty("collapseRecursive", !!bCollapseRecursive, true);
 		return this;
+	};
+
+	/**
+	 * Returns the number of selected entries.
+	 * Depending on the binding it is either retrieved from the binding or the selection model.
+	 * @private
+	 */
+	TreeTable.prototype._getSelectedIndicesCount = function () {
+		var iSelectedIndicesCount;
+
+		//when using the treebindingadapter, check if the node is selected
+		var oBinding = this.getBinding("rows");
+
+		if (oBinding && oBinding.findNode && oBinding.getSelectedNodesCount) {
+			return oBinding.getSelectedNodesCount();
+		} else {
+			// selection model case
+			return Table.prototype.getSelectedIndices.call(this);
+		}
+
+		return iSelectedIndicesCount;
 	};
 
 	return TreeTable;

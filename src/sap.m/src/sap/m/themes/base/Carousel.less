@@ -13,6 +13,11 @@
 	-ms-touch-action: pan-y;
 }
 
+//show the left and right arrows when the carousel is focused
+.sapMCrsl:focus .sapMCrslHud a {
+	opacity: 0.3;
+}
+
 .sapMCrsl.sapMCrslLeft {
 	text-align: left;
 }
@@ -26,7 +31,7 @@
 }
 
 .sapMCrsl.sapMCrslFluid.sapMCrslCenter>.sapMCrslInner>*:first-child {
-	margin-left: 0%;
+	margin-left: 0;
 }
 
 .sapMCrslInner {
@@ -46,6 +51,11 @@
 	transition-duration: 0.5s;
 }
 
+html[data-sap-ui-animation='off'] .sapMCrslInner {
+  transition-duration: 0.01s;
+ }
+
+
 /* special handling for IE / Edge, as it does not support text-align: end */
 html[data-sap-ui-browser^="ie"] .sapMCrslInner,
 html[data-sap-ui-browser^="ed"] .sapMCrslInner {
@@ -58,17 +68,29 @@ html[dir=rtl][data-sap-ui-browser^="ed"] .sapMCrslInner {
 }
 
 .sapMCrslItemTable {
-	display: table;
+	height: 100%;
 }
 
 .sapMCrslItemTableCell {
 	height: 100%;
-	display: table-cell;
 }
 
 .sapMCrslImg {
 	text-align: center;
+	height: 100%;
+}
+
+.sapMCrslImg:before {
+	content: ' ';
+	display: inline-block;
+	height: 100%;
 	vertical-align: middle;
+}
+
+.sapMCrslItemTableCell.sapMCrslImg img {
+	vertical-align: middle;
+	max-width: 100%;
+	max-height: 100%;
 }
 
 .sapMCrslInner.sapMCrslNoTransition {
@@ -101,7 +123,39 @@ html[dir=rtl][data-sap-ui-browser^="ed"] .sapMCrslInner {
 /* mixin call for creating container content padding classes (arguments: rootContainer, contentSelector) */
 .sapUiContainerContentPadding(~".sapMCrsl", ~"> .sapMCrslInner > .sapMCrslItem > .sapMScrollCont > .sapMScrollContScroll");
 
+/*
+  Carousel control base styling
+*/
+.sapMCrslControls {
+  padding-top: 0.625rem;
+  text-align: center;
+}
 
+.sapMCrslControls a {
+  padding: 0.3125rem;
+  -webkit-user-select: none;
+  -moz-user-select: -moz-none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-drag: -moz-none;
+  user-drag: none;
+}
+
+.sapMCrslBulleted.sapMCrslBottomOffset {
+  position: absolute;
+  padding-top: 0;
+  bottom: 0.3125rem;
+  width: 100%;
+  z-index: 10;
+}
+
+.sapMCrslBulleted.sapMCrslTopOffset {
+  position: absolute;
+  padding-bottom: 0.125rem;
+  width: 100%;
+  z-index: 10;
+  padding-top: 0.1875rem;
+}
 
 /* Styles needed for keyboard handling
    ========================================================================== */

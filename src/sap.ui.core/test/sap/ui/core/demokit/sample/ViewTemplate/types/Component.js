@@ -10,77 +10,71 @@ sap.ui.define([
 		'sap/m/FlexItemData',
 		'sap/m/HBox',
 		'sap/m/MessageBox',
-		'sap/ui/core/mvc/View',
+		'sap/ui/core/mvc/View', // sap.ui.view()
+		'sap/ui/core/mvc/ViewType',
 		'sap/ui/core/sample/common/Component',
 		'sap/ui/core/util/MockServer',
+		'sap/ui/model/BindingMode',
 		'sap/ui/model/json/JSONModel',
 		'sap/ui/model/odata/AnnotationHelper',
 		'sap/ui/model/odata/v2/ODataModel',
 		'jquery.sap.script'
-	], function(jQuery, FlexItemData, HBox, MessageBox, View, BaseComponent, MockServer, JSONModel,
-		AnnotationHelper, ODataModel/*, jQuerySapScript*/) {
+	], function(jQuery, FlexItemData, HBox, MessageBox, View, ViewType, BaseComponent, MockServer,
+		BindingMode, JSONModel, AnnotationHelper, ODataModel/*, jQuerySapScript*/) {
 	"use strict";
 
 	var Component = BaseComponent.extend("sap.ui.core.sample.ViewTemplate.types.Component", {
-		metadata: "json",
-		createContent: function () {
+		metadata : "json",
+		createContent : function () {
 			var sUri = "/sap/opu/odata/sap/ZUI5_EDM_TYPES/",
 				oLayout = new HBox(),
 				sMockServerBaseUri =
 					jQuery.sap.getModulePath("sap.ui.core.sample.ViewTemplate.types.data", "/"),
-				oMockServer,
 				oModel,
-				bRealOData = (jQuery.sap.getUriParameters().get("realOData") === "true"),
-				oView;
+				bRealOData = (jQuery.sap.getUriParameters().get("realOData") === "true");
 
 			if (bRealOData) {
 				sUri = this.proxy(sUri);
 			} else {
-				jQuery.sap.require("sap.ui.core.util.MockServer");
-
-				oMockServer = new MockServer({rootUri: sUri});
-				oMockServer.simulate(sMockServerBaseUri + "metadata.xml", {
+				this.aMockServers.push(new MockServer({rootUri: sUri}));
+				this.aMockServers[0].simulate(sMockServerBaseUri + "metadata.xml", {
 					sMockdataBaseUrl: sMockServerBaseUri
 				});
-				oMockServer.start();
+				this.aMockServers[0].start();
 			}
 
 			oModel = new ODataModel(sUri, {
-				annotationURI: sMockServerBaseUri + "annotations.xml",
-				defaultBindingMode: sap.ui.model.BindingMode.TwoWay
+				annotationURI : sMockServerBaseUri + "annotations.xml",
+				defaultBindingMode : BindingMode.TwoWay
 			});
 
 			oModel.getMetaModel().loaded().then(function () {
 				var oMetaModel = oModel.getMetaModel(),
 					oView = sap.ui.view({
 						models : {
-							undefined: oModel,
-							ui: new JSONModel({realOData: bRealOData})
+							undefined : oModel,
+							ui : new JSONModel({realOData : bRealOData, codeVisible : false})
 						},
-						preprocessors: {
-							xml: {
-								bindingContexts: {meta: oMetaModel.createBindingContext(
+						preprocessors : {
+							xml : {
+								bindingContexts : {meta : oMetaModel.createBindingContext(
 									"/dataServices/schema/0/entityType/0")
 								},
-								models: {meta: oMetaModel}
+								models : {meta : oMetaModel}
 							}
 						},
-						type: sap.ui.core.mvc.ViewType.XML,
-						viewName: "sap.ui.core.sample.ViewTemplate.types.Types"
+						type : ViewType.XML,
+						viewName : "sap.ui.core.sample.ViewTemplate.types.Types"
 					});
 
-				oView.setLayoutData(new FlexItemData({growFactor: 1.0}));
+				oView.setLayoutData(new FlexItemData({growFactor : 1.0, baseSize : "0%"}));
 				oLayout.addItem(oView);
 			}, function (oError) {
 				MessageBox.alert(oError.message, {
-					icon: sap.m.MessageBox.Icon.ERROR,
-					title: "Error"});
+					icon : MessageBox.Icon.ERROR,
+					title : "Error"});
 			});
 			return oLayout;
-		},
-
-		exit : function () {
-			MockServer.destroyAll();
 		}
 	});
 

@@ -107,7 +107,7 @@ sap.ui.define(['jquery.sap.global'],
 
 		if (oButton.getIconFirst()) {
 			if (bUseIconFont) {
-				this.writeIconHtml(rm, oButton, bImageOnly);
+				this.writeIconHtml(rm, oButton);
 			} else if (this._getIconForState(oButton, "base")) {
 				this.writeImgHtml(rm, oButton, bImageOnly);
 			}
@@ -126,7 +126,7 @@ sap.ui.define(['jquery.sap.global'],
 
 		if (!oButton.getIconFirst()) {
 			if (bUseIconFont) {
-				this.writeIconHtml(rm, oButton, bImageOnly);
+				this.writeIconHtml(rm, oButton);
 			} else if (this._getIconForState(oButton, "base")) {
 				this.writeImgHtml(rm, oButton, bImageOnly);
 			}
@@ -243,12 +243,12 @@ sap.ui.define(['jquery.sap.global'],
 			rm.writeAttribute("alt", ""); // there must be an ALT attribute
 		}
 
-		if (!bImageOnly) {
-			rm.writeAttribute("role", "presentation");
-		}
+        if (!bImageOnly) {
+            rm.writeAttribute("role", "presentation");
+        }
 
 		rm.addClass("sapUiBtnIco");
-		if (oButton.getText()) { // only add a distance to the text if there is text
+        if (oButton.getText()) { // only add a distance to the text if there is text
 			if (oButton.getIconFirst()) {
 				rm.addClass("sapUiBtnIcoL");
 			} else {
@@ -263,15 +263,12 @@ sap.ui.define(['jquery.sap.global'],
 	/**
 	 * HTML for icon as icon font
 	 */
-	ButtonRenderer.writeIconHtml = function(oRenderManager, oButton, bImageOnly) {
+	ButtonRenderer.writeIconHtml = function(oRenderManager, oButton) {
 
 		var rm = oRenderManager;
 		var oIconInfo = sap.ui.core.IconPool.getIconInfo(oButton.getIcon());
 		var aClasses = [];
-		var mAttributes = {};
-
-		mAttributes["id"] = oButton.getId() + "-icon";
-
+		var mAttributes = buildIconAttributes(oButton);
 		aClasses.push("sapUiBtnIco");
 		if (oButton.getText()) { // only add a distance to the text if there is text
 			var bRTL = rm.getConfiguration().getRTL();
@@ -283,7 +280,6 @@ sap.ui.define(['jquery.sap.global'],
 		}
 
 		rm.writeIcon(oButton.getIcon(), aClasses, mAttributes);
-
 	};
 
 	ButtonRenderer.changeIcon = function(oButton) {
@@ -291,11 +287,7 @@ sap.ui.define(['jquery.sap.global'],
 		if (sap.ui.core.IconPool.isIconURI(oButton.getIcon())) {
 			var oIconInfo = sap.ui.core.IconPool.getIconInfo(oButton.getIcon());
 			var oIcon = oButton.$("icon");
-			if (sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version < 9) {
-				oIcon.text(oIconInfo.content);
-			} else {
-				oIcon.attr("data-sap-ui-icon-content", oIconInfo.content);
-			}
+			oIcon.attr("data-sap-ui-icon-content", oIconInfo.content);
 			if (!oIconInfo.skipMirroring) {
 				oIcon.addClass("sapUiIconMirrorInRTL");
 			} else {
@@ -311,7 +303,24 @@ sap.ui.define(['jquery.sap.global'],
 
 	};
 
+	/**
+	*
+	* @private
+	* @param oButton
+	* @returns {object} icon attributes
+	*/
+	function buildIconAttributes(oButton) {
+		var oAttributes = {},
+			sTooltip = oButton.getTooltip_AsString();
 
+		oAttributes["id"] = oButton.getId() + "-icon";
+		if (sTooltip) { // prevents default icon tooltip
+			oAttributes["title"] = null;
+			oAttributes["aria-label"] = null;
+			oAttributes["aria-hidden"] = true;
+		}
+		return oAttributes;
+	}
 	return ButtonRenderer;
 
 }, /* bExport= */ true);

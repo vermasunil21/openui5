@@ -1,21 +1,25 @@
 /*!
  * ${copyright}
  */
-sap.ui.define(['sap/m/Column',
+sap.ui.define([
+		'sap/m/Button',
+		'sap/m/Column',
 		'sap/m/ColumnListItem',
 		'sap/m/MessageBox',
+		'sap/m/PlacementType',
 		'sap/m/Popover',
 		'sap/m/Table',
 		'sap/m/Text',
 		'sap/ui/commons/ValueHelpField'
-	], function(Column, ColumnListItem, MessageBox, Popover, Table, Text, ValueHelpField) {
+	], function(Button, Column, ColumnListItem, MessageBox, PlacementType, Popover, Table, Text,
+		ValueHelpField) {
 	"use strict";
 
-	return ValueHelpField.extend(
-		"sap.ui.core.sample.ViewTemplate.valuelist.ValueHelp", {
+	var ValueHelp = ValueHelpField.extend("sap.ui.core.sample.ViewTemplate.valuelist.ValueHelp", {
 			metadata : {
 				properties : {
-					qualifier : {type : "string", defaultValue : ""} //value list qualifier
+					qualifier : {type : "string", defaultValue : ""}, //value list qualifier
+					showDetails : {type : "boolean", defaultValue : false}
 				}
 			},
 
@@ -49,12 +53,14 @@ sap.ui.define(['sap/m/Column',
 									}
 								});
 								that._collectionPath = oValueList.CollectionPath.String;
-								that._collectionLabel = oValueList.Label ? oValueList.Label.String
-										: that._collectionPath;
-								that.setTooltip("ValueList"
-									+ (that.getQualifier() !== "" ? "#" + that.getQualifier(): "")
+								that._collectionLabel = oValueList.Label
+									? oValueList.Label.String
+									: that._collectionPath;
+								that._valueListDetails = "ValueList"
+									+ (that.getQualifier() !== "" ? "#" + that.getQualifier() : "")
 									+ "\n"
-									+ JSON.stringify(oValueList, undefined, 2));
+									+ JSON.stringify(oValueList, undefined, 2);
+								that.updateDetails();
 								that.setIconURL("sap-icon://value-help");
 								that.setEditable(true);
 							});
@@ -62,30 +68,43 @@ sap.ui.define(['sap/m/Column',
 				}, function (oError) {
 					//TODO errors cannot seriously be handled per _instance_ of a control
 					MessageBox.alert(oError.message, {
-						icon: MessageBox.Icon.ERROR,
-						title: "Error"});
+						icon : MessageBox.Icon.ERROR,
+						title : "Error"});
 				});
 			},
 
 			renderer : "sap.ui.commons.ValueHelpFieldRenderer",
 
+			setShowDetails : function (bShowDetails) {
+				this.setProperty("showDetails", bShowDetails);
+				this.updateDetails();
+			},
+
+			updateDetails : function () {
+				this.setTooltip(this.getShowDetails() ? this._valueListDetails : "");
+			},
+
 			_onValueHelp : function (oEvent) {
-				var oColumnListItem = new ColumnListItem(),
+				var oButton = new Button({text : "Close"}),
+					oColumnListItem = new ColumnListItem(),
 					oControl = oEvent.getSource(),
-					oPopover = new Popover({placement : sap.m.PlacementType.Auto, modal : true}),
-					oTable = new Table(),
-					aVHTitle = [];
+					oPopover = new Popover({endButton : oButton,
+						placement : PlacementType.Auto, modal : true}),
+					oTable = new Table();
 
 				function createTextOrValueHelp(sPropertyPath, bAsColumnHeader) {
 					var oMetaModel = oControl.getModel().getMetaModel(),
 						oEntityType = oMetaModel.getODataEntityType(oMetaModel.getODataEntitySet(
 							oControl._collectionPath).entityType);
 					if (bAsColumnHeader) {
-						return new Text({text: oMetaModel.getODataProperty(oEntityType,
+						return new Text({text : oMetaModel.getODataProperty(oEntityType,
 							sPropertyPath)["sap:label"]});
 					}
-						return new sap.ui.core.sample.ViewTemplate.valuelist.ValueHelp(
-							{value: "{" + sPropertyPath + "}"});
+						return new ValueHelp({value : "{" + sPropertyPath + "}"});
+				}
+
+				function onClose() {
+					oPopover.close();
 				}
 
 				oPopover.setTitle("Value Help: " + oControl._collectionLabel);
@@ -96,12 +115,15 @@ sap.ui.define(['sap/m/Column',
 				});
 				oControl._parameters.forEach(function (sParameterPath) {
 					oTable.addColumn(new Column(
-						{header: createTextOrValueHelp(sParameterPath, true)}
+						{header : createTextOrValueHelp(sParameterPath, true)}
 					));
 					oColumnListItem.addCell(createTextOrValueHelp(sParameterPath));
 				});
+				oButton.attachPress(onClose);
 				oPopover.addContent(oTable);
 				oPopover.openBy(oControl);
 			}
-	});
+		});
+
+	return ValueHelp;
 });

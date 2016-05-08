@@ -1,4 +1,4 @@
-.sap-desktop .sapMListTblRow:focus{
+html.sap-desktop .sapMListTblRow:focus{
 	outline: 0.125rem dotted @sapHCStandardFG;
 	outline-offset: -0.1875rem;
 }
@@ -11,12 +11,17 @@ html[data-sap-ui-browser^="ie"].sap-desktop .sapMListTblRow:focus{
 	background: @sapHCStandardBG;
 }
 
-.sapMLIBSelected.sapMLIB + .sapMListTblSubRow {
-	background: @sapHCStandardBG;
+.sapMLIBSelected + .sapMListTblSubRow {
+	background: @sapHCHighlightAltBG;
 }
 
-.sapMLIBActive.sapMLIB + .sapMListTblSubRow {
-	background: @sapHCStandardBG;
+.sapMLIBActive + .sapMListTblSubRow {
+	color: @sapHCStandardFG;
+	background: @sapHCHighlightBG;
+}
+
+.sapMLIBHoverable:hover + .sapMListTblSubRow {
+	background : @sapUiListHoverBackground;
 }
 
 /* table popin */

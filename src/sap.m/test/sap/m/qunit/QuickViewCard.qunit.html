@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 
 	<title>QUnit page for sap.m.QuickView</title>
 	<script id="sap-ui-bootstrap" data-sap-ui-theme="sap_bluecrystal"
@@ -15,6 +15,7 @@
 	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon.js"></script>
 	<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/sinon-qunit.js"></script>
+	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-coverage.js"></script>
 	<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 	<script type="text/javascript">
@@ -291,6 +292,29 @@
 			aQuickViewPages.forEach(function (page, index) {
 				assert.strictEqual(page.mProperties.header, mData.pages[index].header, "Header property is set correctly");
 			});
+		});
+
+		QUnit.module("Rendering", {
+			setup: function () {
+				this.oQuickViewCard = getQuickViewCard();
+				oPage.addContent(this.oQuickViewCard);
+
+				sap.ui.getCore().applyChanges();
+			},
+			teardown: function () {
+				this.oQuickViewCard.destroy();
+				this.oQuickViewCard = null;
+			}
+		});
+
+		QUnit.test("Checking if all link have width of 'auto'", function(assert) {
+			// act
+			var aLinks = this.oQuickViewCard.$().find(".sapMLnk");
+
+			// assert
+			for (var index = 0; index < aLinks.length; index += 1) {
+				assert.strictEqual(aLinks[index].style.width, 'auto', "The Link should have width set to 'auto'");
+			}
 		});
 
 	</script>

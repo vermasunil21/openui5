@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>qUnit Page for sap.m.Dialog</title>
 
 		<script id="sap-ui-bootstrap"
@@ -21,7 +21,7 @@
 			}
 		</style>
 
-		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen"/>
+		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script type="text/javascript" src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
@@ -41,7 +41,7 @@
 		<script language="javascript">
 
 			function marginCompare(value1, value2, margin) {
-				var margin = margin || 1;
+				var margin = margin || 2;
 				return (Math.abs(value1 - value2)) < margin;
 			}
 
@@ -101,8 +101,9 @@
 				beforeClose: function () {
 					equal(jQuery.sap.byId("dialog").css("visibility"), "visible", "Dialog should be visible after it's opened");
 				},
-				afterClose: function () {
-					equal(jQuery.sap.byId("dialog").length, 0, "Dialog content should not be rendered before it's opened");
+				afterClose: function (oEvent) {
+					equal(jQuery.sap.byId("dialog").length, 0, "Dialog content is not rendered anymore");
+					ok(oEvent.getParameter("origin") !== null, "Origin parameter should be set");
 					ok(!oDialog.isOpen(), "Dialog is already closed");
 				}
 			});
@@ -131,6 +132,68 @@
 
 			test("Initialization", function () {
 				ok(!jQuery.sap.domById("dialog"), "Dialog is not rendered before it's ever opened.");
+			});
+
+			module("Content preservation");
+
+			asyncTest("Preserve Dialog Content", function() {
+				this.clock.restore();
+
+				var bRendered = false;
+				var oDialog = new sap.m.Dialog();
+				var oHtml = new sap.ui.core.HTML({
+					content: "<div id='htmlControl'>test</div>",
+					preferDOM : true,
+					afterRendering : function(oEvent) {
+						if (!bRendered) {
+							document.querySelector("#htmlControl").setAttribute("data-some-attribute", "some-value");
+							bRendered = true;
+						}
+					}
+				});
+				oDialog.addContent(oHtml);
+
+				var fnOpened2 = function() {
+					oDialog.detachAfterOpen(fnOpened2);
+
+					ok(oDialog.isOpen(), "Dialog is open");
+					ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+					equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+
+					oDialog.attachAfterClose(start);
+
+					oDialog.close();
+				}.bind(this);
+
+				var fnClosed1 = function() {
+					oDialog.detachAfterClose(fnClosed1);
+
+					ok(!oDialog.isOpen(), "Dialog is closed");
+					equals(document.querySelector("#htmlControl").parentElement.id, "sap-ui-preserve", "HTML control rendered (preserved)");
+
+					oDialog.attachAfterOpen(fnOpened2);
+
+					oDialog.open();
+				}.bind(this);
+
+
+				var fnOpened1 = function() {
+					oDialog.detachAfterOpen(fnOpened1);
+
+					ok(oDialog.isOpen(), "Dialog is open");
+					ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+					equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+
+					oDialog.attachAfterClose(fnClosed1);
+
+					oDialog.close();
+				}.bind(this);
+
+
+				equals(document.querySelector("#htmlControl"), null, "HTML control not rendered");
+
+				oDialog.attachAfterOpen(fnOpened1);
+				oDialog.open();
 			});
 
 			module("Open and Close");
@@ -163,11 +226,12 @@
 				ok(oTitleDom, "Title should be rendered");
 			});
 
-			test("Close Dialog", function () {
-				expect(3);
-				oDialog.getBeginButton().firePress();
+			test("Close Dialog. Test set origin parameter value", function () {
+				expect(4);
+				oDialog.getBeginButton().$().trigger("tap");
 				this.clock.tick(500);
 			});
+
 
 			test("Open Message Dialog on phone", function () {
 				var oSystem = {
@@ -248,7 +312,7 @@
 				//System under Test
 						sut = new sap.m.Dialog({
 							contentWidth: contentWidth,
-							content: new sap.ui.core.HTML({content: "<p style='width: 700px'></p>"})
+							content: new sap.ui.core.HTML({content: "<div style='width: 700px'></div>"})
 						});
 
 				//Act
@@ -313,6 +377,40 @@
 				jQuery("html").css("overflow", ""); // restore scrollbar after test
 			});
 
+			test("Dialog: set stretchOnPhone to true should not stretch on desktop", function () {
+				var oDialog = new sap.m.Dialog({
+					stretchOnPhone: true
+				});
+
+				oDialog.open();
+				ok(oDialog.isOpen(), "Dialog is already open");
+				this.clock.tick(500);
+				ok(!oDialog.$().hasClass("sapMDialogStretched"), "Dilog should not has sapMDialogStretched class");
+
+				oDialog.destroy();
+			});
+
+			test("Dialog: set stretchOnPhone to true should stretch on phone", function () {
+				var oSystem = {
+					desktop: false,
+					tablet: false,
+					phone: true
+				};
+
+				this.stub(sap.ui.Device, "system", oSystem);
+
+				var oDialog = new sap.m.Dialog({
+					stretchOnPhone: true
+				});
+
+				oDialog.open();
+				ok(oDialog.isOpen(), "Dialog is already open");
+				this.clock.tick(500);
+				ok(oDialog.$().hasClass("sapMDialogStretched"), "Dilog should has sapMDialogStretched class");
+
+				oDialog.destroy();
+			});
+
 			test("Dialog: set contentWidth when stretch set to true", function () {
 				jQuery("html").css("overflow", "hidden"); // hide scrollbar during test
 				var oDialog = new sap.m.Dialog({
@@ -332,6 +430,8 @@
 				oDialog.destroy();
 				jQuery("html").css("overflow", ""); // restore scrollbar after test
 			});
+
+
 
 			test("Set contentWidth to a fixed value on desktop", function () {
 				var oSystem = {
@@ -624,6 +724,43 @@
 				oDialog.destroy();
 			});
 
+			test("Association ariaLabelledBy", function () {
+				// Arrange
+				var TEXT_ID = "qunitText";
+				var oText = new sap.m.Text(TEXT_ID, {text : "Qunit test"});
+				var oDialog = new sap.m.Dialog({
+					title: "Qunit test",
+					content: [oText],
+					subHeader: new sap.m.Bar({
+						contentMiddle: [
+							new sap.m.SearchField({
+								placeholder: "Search ...",
+								width: "100%"
+							})
+						]
+					}),
+					ariaLabelledBy: [TEXT_ID]
+				});
+
+				// Act
+				oDialog.open();
+				this.clock.tick(500);
+
+				// Assert
+				var dialogHeaderId = oDialog.getDomRef('header').getAttribute('id');
+				var subHeaderId = oDialog.$().find('.sapMDialogSubHeader').attr('id');
+				var dialogAriaLabelledBy = oDialog.getAriaLabelledBy();
+				strictEqual(oDialog.getDomRef().getAttribute('aria-labelledby'), dialogHeaderId + ' ' + subHeaderId +
+						' ' + TEXT_ID);
+				strictEqual(dialogAriaLabelledBy.length, 3);
+				strictEqual(dialogAriaLabelledBy.indexOf(dialogHeaderId), 0);
+				strictEqual(dialogAriaLabelledBy.indexOf(subHeaderId), 1);
+				strictEqual(dialogAriaLabelledBy.indexOf(TEXT_ID), 2);
+
+				// Clean up
+				oDialog.destroy();
+			});
+
 			test("Focusable elements in content area", function () {
 				// Arrange
 				var oInput1 = new sap.m.Input();
@@ -890,6 +1027,7 @@
 				oDialog._reapplyPosition();
 				oDialog.destroy();
 			});
+
 
 			setTimeout(function () {
 				jQuery('html').css('overflow', 'auto');

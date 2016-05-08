@@ -29,6 +29,8 @@ sap.ui.define(['sap/m/semantic/SemanticButton', 'sap/m/semantic/SemanticControl'
 	var SemanticToggleButton = SemanticButton.extend("sap.m.semantic.SemanticToggleButton", /** @lends sap.m.semantic.SemanticToggleButton.prototype */ {
 		metadata : {
 
+			library : "sap.m",
+
 			properties : {
 
 				/**
@@ -38,16 +40,6 @@ sap.ui.define(['sap/m/semantic/SemanticButton', 'sap/m/semantic/SemanticControl'
 			}
 		}
 	});
-
-	SemanticToggleButton.prototype.setProperty = function(sPropertyName, oValue, bSuppressInvalidate) {
-
-		ManagedObject.prototype.setProperty.call(this, sPropertyName, oValue, bSuppressInvalidate);
-
-		if (sPropertyName === 'pressed') {
-			this._setPressed(oValue, bSuppressInvalidate);
-		}
-		return this;
-	};
 
 	/**
 	 * Change the toggle state of the button
@@ -74,6 +66,21 @@ sap.ui.define(['sap/m/semantic/SemanticButton', 'sap/m/semantic/SemanticControl'
 
 		if (oEvent.which === jQuery.sap.KeyCodes.SPACE || oEvent.which === jQuery.sap.KeyCodes.ENTER) {
 			this._onTap(oEvent);
+		}
+	};
+
+	/**
+	 * Applies the property value according to semantic logic
+	 * Overwrites to apply toggle-specific logic
+	 * @Overwrites
+	 * @private
+	 */
+	SemanticToggleButton.prototype._applyProperty = function(sPropertyName, oValue, bSuppressInvalidate) {
+
+		if (sPropertyName === 'pressed') {
+			this._setPressed(oValue, bSuppressInvalidate);
+		} else {
+			SemanticButton.prototype._applyProperty.apply(this, arguments);
 		}
 	};
 

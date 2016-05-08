@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>ToolPopup - sap.ui.ux3</title>
 
 <script id="sap-ui-bootstrap" type="text/javascript"
@@ -575,6 +575,23 @@
 		oBtn1.press();
 		sap.ui.getCore().applyChanges();
 	});
+	asyncTest("Determines the focus DOM reference", function() {
+		expect(1);
+
+		oTPFocus.setDefaultButton("defaultBtn1");
+
+		var fnOpened = function() {
+			oTPFocus.detachOpened(fnOpened);
+
+			start();
+
+			bTest = typeof oTPFocus.getFocusDomRef() === 'object' ;
+			ok(bTest, "getFocusDomRef returns object");
+		};
+		oTPFocus.attachOpened(fnOpened);
+		oBtn1.press();
+		sap.ui.getCore().applyChanges();
+	});
 	asyncTest("default button is focused by pressEnter", function() {
 		expect(1);
 
@@ -864,7 +881,7 @@
 			start();
 
 			oTPRect = oTPMaxHeight.$().rect();
-			bTest = oTPRect.height <= 200;
+			bTest = Math.round(oTPRect.height) <= 200;
 			if (bIE8) {
 				ok(true, "Internet Explorer 8 is too stupid to calculate the correct height of the content");
 			} else {
@@ -887,7 +904,7 @@
 
 			oTPRect = oTPMaxHeight.$().rect();
 			// IE10, 11 are adding some fractions to the calculation in some cases
-			bTest = parseInt(oTPRect.width, 10) === 120;
+			bTest = Math.round(oTPRect.width) <= 120;
 			ok(bTest, "ToolPopup's width of 120px");
 		};
 
@@ -1047,6 +1064,59 @@
 		oTPContent.attachOpened(fnOpened);
 		oButtonContent.press();
 	});
+
+	asyncTest("Preserve Dialog Content", function() {
+		var bRendered = false;
+		var oHtml = new sap.ui.core.HTML({
+			content: "<div id='htmlControl'>test</div>",
+			preferDOM : true,
+			afterRendering : function(oEvent) {
+				if (!bRendered) {
+					document.querySelector("#htmlControl").setAttribute("data-some-attribute", "some-value");
+					bRendered = true;
+				}
+			}
+		});
+		oTPContent.addContent(oHtml);
+
+		var fnOpened2 = function() {
+			oTPContent.detachOpened(fnOpened2);
+
+			ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+			equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+
+			oTPContent.attachClosed(start);
+
+			oTPContent.close();
+		}.bind(this);
+
+		var fnClosed1 = function() {
+			oTPContent.detachClosed(fnClosed1);
+
+			equals(document.querySelector("#htmlControl").parentElement.id, "sap-ui-preserve", "HTML control rendered (preserved)");
+
+			oTPContent.open();
+			oTPContent.attachOpened(fnOpened2);
+		}.bind(this);
+
+
+		var fnOpened1 = function() {
+			oTPContent.detachOpened(fnOpened1);
+
+			ok(!!document.querySelector("#htmlControl"), "HTML control rendered");
+			equals(document.querySelector("#htmlControl").getAttribute("data-some-attribute"), "some-value", "DOM attribute value set correctly");
+
+			oTPContent.attachClosed(fnClosed1);
+			oTPContent.close();
+		}.bind(this);
+
+
+		equals(document.querySelector("#htmlControl"), null, "HTML control not rendered");
+
+		oTPContent.attachOpened(fnOpened1);
+		oTPContent.open();
+	});
+
 </script>
 
 </head>

@@ -145,11 +145,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 *
 	 * @private
 	 */
-	RadioButton.prototype.ontap = function() {
+	RadioButton.prototype.ontap = function(oEvent) {
 
 		if (!this.getEnabled() || !this.getEditable()) {
 			return;
 		}
+
+		// mark the event that it is handled by the control
+		oEvent && oEvent.setMarked();
 
 		this.applyFocusInfo();
 
@@ -179,8 +182,51 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	RadioButton.prototype.ontouchend = function(oEvent) {
-
 		this.$().toggleClass("sapMRbBTouched", false);
+	};
+
+	RadioButton.prototype.onsapnext = function(oEvent) {
+		this._arrowsHandler("next");
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	RadioButton.prototype.onsapprevious = function(oEvent) {
+		this._arrowsHandler();
+
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		return this;
+	};
+
+	/**
+	 * Determines which button becomes focused after an arrow key is pressed.
+	 * @param {string} sPosition Button to be focused (next/previous)
+	 * @private
+	 */
+	RadioButton.prototype._arrowsHandler = function(sPosition) {
+		if (this.getParent() instanceof sap.m.RadioButtonGroup) {
+			return;
+		}
+
+		var aVisibleBtnsGroup = this._groupNames[this.getGroupName()].filter(function(oRB) {
+			return (oRB.getDomRef() && oRB.getEnabled());
+		});
+
+		var iButtonIndex = aVisibleBtnsGroup.indexOf(this);
+
+		if (sPosition === "next") {
+			var iNextPosition = (iButtonIndex + 1) % aVisibleBtnsGroup.length;
+			aVisibleBtnsGroup[iNextPosition].focus();
+		} else {
+			iButtonIndex = iButtonIndex - 1;
+			var iPreviousPosition = iButtonIndex < 0 ? aVisibleBtnsGroup.length - 1 : iButtonIndex;
+			aVisibleBtnsGroup[iPreviousPosition].focus();
+		}
 	};
 
 	// #############################################################################
@@ -213,11 +259,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			sGroupName = this.getGroupName(),
 			aControlsInGroup = this._groupNames[sGroupName],
 			iLength = aControlsInGroup && aControlsInGroup.length;
-			
+
 		this.setProperty("selected", bSelected, true); // No re-rendering
 		this._changeGroupName(this.getGroupName());
 
-		if (bSelected && sGroupName && sGroupName !== "") { // If this radio button is selected and groupName is set, explicitly deselect the other radio buttons of the same group
+		if (!!bSelected && sGroupName && sGroupName !== "") { // If this radio button is selected and groupName is set, explicitly deselect the other radio buttons of the same group
 			for (var i = 0; i < iLength; i++) {
 				oControl = aControlsInGroup[i];
 
@@ -228,7 +274,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			}
 		}
 
-		if ((bSelectedOld !== bSelected) && this.getDomRef()) {
+		if ((bSelectedOld !== !!bSelected) && this.getDomRef()) {
 			this.$().toggleClass("sapMRbSel", bSelected);
 
 			if (bSelected) {
@@ -305,8 +351,11 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	RadioButton.prototype.setGroupName = function(sGroupName) {
 		this._changeGroupName(sGroupName, this.getGroupName());
-
 		return this.setProperty("groupName", sGroupName, true);
+	};
+
+	RadioButton.prototype.onBeforeRendering = function() {
+		return this._changeGroupName(this.getGroupName());
 	};
 
 	/**
@@ -348,25 +397,14 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 * @protected
 	 */
 	RadioButton.prototype.setTabIndex = function(iTabIndex) {
-		var oInternalButton = this.getFocusDomRef("Button");
+		var oFocusDomRef = this.getFocusDomRef();
 		this._iTabIndex = iTabIndex;
 
-		if (oInternalButton) {
-			oInternalButton.setAttribute("tabindex", iTabIndex);
+		if (oFocusDomRef) {
+			oFocusDomRef.setAttribute("tabindex", iTabIndex);
 		}
 
 		return this;
-	};
-
-	RadioButton.prototype.getFocusDomRef = function() {
-
-		//set the focus on the radio button wrapper
-		return this.getDomRef("Button");
-	};
-
-	RadioButton.prototype.applyFocusInfo = function() {
-
-		this.$().focus();
 	};
 
 	/*
@@ -396,6 +434,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var aNewGroup = this._groupNames[sNewGroupName],
 			aOldGroup = this._groupNames[sOldGroupName];
 
+		if (aOldGroup && aOldGroup.indexOf(this) !== -1) {
+			aOldGroup.splice(aOldGroup.indexOf(this), 1);
+		}
+
 		if (!aNewGroup) {
 			aNewGroup = this._groupNames[sNewGroupName] = [];
 		}
@@ -404,9 +446,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			aNewGroup.push(this);
 		}
 
-		if (aOldGroup && aOldGroup.indexOf(this) !== -1) {
-			aOldGroup.splice(aOldGroup.indexOf(this), 1);
-		}
 	};
 
 	return RadioButton;

@@ -2,19 +2,31 @@
  * ${copyright}
  */
 sap.ui.require([
+	"jquery.sap.global",
 	"sap/ui/base/BindingParser",
 	"sap/ui/base/ExpressionParser",
 	"sap/ui/core/Icon",
 	"sap/ui/model/json/JSONModel",
 	"sap/ui/model/odata/ODataUtils"
-], function (BindingParser, ExpressionParser, Icon, JSONModel, ODataUtils) {
+], function (jQuery, BindingParser, ExpressionParser, Icon, JSONModel, ODataUtils) {
 	/*global QUnit, sinon */
-	/*eslint max-nested-callbacks: 4, no-warning-comments: 0 */
+	/*eslint no-warning-comments: 0 */
 	"use strict";
 
-	var oModel = new JSONModel(
-			{mail: "mail", tel: "tel", tel2: "tel", 3: 3, five: 5, thirteen: 13}
-		);
+	var oModel = new JSONModel({
+			mail : "mail",
+			tel : "tel",
+			tel2 : "tel",
+			3 : 3,
+			five : 5,
+			thirteen : 13,
+			complex : {
+				$dollar$ : "$",
+				_underscore_ : "_"
+				//TODO "You can use ISO 8859-1 or Unicode letters such as å and ü in identifiers.
+				// You can also use the Unicode escape sequences as characters in identifiers."
+			}
+		});
 
 	/**
 	 * Checks the string result of an expression binding when bound to a control property of type
@@ -27,7 +39,7 @@ sap.ui.require([
 	 */
 	function check(assert, sExpression, vResult, oScope) {
 		var oIcon = new Icon({
-				color: sExpression.charAt(0) === "{" ? sExpression : "{=" + sExpression + "}",
+				color: sExpression[0] === "{" ? sExpression : "{=" + sExpression + "}",
 				models: oModel
 			}, oScope);
 
@@ -63,32 +75,31 @@ sap.ui.require([
 		 * Checks that the code throws an expected error.
 		 *
 		 * @param {object} assert the assertions
-		 * @param {function} fnCodeUnderTest
-		 *   the code under test
+		 * @param {string} sExpression
+		 *   the expression binding in {=... syntax
 		 * @param {string} sMessage
 		 *   the expected error message
-		 * @param {string} sDetails
-		 *   the expected error details
 		 * @param {number} iAt
 		 *   the expected error position
 		 */
-		checkError : function (assert, fnCodeUnderTest, sMessage, sDetails, iAt) {
+		checkError : function (assert, sExpression, sMessage, iAt) {
 			var oLogMock = this.mock(jQuery.sap.log);
 
 			oLogMock.expects("error").withExactArgs(
 				sMessage + (iAt !== undefined ? " at position " + iAt : ""),
-				sDetails,
+				sExpression,
 				"sap.ui.base.ExpressionParser"
 			);
 			try {
-				fnCodeUnderTest();
+				// call ExpressionParser through BindingParser to gain resolution of bindings
+				BindingParser.complexParser(sExpression);
 				assert.ok(false, "code under test throws");
 			} catch (e) {
 				assert.ok(e instanceof SyntaxError, "Error type: " + e);
 				assert.strictEqual(e.message, sMessage, "Error.message");
 				assert.strictEqual(e.at, iAt, "Error.at");
 				if (iAt) {
-					assert.strictEqual(e.text, sDetails, "Error.at");
+					assert.strictEqual(e.text, sExpression, "Error.at");
 				}
 			}
 		}
@@ -99,7 +110,7 @@ sap.ui.require([
 		{ binding: "{='foo'}", literal: 'foo' },
 		{ binding: '{="foo"}', literal: 'foo' },
 		{ binding: "{= 'foo bar' }", literal: 'foo bar' }
-	].forEach(function(oFixture) {
+	].forEach(function (oFixture) {
 		QUnit.test("Valid String literal " + oFixture.binding, function (assert) {
 			var oExpression;
 
@@ -107,6 +118,7 @@ sap.ui.require([
 				function () { assert.ok(false, "unexpected call to fnResolveBinding"); },
 				oFixture.binding,
 				2);
+
 			assert.strictEqual(oExpression.result, undefined,
 					"no formatter for constant expression");
 			assert.strictEqual(oExpression.constant, oFixture.literal);
@@ -119,7 +131,7 @@ sap.ui.require([
 		{ binding: "{=${target>sap:semantics}}" },
 		{ binding: "{=${ b}   }" },
 		{ binding: "{=     ${ b} }" }
-	].forEach(function(oFixture) {
+	].forEach(function (oFixture) {
 		QUnit.test("Valid embedded binding " + oFixture.binding, function (assert) {
 			var oBinding = {
 					result: {/*bindingInfo*/},
@@ -174,19 +186,6 @@ sap.ui.require([
 	]);
 
 	//*********************************************************************************************
-	[
-		//parser error
-		{binding: "{=$invalid}}", message: "Expected '{' instead of 'i'", at: 4}
-	].forEach(function(oFixture) {
-		QUnit.test("Invalid binding: " + oFixture.binding, function (assert) {
-			this.checkError(assert, function () {
-				// call ExpressionParser through BindingParser to gain resolution of bindings
-				BindingParser.complexParser(oFixture.binding);
-			}, oFixture.message, oFixture.binding, oFixture.at);
-		});
-	});
-
-	//*********************************************************************************************
 	checkFixtures("Boolean literals, &&, ||, !", [
 		{ expression: "true", result: "true" },
 		{ expression: "false", result: "false" },
@@ -220,6 +219,12 @@ sap.ui.require([
 	]);
 
 	//*********************************************************************************************
+	checkFixtures("Member access", [
+		{ expression: "${/complex}.$dollar$", result: "$" },
+		{ expression: "${/complex}._underscore_", result: "_" }
+	]);
+
+	//*********************************************************************************************
 	checkFixtures("Member access and function call", [
 			{ expression: "odata.fillUriTemplate()", result: "TODO" },
 			{ expression: "odata.fillUriTemplate('http://www.foo.com')",
@@ -238,7 +243,7 @@ sap.ui.require([
 		function (oSandbox) {
 			var mGlobals = {
 					odata: {
-						fillUriTemplate: function(sTemplate, mParameters) {
+						fillUriTemplate: function (sTemplate, mParameters) {
 							var sKey;
 							if (!sTemplate) {
 								return "TODO";
@@ -262,7 +267,7 @@ sap.ui.require([
 
 			//use test globals in expression parser
 			oSandbox.stub(ExpressionParser, "parse",
-				function(fnResolveBinding, sInput, iStart) {
+				function (fnResolveBinding, sInput, iStart) {
 					return fnOriginalParse.call(null, fnResolveBinding, sInput, iStart, mGlobals);
 				}
 			);
@@ -294,16 +299,12 @@ sap.ui.require([
 		{ binding: "{=[1 2]}", message: "Expected , but instead saw 2", token: "2"},
 		{ binding: "{=[1+]}", message: "Unexpected ]", token: "]"},
 		{ binding: "{=[1,]}", message: "Unexpected ]", token: "]"}
-	].forEach(function(oFixture) {
+	].forEach(function (oFixture) {
 		QUnit.test("Error handling " + oFixture.binding + " --> " + oFixture.message,
 			function (assert) {
-				this.checkError(assert, function () {
-						BindingParser.complexParser(oFixture.binding);
-					},
-					oFixture.message,
-					oFixture.binding,
-					oFixture.at || (oFixture.token
-						? oFixture.binding.lastIndexOf(oFixture.token) + 1 : undefined));
+				this.checkError(assert, oFixture.binding, oFixture.message,
+					oFixture.at
+					|| oFixture.token && oFixture.binding.lastIndexOf(oFixture.token) + 1);
 			});
 	});
 
@@ -314,12 +315,12 @@ sap.ui.require([
 		{binding: "{=odata foo}", at: 8},
 		{binding: "{=odata.fillUriTemplate )}", at: 24},
 		{binding: "{='foo' , 'bar'}", at: 8}
-	].forEach(function(oFixture) {
+	].forEach(function (oFixture) {
 		QUnit.test("Error handling: excess tokens: " + oFixture.binding, function (assert) {
 			assert.throws(function () {
 				BindingParser.complexParser(oFixture.binding);
 			}, new SyntaxError("Expected '}' and instead saw '"
-					+ oFixture.binding.charAt(oFixture.at) + "' in expression binding "
+					+ oFixture.binding[oFixture.at] + "' in expression binding "
 					+ oFixture.binding + " at position " + oFixture.at)
 			);
 		});
@@ -331,7 +332,7 @@ sap.ui.require([
 		{ binding: "{={'foo': 'bar'}}", result: {foo: "bar"} },
 		{ binding: "{={foo: 'bar'}}", result: {foo: "bar"} },
 		{ binding: "{={a: 'a', \"b\": \"b\"}}", result: {a: "a", b: "b"} }
-	].forEach(function(oFixture) {
+	].forEach(function (oFixture) {
 		QUnit.test("Object literal " + oFixture.binding, function (assert) {
 			var oBindingInfo = ExpressionParser.parse(undefined /*fnResolver*/,
 					oFixture.binding, 2);
@@ -505,20 +506,19 @@ sap.ui.require([
 		// w/o try/catch, a formatter's exception is thrown out of the control's c'tor...
 		// --> expression binding provides the comfort of an "automatic try/catch"
 		assert.throws(function () {
-			var unused = new Icon({
-					color : {
-						path : '/',
-						formatter : function () { return null.toString(); }
-					},
-					models : new JSONModel()
-				});
-			unused = !unused;
+			return new Icon({
+				color : {
+					path : '/',
+					formatter : function () { return null.toString(); }
+				},
+				models : new JSONModel()
+			});
 		});
 
 		// Note: no need to log the stacktrace, it does not really matter to most people here
 		// Note: the exact error message is browser-dependent
 		this.mock(jQuery.sap.log).expects("warning").withExactArgs(
-			sinon.match(/TypeError:.*null/),
+			sinon.match(/TypeError:.*null/i),
 			sExpression,
 			"sap.ui.base.ExpressionParser");
 
@@ -584,4 +584,22 @@ sap.ui.require([
 		// null") and raises a warning.
 		check(assert, "${mail} && ${mail}.indexOf('mail')", "0");
 	});
+
+	//*********************************************************************************************
+	QUnit.test("parse: Performance measurement points", function (assert) {
+		var oAverageSpy = this.spy(jQuery.sap.measure, "average")
+				.withArgs("sap.ui.base.ExpressionParser#parse", "",
+					["sap.ui.base.ExpressionParser"]),
+			oEndSpy = this.spy(jQuery.sap.measure, "end")
+				.withArgs("sap.ui.base.ExpressionParser#parse");
+
+		ExpressionParser.parse(function () { assert.ok(false, "unexpected call"); }, "{='foo'}", 2);
+		assert.strictEqual(oAverageSpy.callCount, 1, "parse start measurement");
+		assert.strictEqual(oEndSpy.callCount, 1, "parse end measurement");
+
+		this.checkError(assert, "{=, 'foo'}", "Unexpected ,", 3);
+		assert.strictEqual(oAverageSpy.callCount, 2, "parse start measurement");
+		assert.strictEqual(oEndSpy.callCount, 1, "parse end measurement - end not reached");
+	});
+
 });

@@ -75,7 +75,15 @@ sap.ui.define(['jquery.sap.global', './BarInPageEnabler', './library', 'sap/ui/c
 			 *  Represents the right content area. Controls such as action buttons or search field can be placed here.
 			 */
 			contentRight : {type : "sap.ui.core.Control", multiple : true, singularName : "contentRight"}
-		}
+		},
+		associations : {
+
+			/**
+			 * Association to controls / ids which label this control (see WAI-ARIA attribute aria-labelledby).
+			 */
+			ariaLabelledBy : {type : "sap.ui.core.Control", multiple : true, singularName : "ariaLabelledBy"}
+		},
+		designTime: true
 	}});
 
 	Bar.prototype.onBeforeRendering = function() {
@@ -201,26 +209,15 @@ sap.ui.define(['jquery.sap.global', './BarInPageEnabler', './library', 'sap/ui/c
 	 * @private
 	 */
 	Bar.prototype._updatePosition = function(bContentLeft, bContentMiddle, bContentRight) {
-
-		if (!bContentLeft && !bContentRight) {
-
-			this._$MidBarPlaceHolder.css({ width : '100%'});
+		if (!bContentLeft && !bContentRight && bContentMiddle) {
 			return;
-
 		}
-
 		if (bContentLeft && !bContentMiddle && !bContentRight) {
-
-			this._$LeftBar.css({ width : '100%'});
 			return;
-
 		}
 
 		if (!bContentLeft && !bContentMiddle && bContentRight) {
-
-			this._$RightBar.css({ width : '100%'});
 			return;
-
 		}
 
 		var iBarWidth = this.$().outerWidth(true);
@@ -272,9 +269,9 @@ sap.ui.define(['jquery.sap.global', './BarInPageEnabler', './library', 'sap/ui/c
 	 * Returns the CSS for the contentMiddle aggregation.
 	 * It is centered if there is enough space for it to fit between the left and the right content, otherwise it is centered between them.
 	 * If not it will be centered between those two.
-	 * @param {integer} iRightBarWidth The width in px
-	 * @param {integer} iBarWidth The width in px
-	 * @param {integer} iLeftBarWidth The width in px
+	 * @param {int} iRightBarWidth The width in px
+	 * @param {int} iBarWidth The width in px
+	 * @param {int} iLeftBarWidth The width in px
 	 * @returns {object} The new _$MidBarPlaceHolder CSS value
 	 * @private
 	 */
@@ -337,7 +334,8 @@ sap.ui.define(['jquery.sap.global', './BarInPageEnabler', './library', 'sap/ui/c
 
 		// Chrome browser has a problem in providing the correct div size when image inside does not have width explicitly set
 		//since ff version 24 the calculation is correct, since we don't support older versions we won't check it
-		if (sap.ui.Device.browser.webkit || sap.ui.Device.browser.firefox) {
+		// Edge also works correctly with this calculation unlike IE
+		if (sap.ui.Device.browser.webkit || sap.ui.Device.browser.firefox || sap.ui.Device.browser.edge) {
 
 			for (i = 0; i < aContainerChildren.length; i++) {
 

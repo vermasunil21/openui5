@@ -502,7 +502,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 		TreeItem : "TreeItem"
 
 	};
-	
+
 	/**
 	 * Defines the accessible landmark roles for ARIA support. This enumeration is used with the AccessibleRole control property.
 	 * For more information, goto "Roles for Accessible Rich Internet Applications (WAI-ARIA Roles)" at the www.w3.org homepage.
@@ -515,7 +515,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * No explicit role is applicable.
-		 * 
+		 *
 		 * The interpretation of this value depends on the control / element which defines a property with this type.
 		 * Normally this value means that no accessible landmark should be written.
 		 *
@@ -525,7 +525,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>banner</code>.
-		 * 
+		 *
 		 * A banner usually appears at the top of the page and typically spans the full width.
 		 *
 		 * @public
@@ -534,7 +534,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>main</code>.
-		 * 
+		 *
 		 * The main content of a page.
 		 *
 		 * @public
@@ -543,7 +543,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>region</code>.
-		 * 
+		 *
 		 * A section of a page, that is important enough to be included in a page summary or table of contents.
 		 *
 		 * @public
@@ -552,7 +552,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>navigation</code>.
-		 * 
+		 *
 		 * A region that contains a collection of items and objects that, as a whole, combine to create a navigation facility.
 		 *
 		 * @public
@@ -561,7 +561,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>search</code>.
-		 * 
+		 *
 		 * A region that contains a collection of items and objects that, as a whole, combine to create a search facility.
 		 *
 		 * @public
@@ -570,7 +570,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 		/**
 		 * Represents the ARIA role <code>complementary</code>.
-		 * 
+		 *
 		 * A section of the page, designed to be complementary to the main content at a similar level in the DOM hierarchy.
 		 *
 		 * @public
@@ -633,18 +633,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 		 * The Islamic calendar
 		 * @public
 		 */
-		Islamic: "Islamic"
-	};
+		Islamic: "Islamic",
 
-	/**
-	 * The map between calendar type and its class that implements its support.
-	 *
-	 * All new calendar types have to be added in the CalendarType their implementations registered in CalendarTypeToClassMap
-	 * @enum {string}
-	 * @private
-	 */
-	sap.ui.core.CalendarTypeToClassMap = {};
-	sap.ui.core.CalendarTypeToClassMap[sap.ui.core.CalendarType.Islamic] = "sap.ui.core.date.IslamicDate";
+		/**
+		 * The Japanese emperor calendar
+		 * @public
+		 */
+		Japanese: "Japanese"
+	};
 
 	/**
 	 * @classdesc A string type that represents CSS color values.
@@ -864,6 +860,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 
 	/**
 	 * @classdesc A string type representing an Id or a name.
+	 *
+	 * Allowed is a sequence of characters (capital/lowercase), digits, underscores, dashes, points and/or colons.
+	 * It may start with a character, number or underscore only.
 	 *
 	 * @final
 	 * @namespace
@@ -1624,26 +1623,29 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/DataType', './Core'],
 	lazy("sap.ui.core.BusyIndicator", "show hide attachOpen detachOpen attachClose detachClose");
 	lazy("sap.ui.core.tmpl.Template", "registerType unregisterType");
 	lazy("sap.ui.core.Fragment", "registerType");
+	lazy("sap.ui.core.service.ServiceFactoryRegistry", "register unregister get");
 
 	lazy("sap.ui.model.odata.AnnotationHelper", "createPropertySetting format getNavigationPath"
 		+ " gotoEntitySet gotoEntityType gotoFunctionImport isMultiple resolvePath simplePath");
-	sap.ui.model.odata.AnnotationHelper.format.requiresIContext = true;
-	sap.ui.model.odata.AnnotationHelper.getNavigationPath.requiresIContext = true;
-	sap.ui.model.odata.AnnotationHelper.isMultiple.requiresIContext = true;
-	sap.ui.model.odata.AnnotationHelper.simplePath.requiresIContext = true;
-
+	if ( sap.ui.model && sap.ui.model.odata && sap.ui.model.odata.AnnotationHelper ) { // ensure that lazy stub exists before enriching it
+		sap.ui.model.odata.AnnotationHelper.format.requiresIContext = true;
+		sap.ui.model.odata.AnnotationHelper.getNavigationPath.requiresIContext = true;
+		sap.ui.model.odata.AnnotationHelper.isMultiple.requiresIContext = true;
+		sap.ui.model.odata.AnnotationHelper.simplePath.requiresIContext = true;
+	}
 	lazy("sap.ui", "xmlfragment", "sap.ui.core.Fragment"); // cannot use "each" as it assumes a module to exist for each function name
 	lazy("sap.ui", "jsfragment", "sap.ui.core.Fragment");
 	lazy("sap.ui", "htmlfragment", "sap.ui.core.Fragment");
 
-	each("sap.ui.model.", ["Filter","Sorter","json.JSONModel","resource.ResourceModel","odata.ODataModel","odata.v2.ODataModel","xml.XMLModel"]);
+	each("sap.ui.model.", ["Filter","Sorter","json.JSONModel","resource.ResourceModel","odata.ODataModel","odata.v2.ODataModel","odata.v4.ODataModel","xml.XMLModel"]);
 	each("sap.ui.model.type.", ["Boolean","Integer","Float","String","Date","Time","DateTime","FileSize", "Currency"]);
-	each("sap.ui.model.odata.type.", ["Boolean","Byte","DateTime","DateTimeOffset","Double","Decimal","Guid","Int16","Int32","Int64","SByte","Single","String","Time"]);
+	each("sap.ui.model.odata.type.", ["Boolean","Byte","Date","DateTime","DateTimeOffset","Double","Decimal","Guid","Int16","Int32","Int64","Raw","SByte","Single","String","Time","TimeOfDay"]);
 	each("sap.ui.core.", ["Locale","LocaleData","mvc.Controller"]);
 	each("sap.ui.core.mvc.", ["Controller", "View", "JSView", "JSONView", "XMLView", "HTMLView", "TemplateView"], "sap.ui");
 	each("sap.ui.core.", ["Component"], "sap.ui");
 	each("sap.ui.core.tmpl.", ["Template"], "sap.ui");
 	each("sap.ui.core.routing.", ["HashChanger", "History", "Route", "Router", "Target", "Targets", "Views"]);
+	each("sap.ui.core.service.", ["ServiceFactory", "Service"]);
 
 	return sap.ui.core;
 

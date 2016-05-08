@@ -34,7 +34,7 @@ sap.ui.define(['sap/ui/model/FormatException', 'sap/ui/model/odata/type/ODataTyp
 
 		oType.oConstraints = undefined;
 		if (vNullable === false || vNullable === "false") {
-			oType.oConstraints = {nullable: false};
+			oType.oConstraints = {nullable : false};
 		} else if (vNullable !== undefined && vNullable !== true && vNullable !== "true") {
 			jQuery.sap.log.warning("Illegal nullable: " + vNullable, null, oType.getName());
 		}
@@ -47,8 +47,8 @@ sap.ui.define(['sap/ui/model/FormatException', 'sap/ui/model/odata/type/ODataTyp
 	 * href="http://www.odata.org/documentation/odata-version-2-0/overview#AbstractTypeSystem">
 	 * <code>Edm.Guid</code></a>.
 	 *
-	 * In {@link sap.ui.model.odata.v2.ODataModel ODataModel} this type is represented as a
-	 * <code>string</code>.
+	 * In both {@link sap.ui.model.odata.v2.ODataModel} and {@link sap.ui.model.odata.v4.ODataModel}
+	 * this type is represented as a <code>string</code>.
 	 *
 	 * @extends sap.ui.model.odata.type.ODataType
 	 *

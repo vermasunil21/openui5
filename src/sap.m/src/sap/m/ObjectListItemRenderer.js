@@ -107,10 +107,6 @@ sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Rende
 				sIntroDir = oLI.getIntroTextDirection(),
 				sNumberDir = oLI.getNumberTextDirection();
 
-			rm.write("<div"); // Start Main container
-			rm.writeControlData(oLI);
-			rm.write(">");
-
 			// Introductory text at the top of the item, like "On behalf of Julie..."
 			if (oLI.getIntro()) {
 				rm.write("<div");
@@ -202,7 +198,9 @@ sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Rende
 
 			rm.write("</div>"); // End Top row container
 
-			rm.write('<div style="clear:both"/>');
+			if (!(sap.ui.Device.browser.internet_explorer && sap.ui.Device.browser.version < 10)) {
+				rm.write("<div style=\"clear: both;\"></div>");
+			}
 
 			// Bottom row container.
 			if (oLI._hasBottomContent()) {
@@ -260,7 +258,6 @@ sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Rende
 			// ARIA description node
 			this.renderAriaNode(rm, oLI, this.getAriaNodeText(oLI));
 
-			rm.write("</div>"); // End Main container
 		};
 
 		/**
@@ -343,18 +340,18 @@ sap.ui.define(['jquery.sap.global', './ListItemBaseRenderer', 'sap/ui/core/Rende
 				aLabelledByIds.push(oLI.getId() + "-numberUnit");
 			}
 
+			if (oLI.getAttributes()) {
+				oLI.getAttributes().forEach(function(attribute) {
+					aLabelledByIds.push(attribute.getId());
+				});
+			}
+
 			if (oLI.getFirstStatus()) {
 				aLabelledByIds.push(oLI.getFirstStatus().getId());
 			}
 
 			if (oLI.getSecondStatus()) {
 				aLabelledByIds.push(oLI.getSecondStatus().getId());
-			}
-
-			if (oLI.getAttributes()) {
-				oLI.getAttributes().forEach(function(attribute) {
-					aLabelledByIds.push(attribute.getId());
-				});
 			}
 
 			if (this.getAriaNodeText(oLI)) {

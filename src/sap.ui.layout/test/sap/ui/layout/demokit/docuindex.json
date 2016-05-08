@@ -16,7 +16,8 @@
 				"samples" : [
 					"sap.ui.layout.sample.DynamicSideContent",
 					"sap.ui.layout.sample.DynamicSideContentEqualSplit",
-					"sap.ui.layout.sample.DynamicSideContentProduct"
+					"sap.ui.layout.sample.DynamicSideContentProduct",
+					"sap.ui.layout.sample.DynamicSideContentPosition"
 				]
 			},
 			{
@@ -39,7 +40,10 @@
 				"samples" : [
 					"sap.ui.layout.sample.SimpleForm354",
 					"sap.ui.layout.sample.SimpleForm471",
-					"sap.ui.layout.sample.SimpleForm480"
+					"sap.ui.layout.sample.SimpleForm480",
+					"sap.ui.layout.sample.SimpleForm480_12120",
+					"sap.ui.layout.sample.SimpleForm480_Trial",
+					"sap.ui.layout.sample.SimpleFormToolbar"
 				]
 			},
 			{
@@ -96,6 +100,26 @@
 					"sap.ui.layout.sample.Splitter4",
 					"sap.ui.layout.sample.SplitterNested1"
 				]
+			},
+			{
+				"id" : "sap.ui.layout.BlockLayout",
+				"name" : "Block Layout ",
+				"category" : "Layout",
+				"since" : "1.34",
+				"formFactors" : "-",
+				"samples" : [
+					"sap.ui.layout.sample.BlockLayoutDefault"
+				]
+			},
+			{
+				"id" : "sap.ui.layout.ResponsiveSplitter",
+				"name" : "ResponsiveSplitter ",
+				"category" : "Layout",
+				"since" : "1.38",
+				"formFactors" : "-",
+				"samples" : [
+					"sap.ui.layout.sample.ResponsiveSplitter"
+				]
 			}
 		],
 		"samples" : [
@@ -113,6 +137,11 @@
 				"id": "sap.ui.layout.sample.DynamicSideContentProduct",
 				"name": "Dynamic Side Content - product page",
 				"description": "Product page with comments example."
+			},
+			{
+				"id": "sap.ui.layout.sample.DynamicSideContentPosition",
+				"name": "Dynamic Side Content - position",
+				"description": "The side content is positioned on the left side of the main content in left-to-right mode and on the right side of the main content in right-to-left mode."
 			},
 			{
 				"id": "sap.ui.layout.sample.Form354",
@@ -145,9 +174,24 @@
 				"description": "With a form you can easily layout (a) lists of properties (b) input fields. The form automatically adapts to the screen size. Even though the form is not part of sap.m it can and shall be used for building mobile user interfaces. This is an example of a dual-column 4:8:0 layout (label:input:emptyspace) using the SimpleForm control"
 			},
 			{
+				"id": "sap.ui.layout.sample.SimpleForm480_Trial",
+				"name": "Simple Form - Trial 4:8:0",
+				"description": "This is an example of a trial-column layout using the SimpleForm control. On extra large screens (screen size XL) a trial-column 4:8:0 layout (label:input:emptyspace) is used, on large and medium screens a dual-column 4:8:0 layout (label:input:emptyspace) is used and on small screens a one-column 12:12:0 layout (label:input:emptyspace) is used."
+			},
+			{
+				"id": "sap.ui.layout.sample.SimpleForm480_12120",
+				"name": "Simple Form - Dual 4:8:0 / 12:12:0",
+				"description": "This is an example of a dual-column layout using the SimpleForm control. On large screens a dual-column 4:8:0 layout (label:input:emptyspace) is used, on medium screens a dual-column 12:12:0 layout is used and on small screens a one-column 12:12:0 layout is used. In the second SimpleForm only one Container is used, but an empty column is displayed beside to be aligned with the first SimpleForm."
+			},
+			{
+				"id": "sap.ui.layout.sample.SimpleFormToolbar",
+				"name": "SimpleForm With Toolbar",
+				"description": "A SimpleForm that used Toolbars as Form header and FormContainer headers."
+			},
+			{
 				"id": "sap.ui.layout.sample.FormToolbar",
 				"name": "Form With Toolbar",
-				"description": "Unfortunately the form control has no toolbar. As remedy you can put the form inside a Panel that carries the toolbar."
+				"description": "A Form that used Toolbars as Form header and FormContainer headers."
 			},
 			{
 				"id": "sap.ui.layout.sample.FixFlexVertical",
@@ -208,6 +252,16 @@
 				"id": "sap.ui.layout.sample.SplitterNested1",
 				"name": "Nested Splitter Layouts - 7 Areas",
 				"description": "Nested Splitter example with 7 content areas"
+			},
+			{
+				"id": "sap.ui.layout.sample.BlockLayoutDefault",
+				"name": "Block Layout ",
+				"description": "The Block Layout  is intended to be used with rows and cells. The cells have predefined width, the rows have predefined rendering modes - scrollable/vertical/horizontal."
+			},
+			{
+				"id": "sap.ui.layout.sample.ResponsiveSplitter",
+				"name": "Responsive Splitter",
+				"description": "ResponsiveSplitter is used to visually divide the content of its parent. It consists of PaneContainers that further  agregate other PaneContainers and SplitPanes. SplitPanes can be moved to the pagination when a minimum width of their parent is reached."
 			}
 		]
 	}

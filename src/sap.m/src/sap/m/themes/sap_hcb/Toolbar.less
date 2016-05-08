@@ -1,5 +1,4 @@
 .sapMTB {
-	padding: 0;
 	height: 3rem;
 	background: @sapHCStandardBG;
 	border-bottom: 1px solid @sapHCStandardFG;
@@ -9,20 +8,10 @@
 	min-width: 2.5rem; /* default min-width value for the shrinkable items */
 }
 
-/* Transparent Toolbar Context */
-.sapMTB-Transparent-CTX.sapMTB {
-	padding-left: 1rem;
-}
-
-/* Overwrite the margin of the IBar for Transparent context*/
-.sapMIBar.sapMTB-Transparent-CTX.sapMTB > :first-child {
-	margin-left: 0;
-}
-
 /* Info Toolbar Context */
 .sapMTB-Info-CTX.sapMTB {
 	height: 1.75rem;
-	padding: 0 .5rem;
+	padding: 0 .25rem 0 .5rem;
 	margin: 0.125rem 0.1875rem;
 	border: 0.125rem solid @sapHCStandardFG;
 	border-radius: 0.3125rem;
@@ -33,13 +22,23 @@
 	outline-offset: -0.1875rem;
 }
 
-.sapMTB-Info-CTX.sapMTB > * {
-	margin: 0 .5rem;
-}
-
-/* Overwrite the margin of the IBar for Info context */
-.sapMIBar.sapMTB-Info-CTX.sapMTB > :first-child {
-	margin: 0 .5rem;
+/* IE ignores outline-offset. Use an overlay: */
+html[data-sap-ui-browser^="ie"].sap-desktop {
+	.sapMTBActive:focus {
+		outline: none;
+		position: relative;
+	}
+	.sapMTBActive:focus:before {
+		content: " ";
+		box-sizing: border-box;
+		width: calc(~'100% - 0.0625rem');
+		height: calc(~'100% - 0.0625rem');
+		position: absolute;
+		left: 0;
+		top: 0;
+		border: 0.125rem dotted @sapHCStandardFG;
+		pointer-events: none;
+	}
 }
 
 /********** COMPACT DESIGN ************/
@@ -51,7 +50,7 @@
 
 /* default min-width value for the shrinkable items */
 .sapUiSizeCompact .sapMTBShrinkItem,
-.sapUiSizeCondensed .sapMTBShrinkItem {
+.sapUiSizeCondensed .sapUiTableCell .sapMTBShrinkItem {
 	min-width: 2rem;
 }
 

@@ -8,45 +8,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 	"use strict";
 
 	/**
-	 * Shortcut for document.getElementById() with additionally an IE6/7 bug fixed.
-	 * Used to replace the jQuery.sap.domById when running in IE < v8.
-	 *
-	 * @param {string} sId the id of the DOM element to return
-	 * @param {Window} oWindow the window (optional)
-	 * @return {Element} the DOMNode identified by the given sId
-	 * @private
-	 */
-	var domByIdInternal = function(sId, oWindow) {
-
-		if (!oWindow) {
-			oWindow = window;
-		}
-		if (!sId || sId == "") {
-			return null;
-		}
-
-		var oDomRef = oWindow.document.getElementById(sId);
-
-		// IE also returns the element with the name or id whatever is first
-		// => the following line makes sure that this was the id
-		if (oDomRef && oDomRef.id == sId) {
-			return oDomRef;
-		}
-
-		// otherwise try to lookup the name
-		var oRefs = oWindow.document.getElementsByName(sId);
-		for (var i = 0;i < oRefs.length;i++) {
-			oDomRef = oRefs[i];
-			if (oDomRef && oDomRef.id == sId) {
-				return oDomRef;
-			}
-		}
-
-		return null;
-
-	};
-
-	/**
 	 * Shortcut for document.getElementById(), including a bug fix for older IE versions.
 	 *
 	 * @param {string} sId The id of the DOM element to return
@@ -56,10 +17,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 	 * @function
 	 * @since 0.9.0
 	 */
-	jQuery.sap.domById = !!Device.browser.internet_explorer && Device.browser.version < 8 ? domByIdInternal : function domById(sId, oWindow) {
+	jQuery.sap.domById = function domById(sId, oWindow) {
 		return sId ? (oWindow || window).document.getElementById(sId) : null;
 	};
-
 
 	/**
 	 * Shortcut for jQuery("#" + id) with additionally the id being escaped properly.
@@ -414,6 +374,24 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 		return !isNaN(iTabIndex) && iTabIndex >= 0;
 	};
 
+	/**
+	 * Checks whether an Element is invisible for the end user.
+	 *
+	 * This is a modified version of jQuery's :hidden selector, but with a slightly
+	 * different semantic:
+	 *
+	 * Since jQuery 2.x, inline elements (SPAN etc.) might be considered 'visible'
+	 * although they have zero dimensions (e.g. an empty span). In jQuery 1.x such
+	 * elements had been treated as 'hidden'.
+	 *
+	 * As some UI5 controls rely on the old behavior, this method restores it.
+	 *
+	 * @param {Element} oElem Element to check the dimensions for
+	 * @returns {boolean} whether the Element has only zero dimensions
+	 */
+	function hasZeroDimensions(oElem) {
+		return oElem.offsetWidth <= 0 && oElem.offsetHeight <= 0;
+	}
 
 	/**
 	 * Returns the first focusable domRef in a given container (the first element of the collection)
@@ -430,7 +408,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 		var visibilityHiddenFilter = function (idx){
 			return jQuery(this).css("visibility") == "hidden";
 		};
-		if (!oContainerDomRef || jQuery(oContainerDomRef).is(':hidden') ||
+		if (!oContainerDomRef || hasZeroDimensions(oContainerDomRef) ||
 				jQuery(oContainerDomRef).filter(visibilityHiddenFilter).length == 1) {
 			return null;
 		}
@@ -439,7 +417,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 			oDomRefFound = null;
 
 		while (oCurrDomRef) {
-			if (oCurrDomRef.nodeType == 1 && jQuery(oCurrDomRef).is(':visible')) {
+			if (oCurrDomRef.nodeType == 1 && !hasZeroDimensions(oCurrDomRef)) {
 				if (jQuery(oCurrDomRef).hasTabIndex()) {
 					return oCurrDomRef;
 				}
@@ -473,7 +451,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 		var visibilityHiddenFilter = function (idx){
 			return jQuery(this).css("visibility") == "hidden";
 		};
-		if (!oContainerDomRef || jQuery(oContainerDomRef).is(':hidden') ||
+		if (!oContainerDomRef || hasZeroDimensions(oContainerDomRef) ||
 				jQuery(oContainerDomRef).filter(visibilityHiddenFilter).length == 1) {
 			return null;
 		}
@@ -482,7 +460,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 			oDomRefFound = null;
 
 		while (oCurrDomRef) {
-			if (oCurrDomRef.nodeType == 1 && jQuery(oCurrDomRef).is(':visible')) {
+			if (oCurrDomRef.nodeType == 1 && !hasZeroDimensions(oCurrDomRef)) {
 				if (oCurrDomRef.childNodes) {
 					oDomRefFound = jQuery(oCurrDomRef).lastFocusableDomRef();
 					if (oDomRefFound) {
@@ -741,7 +719,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/Device'],
 			if ( !element.href || !mapName || map.nodeName.toLowerCase() !== "map" ) {
 				return false;
 			}
-			img = jQuery( "img[usemap=#" + mapName + "]" )[0];
+			img = jQuery( "img[usemap='#" + mapName + "']" )[0];
 			return !!img && visible( img );
 		}
 		/*eslint-disable no-nested-ternary */

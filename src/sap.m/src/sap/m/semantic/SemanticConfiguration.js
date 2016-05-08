@@ -75,6 +75,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 		return SemanticConfiguration._oTypeConfigs[sType].order;
 	};
 
+	SemanticConfiguration.getAriaId = function (sType) {
+
+		return SemanticConfiguration._oTypeConfigs[sType].getSettings().ariaLabelledBy;
+	};
+
 	SemanticConfiguration._oTypeConfigs = (function () { //TODO: set from outside?
 
 	var oTypeConfigs = {},
@@ -90,7 +95,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 		var _mInvisibleTexts = {};
 
 		/**
-		 * Creates (if not already created) and returns an invisible text element for screan reader support
+		 * Creates (if not already created) and returns an invisible text element for screen reader support
 		 * @param sType - the type of the control we want to get a label for
 		 * @param sText - the text to be used
 		 * @private
@@ -154,10 +159,30 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 				return {
 					text: oBundle.getText("SEMANTIC_CONTROL_SAVE"),
 					ariaLabelledBy: _ensureInvisibleText("SaveAction", oBundle.getText("SEMANTIC_CONTROL_SAVE")),
-					type: sap.m.ButtonType.Emphasized
+					type: sap.m.ButtonType.Emphasized,
+					layoutData: new OverflowToolbarLayoutData({
+						moveToOverflow: false,
+						stayInOverflow: false
+					})
 				};
 			},
 			order: 3
+		};
+
+		oTypeConfigs["sap.m.semantic.DeleteAction"] = {
+			position: SemanticConfiguration.prototype._PositionInPage.footerRight_TextOnly,
+			triggers: SemanticConfiguration._PageMode.display,
+			getSettings: function() {
+				return {
+					text: oBundle.getText("SEMANTIC_CONTROL_DELETE"),
+					layoutData: new OverflowToolbarLayoutData({
+						moveToOverflow: false,
+						stayInOverflow: false
+					}),
+					ariaLabelledBy: _ensureInvisibleText("DeleteAction", oBundle.getText("SEMANTIC_CONTROL_DELETE"))
+				};
+			},
+			order: 4
 		};
 
 		oTypeConfigs["sap.m.semantic.PositiveAction"] = {
@@ -170,7 +195,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 						stayInOverflow: false
 					})};
 			},
-			order: 4
+			order: 5
 		};
 
 		oTypeConfigs["sap.m.semantic.NegativeAction"] = {
@@ -183,7 +208,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 						stayInOverflow: false
 					})};
 			},
-			order: 5
+			order: 6
 		};
 
 		oTypeConfigs["sap.m.semantic.CancelAction"] = {
@@ -195,7 +220,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("CancelAction", oBundle.getText("SEMANTIC_CONTROL_CANCEL"))
 				};
 			},
-			order: 6
+			order: 7
 		};
 
 		oTypeConfigs["sap.m.semantic.ForwardAction"] = {
@@ -210,7 +235,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					})
 				};
 			},
-			order: 7
+			order: 8
 		};
 
 		oTypeConfigs["sap.m.semantic.OpenInAction"] = {
@@ -221,7 +246,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("OpenInAction", oBundle.getText("SEMANTIC_CONTROL_OPEN_IN"))
 				};
 			},
-			order: 8
+			order: 9
 		};
 
 		oTypeConfigs["sap.m.semantic.AddAction"] = {
@@ -376,6 +401,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 			constraints: "IconOnly"
 		};
 
+		// sap.m.Select has no property for tooltip of the icon, so the default tooltip icon will be used
+		// this might lead to a different translation of the tooltip when the "Group-2" button is used inside sap.m.Select or used as a standard button
 		oTypeConfigs["sap.m.semantic.GroupSelect"] = {
 			position: SemanticConfiguration.prototype._PositionInPage.footerRight_IconOnly,
 			getSettings: function() {
@@ -383,7 +410,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					icon: IconPool.getIconURI("group-2"),
 					type: "IconOnly",
 					autoAdjustWidth: true,
-					tooltip: oBundle.getText("SEMANTIC_CONTROL_GROUP"),
 					ariaLabelledBy: _ensureInvisibleText("GroupAction", oBundle.getText("SEMANTIC_CONTROL_GROUP")),
 					layoutData: new OverflowToolbarLayoutData({
 						moveToOverflow: true,
@@ -403,7 +429,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 
 		oTypeConfigs["saveAsTileAction"] = {
 			position: SemanticConfiguration.prototype._PositionInPage.shareMenu,
-			order: 0
+			order: 0,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["pagingAction"] = {
@@ -420,7 +447,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("DiscussInJamAction", oBundle.getText("SEMANTIC_CONTROL_DISCUSS_IN_JAM"))
 				};
 			},
-			order: 1
+			order: 1,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["sap.m.semantic.ShareInJamAction"] = {
@@ -433,7 +461,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("ShareInJamAction", oBundle.getText("SEMANTIC_CONTROL_SHARE_IN_JAM"))
 				};
 			},
-			order: 2
+			order: 2,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["sap.m.semantic.SendMessageAction"] = {
@@ -446,7 +475,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("SendMessageAction", oBundle.getText("SEMANTIC_CONTROL_SEND_MESSAGE"))
 				};
 			},
-			order: 3
+			order: 3,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["sap.m.semantic.SendEmailAction"] = {
@@ -459,7 +489,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("SendEmailAction", oBundle.getText("SEMANTIC_CONTROL_SEND_EMAIL"))
 				};
 			},
-			order: 4
+			order: 4,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["sap.m.semantic.PrintAction"] = {
@@ -472,7 +503,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/Metadata', "sap/m/OverflowToolb
 					ariaLabelledBy: _ensureInvisibleText("PrintAction", oBundle.getText("SEMANTIC_CONTROL_PRINT"))
 				};
 			},
-			order: 5
+			order: 5,
+			constraints: "IconOnly"
 		};
 
 		oTypeConfigs["sap.m.semantic.MessagesIndicator"] = {

@@ -46,7 +46,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	if ( typeof window.sap !== "object" && typeof window.sap !== "function"  ) {
 	  window.sap = {};
 	}
-	
+
 	/**
 	 * The <code>sap.ui</code> namespace is the central OpenAjax compliant entry
 	 * point for UI related JavaScript functionality provided by SAP.
@@ -59,14 +59,25 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	if ( typeof window.sap.ui !== "object") {
 		window.sap.ui = {};
 	}
+
 	sap.ui = jQuery.extend(sap.ui, {
-			/**
-			 * The version of the SAP UI Library
-			 * @type string
-			 */
-			version: "${version}",
-			buildinfo : { lastchange : "${lastchange}", buildtime : "${buildtime}" }
-		});
+		/**
+		 * The version of the SAP UI Library
+		 * @type string
+		 */
+		version: "${version}",
+		buildinfo : { lastchange : "${lastchange}", buildtime : "${buildtime}" }
+	});
+
+	var oCfgData = window["sap-ui-config"] || {};
+
+	var syncCallBehavior = 0; // ignore
+	if ( oCfgData['xx-nosync'] === 'warn' || /(?:\?|&)sap-ui-xx-nosync=(?:warn)/.exec(window.location.search) ) {
+		syncCallBehavior = 1;
+	}
+	if ( oCfgData['xx-nosync'] === true || oCfgData['xx-nosync'] === 'true' || /(?:\?|&)sap-ui-xx-nosync=(?:x|X|true)/.exec(window.location.search) ) {
+		syncCallBehavior = 2;
+	}
 
 	/**
 	 * Stores the loading Promise for "sap-ui-version.json".
@@ -76,17 +87,17 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	var oVersionInfoPromise = null;
 
 	/**
-	 * Loads the version info file (resources/sap-ui-version.json) and returns 
-	 * it or if a library name is specified then the version info of the individual 
+	 * Loads the version info file (resources/sap-ui-version.json) and returns
+	 * it or if a library name is specified then the version info of the individual
 	 * library will be returned.
-	 * 
+	 *
 	 * In case of the version info file is not available an error will occur when
 	 * calling this function.
-	 * 
+	 *
 	 * @param {string|object} [mOptions] name of the library (e.g. "sap.ui.core") or a object map (see below)
 	 * @param {boolean} [mOptions.library] name of the library (e.g. "sap.ui.core")
 	 * @param {boolean} [mOptions.async=false] whether "sap-ui-version.json" should be loaded asynchronously
-	 * @param {boolean} [mOptions.failOnError=true] whether to propagate load errors or not
+	 * @param {boolean} [mOptions.failOnError=true] whether to propagate load errors or not (not relevant for async loading)
 	 * @return {object|undefined|Promise} the full version info, the library specific one,
 	 *                                    undefined (if library is not listed or there was an error and "failOnError" is set to "false")
 	 *                                    or a Promise which resolves with one of them
@@ -154,7 +165,9 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 
 			var vReturn = jQuery.sap.loadResource("sap-ui-version.json", {
 				async: mOptions.async,
-				failOnError: mOptions.failOnError
+
+				// "failOnError" only applies for sync mode, async should always fail (reject)
+				failOnError: mOptions.async || mOptions.failOnError
 			});
 
 			if (vReturn instanceof Promise) {
@@ -187,7 +200,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 			return mOptions.async ? Promise.resolve(oResult) : oResult;
 		}
 	};
-	
+
 	/**
 	 * Ensures that a given a namespace or hierarchy of nested namespaces exists in the
 	 * current <code>window</code>.
@@ -199,9 +212,9 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	 * @deprecated Use jQuery.sap.declare or jQuery.sap.getObject(...,0) instead
 	 */
 	sap.ui.namespace = function(sNamespace){
-	
+
 		jQuery.sap.assert(false, "sap.ui.namespace is long time deprecated and shouldn't be used");
-	
+
 		return jQuery.sap.getObject(sNamespace, 0);
 	};
 
@@ -223,7 +236,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	 * won't work as expected. This is a fundamental restriction of the lazy loader approach.
 	 * It could only be fixed with JavaScript 1.5 features that are not available in all
 	 * UI5 target browsers (e.g. not in IE8).
-	 * 
+	 *
 	 * <b>Note</b>: As a side effect of this method, the namespace containing the given
 	 * class is created <b>immediately</b>.
 	 *
@@ -234,10 +247,15 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	 * @static
 	 */
 	sap.ui.lazyRequire = function(sClassName, sMethods, sModuleName) {
-	
+
 		jQuery.sap.assert(typeof sClassName === "string" && sClassName, "lazyRequire: sClassName must be a non-empty string");
 		jQuery.sap.assert(!sMethods || typeof sMethods === "string", "lazyRequire: sMethods must be empty or a string");
-	
+
+		if ( syncCallBehavior === 2 ) {
+			jQuery.sap.log.error("[nosync] lazy stub creation ignored for '" + sClassName + "'");
+			return;
+		}
+
 		var sFullClass = sClassName.replace(/\//gi,"\."),
 			iLastDotPos = sFullClass.lastIndexOf("."),
 			sPackage = sFullClass.substr(0, iLastDotPos),
@@ -245,17 +263,23 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 			oPackage = jQuery.sap.getObject(sPackage, 0),
 			oClass = oPackage[sClass],
 			aMethods = (sMethods || "new").split(" "),
-			iConstructor = jQuery.inArray("new", aMethods);
-	
+			iConstructor = aMethods.indexOf("new");
+
 		sModuleName = sModuleName || sFullClass;
-	
+
 		if (!oClass) {
-	
+
 			if ( iConstructor >= 0 ) {
 
 				// Create dummy constructor which loads the class on demand
 				oClass = function() {
-					jQuery.sap.log.debug("lazy stub for '" + sFullClass + "' (constructor) called.");
+					if ( syncCallBehavior ) {
+						if ( syncCallBehavior === 1 ) {
+							jQuery.sap.log.error("[nosync] lazy stub for constructor '" + sFullClass + "' called");
+						}
+					} else {
+						jQuery.sap.log.debug("lazy stub for constructor '" + sFullClass + "' called.");
+					}
 					jQuery.sap.require(sModuleName);
 					var oRealClass = oPackage[sClass];
 					jQuery.sap.assert(typeof oRealClass === "function", "lazyRequire: oRealClass must be a function after loading");
@@ -273,7 +297,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 				};
 				// mark the stub as lazy loader
 				oClass._sapUiLazyLoader = true;
-		
+
 				aMethods.splice(iConstructor,1);
 
 			} else {
@@ -285,16 +309,22 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 
 			// remember the stub
 			oPackage[sClass] = oClass;
-	
+
 		}
-	
-	
+
+
 		// add stub methods to it
 		jQuery.each(aMethods, function (i,sMethod) {
 			// check whether method is already available
 			if (!oClass[sMethod]) {
 				oClass[sMethod] = function() {
-					jQuery.sap.log.debug("lazy stub for '" + sFullClass + "." + sMethod + "' called.");
+					if ( syncCallBehavior ) {
+						if ( syncCallBehavior === 1 ) {
+							jQuery.sap.log.error("[no-sync] lazy stub for method '" + sFullClass + "." + sMethod + "' called");
+						}
+					} else {
+						jQuery.sap.log.debug("lazy stub for method '" + sFullClass + "." + sMethod + "' called.");
+					}
 					jQuery.sap.require(sModuleName);
 					var oRealClass = oPackage[sClass];
 					jQuery.sap.assert(typeof oRealClass === "function" || typeof oRealClass === "object", "lazyRequire: oRealClass must be a function or object after loading");
@@ -307,7 +337,7 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 				oClass[sMethod]._sapUiLazyLoader = true;
 			}
 		});
-	
+
 	};
 
 	/**
@@ -347,17 +377,17 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 	sap.ui.resource = function(sLibraryName, sResourcePath) {
 		jQuery.sap.assert(typeof sLibraryName === "string", "sLibraryName must be a string");
 		jQuery.sap.assert(typeof sResourcePath === "string", "sResourcePath must be a string");
-	
+
 		// special handling for theme-dependent resources: move theme folder into module name
 		var match = sResourcePath.match(/^themes\/([^\/]+)\//);
 		if (match) {
 			sLibraryName += ".themes." + match[1];
 			sResourcePath = sResourcePath.substr(match[0].length);
 		}
-	
+
 		return jQuery.sap.getModulePath(sLibraryName, '/') + sResourcePath;
 	};
-	
+
 	/**
 	 * Redirects access to resources that are part of the given namespace to a location
 	 * relative to the assumed <b>application root folder</b>.
@@ -402,4 +432,4 @@ sap.ui.define(['jquery.sap.global', 'jquery.sap.dom'],
 
 	return sap.ui;
 
-}, /* bExport= */ true);
+});

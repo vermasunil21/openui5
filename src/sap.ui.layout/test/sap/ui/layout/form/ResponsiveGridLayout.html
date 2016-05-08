@@ -2,8 +2,8 @@
 <html>
 	<head>
 
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name='viewport' content='width=device-width, initial-scale=1.0' />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name='viewport' content='width=device-width, initial-scale=1.0'>
 		<title>ResponsiveGridLayout - sap.ui.layout.form</title>
 		<link rel="shortcut icon" type="image/x-icon" href="../images/controls/sap.ui.layout.form.GridLayout.gif">
 		<script id="sap-ui-bootstrap" type="text/javascript"
@@ -69,6 +69,17 @@
 					oContainer.setVisible(false);
 				}else{
 					oContainer.setVisible(true);
+				}
+
+			};
+
+			var toggleAdjustLabelSpan = function(oEvent){
+
+				var oLayout = sap.ui.getCore().byId("L1");
+				if(oEvent.getParameter("pressed")){
+					oLayout.setAdjustLabelSpan(true);
+				}else{
+					oLayout.setAdjustLabelSpan(false);
 				}
 
 			};
@@ -249,6 +260,10 @@
 										new sap.ui.commons.ToggleButton({text: "visibility Container",
 																	press: visibilityContainer,
 																	layoutData: new sap.ui.layout.GridData({linebreak: true, span: "L3 M3 S3"})}),
+										new sap.ui.commons.ToggleButton({text: "adjust Label Span",
+																	pressed: true,
+																	press: toggleAdjustLabelSpan,
+																	layoutData: new sap.ui.layout.GridData({span: "L3 M3 S3"})}),
 										new sap.ui.commons.Button({text: 'OK',
 																	layoutData: new sap.ui.layout.GridData({span: "L1 M1 S1"})}),
 										new sap.ui.commons.Button({text: 'Cancel',

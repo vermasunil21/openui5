@@ -1,5 +1,4 @@
 .sapMTB {
-	padding: 0;
 	height: 3rem;
 	background: @sapUiToolbarBackground;
 	border-bottom: 1px solid @sapUiGroupTitleBorderColor;
@@ -7,16 +6,6 @@
 
 .sapMTBShrinkItem {
 	min-width: 2.5rem; /* default min-width value for the shrinkable items */
-}
-
-/* Transparent Toolbar Context */
-.sapMTB-Transparent-CTX.sapMTB {
-	padding-left: 1rem;
-}
-
-/* Overwrite the margin of the IBar for Transparent context*/
-.sapMIBar.sapMTB-Transparent-CTX.sapMTB > :first-child {
-	margin-left: 0;
 }
 
 /* Solid Toolbar Context */
@@ -27,7 +16,7 @@
 /* Info Toolbar Context */
 .sapMTB-Info-CTX.sapMTB {
 	height: 2rem;
-	padding: 0 .5rem;
+	padding: 0 .25rem 0 0.5rem;
 	background: @sapUiInfobarBackground;
 	border-bottom: 1px solid @sapUiListBorderColor;
 }
@@ -40,22 +29,32 @@
 	background: @sapUiInfobarActiveBackground;
 }
 
-.sap-desktop .sapMTBActive:focus {
-	outline: 1px dotted @sapUiFocus;
+html.sap-desktop .sapMTBActive:focus {
+	outline: 1px dotted @sapUiInvertedFocus;
 	outline-offset: -0.125rem;
 }
 
-.sap-desktop .sapMTB-Info-CTX.sapMTBActive:focus {
+/* IE ignores outline-offset. Use an overlay: */
+html[data-sap-ui-browser^="ie"].sap-desktop {
+	.sapMTBActive:focus {
+		outline: none;
+		position: relative;
+	}
+	.sapMTBActive:focus:before {
+		content: " ";
+		box-sizing: border-box;
+		width: calc(~'100% - 0.0625rem');
+		height: calc(~'100% - 0.0625rem');
+		position: absolute;
+		left: 0;
+		top: 0;
+		border: 0.0625rem dotted @sapUiInvertedFocus;
+		pointer-events: none;
+	}
+}
+
+html.sap-desktop .sapMTB-Info-CTX.sapMTBActive:focus {
 	outline-color: @sapUiInvertedFocus;
-}
-
-.sapMTB-Info-CTX.sapMTB > * {
-	margin: 0 .5rem;
-}
-
-/* Overwrite the margin of the IBar for Info context */
-.sapMIBar.sapMTB-Info-CTX.sapMTB > :first-child {
-	margin: 0 .5rem;
 }
 
 
@@ -68,6 +67,6 @@
 
 /* default min-width value for the shrinkable items */
 .sapUiSizeCompact .sapMTBShrinkItem,
-.sapUiSizeCondensed .sapMTBShrinkItem{
-	min-width: 2rem; 
+.sapUiSizeCondensed .sapUiTableCell .sapMTBShrinkItem{
+	min-width: 2rem;
 }

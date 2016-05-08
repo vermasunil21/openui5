@@ -7,7 +7,7 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 			metadata: {
 				config: {
 					sample: {
-						iframe: "webapp/test/testService.html",
+						iframe: "webapp/test/mockServer.html",
 						stretch: true,
 						files: [
 							"webapp/controller/App.controller.js",
@@ -17,6 +17,9 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 							"webapp/controller/InvoiceList.controller.js",
 							"webapp/css/style.css",
 							"webapp/i18n/i18n.properties",
+							"webapp/localService/mockdata/Invoices.json",
+							"webapp/localService/metadata.xml",
+							"webapp/localService/mockserver.js",
 							"webapp/model/formatter.js",
 							"webapp/view/App.view.xml",
 							"webapp/view/Detail.view.xml",
@@ -27,13 +30,10 @@ sap.ui.define(['sap/ui/core/UIComponent'],
 							"webapp/Component.js",
 							"webapp/index.html",
 							"webapp/manifest.json",
-							"webapp/test/testService.html",
+							"webapp/test/mockServer.html",
 							"webapp/test/integration/pages/App.js",
 							"webapp/test/integration/navigationJourney.js",
 							"webapp/test/integration/opaTests.qunit.html",
-							"webapp/test/service/Invoices.json",
-							"webapp/test/service/metadata.xml",
-							"webapp/test/service/server.js",
 							"webapp/test/unit/model/formatter.js",
 							"webapp/test/unit/unitTests.qunit.html"
 						]

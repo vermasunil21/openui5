@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>Test Page for sap.ui.dt.DesignTimeMetadata</title>
 
 		<script id="sap-ui-bootstrap"
@@ -12,30 +12,34 @@
 				data-sap-ui-libs="sap.ui.dt,sap.m,sap.ui.layout"
 				src="../../../../../resources/sap-ui-core.js">
 		</script>
-		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+		<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
 		<script type="text/javascript">
 
-			jQuerH.sap.require("sap.ui.dt.DesignTimeMetadata");
-			jQuery.sap.require("sap.ui.layout.VerticalLayout");
+			jQuery.sap.require("sap.ui.qunit.qunit-coverage");
+
+			jQuery.sap.require("sap.ui.dt.DesignTimeMetadata");
 
 			QUnit.module("Given that an DesignTimeMetadata is created for a control", {
 				beforeEach : function() {
 					this.oDesignTimeMetadata = new sap.ui.dt.DesignTimeMetadata({
-						data : sap.ui.layout.VerticalLayout.getMetadata().getDesignTime()
+						data : {
+							testField : "testValue",
+							domRef : "domRef"
+						}
 					});
 				},
 				afterEach : function() {
 					this.oDesignTimeMetadata.destroy();
 				}
 			});
-			QUnit.test("when the DesignTimeMetadata is initialized", 2, function(assert) {
-				assert.equal(this.oDesignTimeMetadata.getName(), "{name}", "then the name is returned right");
-				assert.deepEqual(this.oDesignTimeMetadata.getAggregation("content"), {
-					cssSelector : ":sap-domref"
-				}, "and the aggregation is returned right");
+			QUnit.test("when the DesignTimeMetadata is initialized", function(assert) {
+				assert.strictEqual(this.oDesignTimeMetadata.getData().testField, "testValue", "then the field is returned right");
+				assert.strictEqual(this.oDesignTimeMetadata.getDomRef(), "domRef", "then the domRef is returned right");
+				assert.strictEqual(this.oDesignTimeMetadata.isIgnored(), false, "then ignore property is returned right");
+				assert.strictEqual(this.oDesignTimeMetadata.getCloneDomRef(), false, "then cloneDomRef property is returned right");
 			});
 
 		</script>

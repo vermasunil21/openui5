@@ -3,9 +3,12 @@
  */
 
 // Provides class sap.ui.core.UIArea
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', './RenderManager', 'jquery.sap.act', 'jquery.sap.ui', 'jquery.sap.keycodes'],
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', './RenderManager', 'jquery.sap.act', 'jquery.sap.ui', 'jquery.sap.keycodes', 'jquery.sap.trace'],
 	function(jQuery, ManagedObject, Element, RenderManager /* , jQuerySap1, jQuerySap, jQuerySap2 */) {
 	"use strict";
+
+	//lazy dependency (to avoid cycle)
+	var Control;
 
 	/**
 	 * A private logger instance used for 'debugRendering' logging.
@@ -533,11 +536,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 					return len;
 				};
 
+				var oFocusRef_Initial = document.activeElement;
+				var oStoredFocusInfo = this.oCore.oFocusHandler.getControlFocusInfo();
+
 				//First remove the old Dom nodes and then render the controls again
 				cleanUpDom(aContentToRemove);
 
 				var aContent = this.getContent();
 				var len = cleanUpDom(aContent, true);
+
+				var oFocusRef_AfterCleanup = document.activeElement;
 
 				for (var i = 0; i < len; i++) {
 					if (aContent[i] && aContent[i].getParent() === this) {
@@ -545,6 +553,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 					}
 				}
 				bUpdated = true;
+
+				/* Try restoring focus when focus ref is changed due to cleanup operations and not changed anymore by the rendering logic */
+				if (oFocusRef_Initial != oFocusRef_AfterCleanup && oFocusRef_AfterCleanup === document.activeElement) {
+					try {
+						this.oCore.oFocusHandler.restoreFocus(oStoredFocusInfo);
+					} catch (e) {
+						jQuery.sap.log.warning("Problems while restoring the focus after full UIArea rendering: " + e, null, this);
+					}
+				}
 
 			} else {
 
@@ -555,25 +572,42 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 
 		} else { // only partial update (invalidated controls)
 
-			var isAncestorInvalidated = function(oAncestor) {
-				while ( oAncestor && oAncestor !== that ) {
-					if ( mInvalidatedControls.hasOwnProperty(oAncestor.getId()) ) {
-						return true;
-					}
+			var isRenderedTogetherWithAncestor = function(oCandidate) {
+
+				for (;;) {
+
 					// Controls that implement marker interface sap.ui.core.PopupInterface are by contract not rendered by their parent.
-					// Therefore the search for invalid ancestors must be stopped when such a control is reached.
-					if ( oAncestor && oAncestor.getMetadata && oAncestor.getMetadata().isInstanceOf("sap.ui.core.PopupInterface") ) {
+					// Therefore the search for to-be-rendered ancestors must be stopped when such a control is reached.
+					if ( oCandidate.getMetadata && oCandidate.getMetadata().isInstanceOf("sap.ui.core.PopupInterface") ) {
 						break;
 					}
-					oAncestor = oAncestor.getParent();
+
+					oCandidate = oCandidate.getParent();
+
+					// If the candidate is null/undefined or the UIArea itself
+					// they do-while loop will be interrupted
+					if ( !oCandidate || oCandidate === that ) {
+						return false;
+					}
+
+					// If the candidate is listed in the invalidated controls map
+					// it will be re-rendered together with the UIArea. Inline
+					// templates are a special case because they share their ID
+					// with the UIArea and therefore the detection will ignore
+					// the inline templates since they should be re-rendered with
+					// their UIArea.
+					if ( mInvalidatedControls.hasOwnProperty(oCandidate.getId()) ) {
+						return true;
+					}
+
 				}
-				return false;
+
 			};
 
-			for (var n in mInvalidatedControls) { // TODO for in skips some names in IE8!
+			for (var n in mInvalidatedControls) {
 				var oControl = this.oCore.byId(n);
-				// CSN 0000834961 2011: control may have been destroyed since invalidation happened
-				if ( oControl && !isAncestorInvalidated(oControl.getParent()) ) {
+				// CSN 0000834961 2011: control may have been destroyed since invalidation happened -> check whether it still exists
+				if ( oControl && !isRenderedTogetherWithAncestor(oControl) ) {
 					oControl.rerender();
 					bUpdated = true;
 				}
@@ -603,7 +637,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	 * that point in time, the previous rendering cannot reflect the changes that led to the
 	 * invalidation and therefore a new rendering is required.
 	 *
-	 * Therefore, pending invalidatoins can only be cleared at this point in time.
+	 * Therefore, pending invalidations can only be cleared at this point in time.
 	 * @private
 	 */
 	UIArea.prototype._onControlRendered = function(oControl) {
@@ -623,8 +657,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		var oDomRef = null;
 		if (oControl) {
 			oDomRef = oControl.getDomRef();
-			if (!oDomRef) {
-				// If no DOM node was found, look for the invisible placeholder node
+			if (!oDomRef || RenderManager.isPreservedContent(oDomRef) ) {
+				// In case no old DOM node was found or only preserved DOM, search for an 'invisible' placeholder
 				oDomRef = jQuery.sap.domById(sap.ui.core.RenderPrefixes.Invisible + oControl.getId());
 			}
 		}
@@ -643,6 +677,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		}
 	};
 
+	var rEvents = /^(mousedown|mouseup|click|keydown|keyup|keypress|touchstart|touchend|tap)$/;
+
 	/**
 	 * Handles all incoming DOM events centrally and dispatches the event to the
 	 * registered event handlers.
@@ -650,9 +686,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 	 * @private
 	 */
 	UIArea.prototype._handleEvent = function(/**event*/oEvent) {
-
 		// execute the registered event handlers
-		var oElement = null;
+		var oElement = null,
+			bInteractionRelevant;
+
 
 		// TODO: this should be the 'lowest' SAPUI5 Control of this very
 		// UIArea instance's scope -> nesting scenario
@@ -698,6 +735,15 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		// as control event afterwards!
 		if (this.bLocked || this.oCore.isLocked()) {
 			return;
+		}
+
+		// notify interaction tracing for relevant event - it is important to have evaluated all the previous switches
+		// in case the method would return before dispatching the event, we should not notify an event start
+		if (jQuery.sap.interaction.getActive()) {
+			bInteractionRelevant = oEvent.type.match(rEvents);
+			if (bInteractionRelevant) {
+				jQuery.sap.interaction.notifyEventStart(oEvent);
+			}
 		}
 
 		// retrieve the pseudo event types
@@ -752,11 +798,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 			oDomRef = oDomRef.parentNode;
 			oElement = null;
 
-		// Only process the touchend event which is emulated from mouseout event when the current domRef
-		// doesn't equal or contain the relatedTarget
-		if (oEvent.isMarked("fromMouseout") && jQuery.sap.containsOrEquals(oDomRef, oEvent.relatedTarget)) {
-			break;
-		}
+			// Only process the touchend event which is emulated from mouseout event when the current domRef
+			// doesn't equal or contain the relatedTarget
+			if (oEvent.isMarked("fromMouseout") && jQuery.sap.containsOrEquals(oDomRef, oEvent.relatedTarget)) {
+				break;
+			}
 
 			// ensure we do not bubble the control tree higher than our rootNode
 			while (oDomRef && oDomRef !== this.getRootNode()) {
@@ -768,7 +814,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 				}
 				oDomRef = oDomRef.parentNode;
 			}
+		}
 
+		if (bInteractionRelevant) {
+			jQuery.sap.interaction.notifyEventEnd(oEvent);
 		}
 
 		// reset previously changed currentTarget
@@ -926,7 +975,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 				jQuery.sap.clearDelayedCall(UIArea._iFieldGroupTriggerDelay);
 			}
 			var oCurrentControl = this.getFieldGroupControl(),
-				aCurrentGroupIds = (oCurrentControl ? oCurrentControl.getFieldGroupIds() : []);
+				aCurrentGroupIds = (oCurrentControl ? oCurrentControl._getFieldGroupIds() : []);
 			if (aCurrentGroupIds.length > 0) {
 				oCurrentControl.triggerValidateFieldGroup(aCurrentGroupIds);
 			}
@@ -963,15 +1012,18 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/ManagedObject', './Element', '.
 		var oCurrentControl = this.getFieldGroupControl();
 		if (oElement != oCurrentControl) {
 			var oControl = null;
-			if (oElement instanceof sap.ui.core.Control) {
-				oControl = oElement;
-			} else {
-				oControl = findParent(oElement,function(oElement){
-					return oElement instanceof sap.ui.core.Control;
-				});
+			Control = Control || sap.ui.require('sap/ui/core/Control'); // resolve lazy dependency
+			if ( Control ) {
+				if (oElement instanceof Control) {
+					oControl = oElement;
+				} else {
+					oControl = findParent(oElement,function(oElement){
+						return oElement instanceof Control;
+					});
+				}
 			}
-			var aCurrentGroupIds = (oCurrentControl ? oCurrentControl.getFieldGroupIds() : []),
-				aNewGroupIds = (oControl ? oControl.getFieldGroupIds() : []),
+			var aCurrentGroupIds = (oCurrentControl ? oCurrentControl._getFieldGroupIds() : []),
+				aNewGroupIds = (oControl ? oControl._getFieldGroupIds() : []),
 				aTargetFieldGroupIds = [];
 			for (var i = 0; i < aCurrentGroupIds.length; i++) {
 				var sCurrentGroupId = aCurrentGroupIds[i];

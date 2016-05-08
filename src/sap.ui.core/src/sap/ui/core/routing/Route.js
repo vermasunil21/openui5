@@ -3,8 +3,8 @@
  */
 
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/core/routing/Target', 'sap/ui/core/Component'],
-	function($, EventProvider, Target, Component) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/core/routing/Target', 'sap/ui/core/routing/async/Route', 'sap/ui/core/routing/sync/Route', 'sap/ui/core/Component'],
+	function($, EventProvider, Target, asyncRoute, syncRoute, Component) {
 	"use strict";
 
 		/**
@@ -46,6 +46,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/core/ro
 		 *
 		 * @public
 		 * @alias sap.ui.core.routing.Route
+		 * @extends sap.ui.base.EventProvider
 		 */
 		var Route = EventProvider.extend("sap.ui.core.routing.Route", /** @lends sap.ui.core.routing.Route.prototype */ {
 
@@ -74,13 +75,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', 'sap/ui/core/ro
 					RouteStub,
 					async = oRouter._isAsync();
 
-				if (async) {
-					jQuery.sap.require("sap.ui.core.routing.async.Route");
-					RouteStub = sap.ui.require("sap/ui/core/routing/async/Route");
-				} else {
-					jQuery.sap.require("sap.ui.core.routing.sync.Route");
-					RouteStub = sap.ui.require("sap/ui/core/routing/sync/Route");
-				}
+				RouteStub = async ? asyncRoute : syncRoute;
 				for (var fn in RouteStub) {
 					this[fn] = RouteStub[fn];
 				}

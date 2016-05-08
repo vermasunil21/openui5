@@ -19,9 +19,9 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'], function(jQuery, Ele
 	 * @author SAP SE
 	 * @extends sap.ui.core.Element
 	 * @version ${version}
-	 * @private
+	 * @public
 	 * @constructor
-	 * @since 1.32.0
+	 * @since 1.34.0
 	 * @alias sap.m.MaskInputRule
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -42,18 +42,6 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'], function(jQuery, Ele
 			}
 		}
 	});
-
-	/**
-	 * Initializes the control.
-	 */
-	MaskInputRule.prototype.init = function () {
-	};
-
-	/**
-	 * Called when the control is destroyed.
-	 */
-	MaskInputRule.prototype.exit = function () {
-	};
 
 	/**
 	 * Sets <code>maskFormatSymbol</code> property.
@@ -104,14 +92,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'], function(jQuery, Ele
 	 * @private
 	 */
 	function validateMaskFormatSymbol(sNewSymbol) {
-		var rSymbol = /^.$/i,
-			bNewSymbolIsValid = rSymbol.test(sNewSymbol);
-
-		if (!bNewSymbolIsValid) {
-			jQuery.sap.log.error("The mask format symbol '" + sNewSymbol + "' is not valid");
+		if (/^.$/i.test(sNewSymbol)) {
+			return true;
 		}
-
-		return bNewSymbolIsValid;
+		jQuery.sap.log.error("The mask format symbol '" + sNewSymbol + "' is not valid");
+		return false;
 	}
 
 	/**
@@ -121,16 +106,13 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element'], function(jQuery, Ele
 	 * @private
 	 */
 	function validateRegex(sRegex) {
-		var rAllowedChars = /.+/i,
-			bRegexIsValid = rAllowedChars.test(sRegex);
-
-		if (!bRegexIsValid) {
-			jQuery.sap.log.error("The regex value '" + sRegex + "' is not valid");
+		if (/.+/i.test(sRegex)) {
+			return true;
 		}
-
-		return bRegexIsValid;
+		jQuery.sap.log.error("The regex value '" + sRegex + "' is not valid");
+		return false;
 	}
 
 	return MaskInputRule;
 
-}, /* bExport= */ false);
+}, /* bExport= */ true);

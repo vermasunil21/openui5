@@ -3,7 +3,7 @@
  */
 
 sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger', './Route', './Views', './Targets', 'sap/ui/thirdparty/crossroads'],
-	function($, EventProvider, HashChanger, Route, Views, Targets, crossroads) {
+	function(jQuery, EventProvider, HashChanger, Route, Views, Targets, crossroads) {
 	"use strict";
 
 		var oRouters = {};
@@ -86,7 +86,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 		 * </pre>
 		 *
 		 * Since the xmlTarget does not specify its viewType, XML is taken from the config object. The jsTarget is specifying it, so the viewType will be JS.
-		 * @param {string|string[]} [oConfig.bypassed.target] Since 1.28. One or multiple names of targets that will be displayed, if no route of the router is matched.<br/>
+		 * @param {string|string[]} [oConfig.bypassed.target] @since 1.28. One or multiple names of targets that will be displayed, if no route of the router is matched.<br/>
 		 * A typical use case is a not found page.<br/>
 		 * The current hash will be passed to the display event of the target.<br/>
 		 * <b>Example:</b>
@@ -116,6 +116,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 		 *     });
 		 * </code>
 		 * </pre>
+		 * @param {boolean} [oConfig.async=false] @since 1.34. Whether the views which are loaded within this router instance asyncly. The default value is set to false.
 		 * @param {sap.ui.core.UIComponent} [oOwner] the Component of all the views that will be created by this Router,<br/>
 		 * will get forwarded to the {@link sap.ui.core.routing.Views#contructor}.<br/>
 		 * If you are using the componentMetadata to define your routes you should skip this parameter.
@@ -204,23 +205,23 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 					oRoutes = {};
 				}
 
-				if ($.isArray(oRoutes)) {
+				if (jQuery.isArray(oRoutes)) {
 					//Convert route object
 					aRoutes = oRoutes;
 					oRoutes = {};
-					$.each(aRoutes, function(iRouteIndex, oRouteConfig) {
+					jQuery.each(aRoutes, function(iRouteIndex, oRouteConfig) {
 						oRoutes[oRouteConfig.name] = oRouteConfig;
 					});
 				}
 
-				$.each(oRoutes, function(sRouteName, oRouteConfig) {
+				jQuery.each(oRoutes, function(sRouteName, oRouteConfig) {
 					if (oRouteConfig.name === undefined) {
 						oRouteConfig.name = sRouteName;
 					}
 					that.addRoute(oRouteConfig);
 				});
 
-				this._oRouter.bypassed.add($.proxy(this._onBypassed, this));
+				this._oRouter.bypassed.add(jQuery.proxy(this._onBypassed, this));
 			},
 
 			/**
@@ -232,11 +233,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			 */
 			addRoute : function (oConfig, oParent) {
 				if (!oConfig.name) {
-					$.sap.log.error("A name has to be specified for every route", this);
+					jQuery.sap.log.error("A name has to be specified for every route", this);
 				}
 
 				if (this._oRoutes[oConfig.name]) {
-					$.sap.log.error("Route with name " + oConfig.name + " already exists", this);
+					jQuery.sap.log.error("Route with name " + oConfig.name + " already exists", this);
 				}
 				this._oRoutes[oConfig.name] = new Route(this, oConfig, oParent);
 			},
@@ -251,7 +252,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 				if (this._oRouter) {
 					this._oRouter.parse(sNewHash);
 				} else {
-					$.sap.log.warning("This router has been destroyed while the hash changed. No routing events where fired by the destroyed instance.", this);
+					jQuery.sap.log.warning("This router has been destroyed while the hash changed. No routing events where fired by the destroyed instance.", this);
 				}
 			},
 
@@ -266,7 +267,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 					oHashChanger = this.oHashChanger = HashChanger.getInstance();
 
 				if (this._bIsInitialized) {
-					$.sap.log.warning("Router is already initialized.", this);
+					jQuery.sap.log.warning("Router is already initialized.", this);
 					return this;
 				}
 
@@ -277,7 +278,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 				};
 
 				if (!oHashChanger) {
-					$.sap.log.error("navTo of the router is called before the router is initialized. If you want to replace the current hash before you initialize the router you may use getUrl and use replaceHash of the Hashchanger.", this);
+					jQuery.sap.log.error("navTo of the router is called before the router is initialized. If you want to replace the current hash before you initialize the router you may use getUrl and use replaceHash of the Hashchanger.", this);
 					return;
 				}
 
@@ -300,7 +301,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			stop : function () {
 
 				if (!this._bIsInitialized) {
-					$.sap.log.warning("Router is not initialized. But it got stopped", this);
+					jQuery.sap.log.warning("Router is not initialized. But it got stopped", this);
 				}
 
 				if (this.fnHashChanged) {
@@ -324,7 +325,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 				EventProvider.prototype.destroy.apply(this);
 
 				if (!this._bIsInitialized) {
-					$.sap.log.info("Router is not initialized, but got destroyed.", this);
+					jQuery.sap.log.info("Router is not initialized, but got destroyed.", this);
 				}
 
 				if (this.fnHashChanged) {
@@ -335,7 +336,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 				this._oRouter.removeAllRoutes();
 				this._oRouter = null;
 
-				$.each(this._oRoutes, function(iRouteIndex, oRoute) {
+				jQuery.each(this._oRoutes, function(iRouteIndex, oRoute) {
 					oRoute.destroy();
 				});
 				this._oRoutes = null;
@@ -355,7 +356,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			 * Returns the URL for the route and replaces the placeholders with the values in oParameters
 			 *
 			 * @param {string} sName Name of the route
-			 * @param {object} oParameters Parameters for the route
+			 * @param {object} [oParameters] Parameters for the route
 			 * @return {string} the unencoded pattern with interpolated arguments
 			 * @public
 			 */
@@ -367,7 +368,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 
 				var oRoute = this.getRoute(sName);
 				if (!oRoute) {
-					$.sap.log.warning("Route with name " + sName + " does not exist", this);
+					jQuery.sap.log.warning("Route with name " + sName + " does not exist", this);
 					return;
 				}
 				return oRoute.getURL(oParameters);
@@ -407,7 +408,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			/**
 			 * Returns a cached view for a given name or creates it if it does not yet exists
 			 *
-			 * @deprecated @since 1.28.1 use {@link #getViews} instead.
+			 * @deprecated Since 1.28.1 use {@link #getViews} instead.
 			 * @param {string} sViewName Name of the view
 			 * @param {string} sViewType Type of the view
 			 * @param {string} sViewId Optional view id
@@ -433,7 +434,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			/**
 			 * Adds or overwrites a view in the viewcache of the router, the viewname serves as a key
 			 *
-			 * @deprecated @since 1.28 use {@link #getViews} instead.
+			 * @deprecated Since 1.28 use {@link #getViews} instead.
 			 * @param {string} sViewName Name of the view
 			 * @param {sap.ui.core.mvc.View} oView the view instance
 			 * @since 1.22
@@ -449,17 +450,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			 * Navigates to a specific route defining a set of parameters. The Parameters will be URI encoded - the characters ; , / ? : @ & = + $ are reserved and will not be encoded.
 			 * If you want to use special characters in your oParameters, you have to encode them (encodeURIComponent).
 			 *
+			 * IF the given route name can't be found, an error message is logged to the console and the hash will be changed to empty string.
+			 *
 			 * @param {string} sName Name of the route
-			 * @param {object} oParameters Parameters for the route
-			 * @param {boolean} bReplace Defines if the hash should be replaced (no browser history entry) or set (browser history entry)
+			 * @param {object} [oParameters] Parameters for the route
+			 * @param {boolean} [bReplace=false] Defines if the hash should be replaced (no browser history entry) or set (browser history entry)
 			 * @public
 			 * @returns {sap.ui.core.routing.Router} this for chaining.
 			 */
 			navTo : function (sName, oParameters, bReplace) {
+				var sURL = this.getURL(sName, oParameters);
+
+				if (sURL === undefined) {
+					jQuery.sap.log.error("Can not navigate to route with name " + sName + " because the route does not exist");
+				}
+
 				if (bReplace) {
-					this.oHashChanger.replaceHash(this.getURL(sName, oParameters));
+					this.oHashChanger.replaceHash(sURL);
 				} else {
-					this.oHashChanger.setHash(this.getURL(sName, oParameters));
+					this.oHashChanger.setHash(sURL);
 				}
 
 				return this;
@@ -538,7 +547,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			 * oListener-instance (if present) or in a 'static way'.
 			 * @param {object} [oListener] Object on which to call the given function. If empty, this Model is used.
 			 *
-			 * @deprecated @since 1.28 use {@link #getViews} instead.
+			 * @deprecated Since 1.28 use {@link #getViews} instead.
 			 * @return {sap.ui.core.routing.Router} <code>this</code> to allow method chaining
 			 * @public
 			 */
@@ -552,7 +561,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			 *
 			 * The passed function and listener object must match the ones previously used for event registration.
 			 *
-			 * @deprecated @since 1.28 use {@link #getViews} instead.
+			 * @deprecated Since 1.28 use {@link #getViews} instead.
 			 * @param {function} fnFunction The function to call, when the event occurs.
 			 * @param {object} oListener Object on which the given function had to be called.
 			 * @return {sap.ui.core.routing.Router} <code>this</code> to allow method chaining
@@ -566,7 +575,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			/**
 			 * Fire event viewCreated to attached listeners.
 			 *
-			 * @deprecated @since 1.28 use {@link #getViews} instead.
+			 * @deprecated Since 1.28 use {@link #getViews} instead.
 			 * @param {object} [mArguments] the arguments to pass along with the event.
 			 *
 			 * @return {sap.ui.core.routing.Router} <code>this</code> to allow method chaining
@@ -691,13 +700,25 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/base/EventProvider', './HashChanger'
 			},
 
 			_onBypassed : function (sHash) {
+				var fnFireEvent = function() {
+					this.fireBypassed({
+						hash: sHash
+					});
+				}.bind(this);
+
 				if (this._oConfig.bypassed) {
-					this._oTargets.display(this._oConfig.bypassed.target, { hash : sHash});
+					// In sync case, oReturn is a Targets reference
+					// In async case, it's a Promise instance
+					var oReturn = this._oTargets.display(this._oConfig.bypassed.target, { hash : sHash});
+
+					if (oReturn instanceof Promise) {
+						// When Promise is returned, make sure the bypassed event is fired after the target view is loaded
+						oReturn.then(fnFireEvent);
+						return;
+					}
 				}
 
-				this.fireBypassed({
-					hash: sHash
-				});
+				fnFireEvent();
 			},
 
 			_isAsync : function() {

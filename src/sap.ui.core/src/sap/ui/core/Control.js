@@ -3,8 +3,8 @@
  */
 
 // Provides base class sap.ui.core.Control for all controls
-sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', './UIArea', /* cyclic: './RenderManager', */ './ResizeHandler', './BusyIndicatorUtils'],
-	function(jQuery, CustomStyleClassSupport, Element, UIArea, ResizeHandler, BusyIndicatorUtils) {
+sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', './UIArea', './RenderManager', './ResizeHandler', './BusyIndicatorUtils'],
+	function(jQuery, CustomStyleClassSupport, Element, UIArea, RenderManager, ResizeHandler, BusyIndicatorUtils) {
 	"use strict";
 
 	/**
@@ -37,7 +37,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 	 * @alias sap.ui.core.Control
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
-	var Control = Element.extend("sap.ui.core.Control", /* @lends sap.ui.core.Control */ {
+	var Control = Element.extend("sap.ui.core.Control", /** @lends sap.ui.core.Control */ {
 
 		metadata : {
 			stereotype : "control",
@@ -213,6 +213,16 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 	 */
 	Control.prototype.rerender = function() {
 		UIArea.rerenderControl(this);
+	};
+
+	// @see sap.ui.core.Element#getDomRef
+	Control.prototype.getDomRef = function(sSuffix) {
+		// while cloning we know that control DOM does not exist
+		if (this.bOutput === false && !this.oParent) {
+			return null;
+		}
+
+		return Element.prototype.getDomRef.call(this, sSuffix);
 	};
 
 	/**
@@ -414,8 +424,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 	 * @protected
 	 */
 	Control.prototype.getRenderer = function () {
-		//TODO introduce caching?
-		return sap.ui.core.RenderManager.getRenderer(this);
+		return RenderManager.getRenderer(this);
 	};
 
 	/**
@@ -466,15 +475,18 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 			if (!bIsUIArea) {
 				var oContentAggInfo = oContainer.getMetadata().getAggregation("content");
 				var bContainerSupportsPlaceAt = true;
+
 				if (oContentAggInfo) {
 					if (!oContentAggInfo.multiple || oContentAggInfo.type != "sap.ui.core.Control") {
 						bContainerSupportsPlaceAt = false;
 					}
-				} else {
-					//Temporary workaround for sap.ui.commons.AbsoluteLayout to enable placeAt even when no content aggregation is available. TODO: Find a proper solution
-					if (!oContainer.addContent || !oContainer.insertContent || !oContainer.removeAllContent) {
-						bContainerSupportsPlaceAt = false;
-					}
+				} else if (!oContainer.addContent ||
+						!oContainer.insertContent ||
+						!oContainer.removeAllContent) {
+					//Temporary workaround for sap.ui.commons.AbsoluteLayout to enable
+					// placeAt even when no content aggregation is available.
+					// TODO: Find a proper solution
+					bContainerSupportsPlaceAt = false;
 				}
 				if (!bContainerSupportsPlaceAt) {
 					jQuery.sap.log.warning("placeAt cannot be processed because container " + oContainer + " does not have an aggregation 'content'.");
@@ -580,7 +592,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 		// Controls can have their visible-property set to "false" in which case the Element's destroy method will#
 		// fail to remove the placeholder content from the DOM. We have to remove it here in that case
 		if (!this.getVisible()) {
-			var oPlaceholder = document.getElementById(sap.ui.core.RenderManager.createInvisiblePlaceholderId(this));
+			var oPlaceholder = document.getElementById(RenderManager.createInvisiblePlaceholderId(this));
 			if (oPlaceholder && oPlaceholder.parentNode) {
 				oPlaceholder.parentNode.removeChild(oPlaceholder);
 			}
@@ -590,17 +602,27 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 	};
 
 	(function() {
-		var sPreventedEvents = "focusin focusout keydown keypress keyup mousedown touchstart mouseup touchend click",
+		var sPreventedEvents = "focusin focusout keydown keypress keyup mousedown touchstart touchmove mouseup touchend click",
 			oBusyIndicatorDelegate = {
 				onAfterRendering: function() {
-					if (this.getBusy() && this.$() && !this._busyIndicatorDelayedCallId) {
-						// Also use the BusyIndicatorDelay when a control is initialized with "busy = true"
-						// If the delayed call was already initialized skip any further call if the control was re-rendered while
-						// the delay is on its way.
-						this._busyIndicatorDelayedCallId = jQuery.sap.delayedCall(this.getBusyIndicatorDelay(), this, fnAppendBusyIndicator);
+					if (this.getBusy() && this.$() && !this._busyIndicatorDelayedCallId && !this.$("busyIndicator").length) {
+						// Also use the BusyIndicatorDelay when a control is initialized
+						// with "busy = true". If the delayed call was already initialized
+						// skip any further call if the control was re-rendered while
+						// the delay is running.
+						var iDelay = this.getBusyIndicatorDelay();
+
+						// Only do it via timeout if there is a delay. Otherwise append the
+						// BusyIndicator immediately
+						if (iDelay) {
+							this._busyIndicatorDelayedCallId = jQuery.sap.delayedCall(iDelay, this, fnAppendBusyIndicator);
+						} else {
+							fnAppendBusyIndicator.call(this);
+						}
 					}
 				}
 			},
+
 			fnAppendBusyIndicator = function() {
 				var $this = this.$(this._sBusySection),
 					aForbiddenTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem", "meta", "param", "source", "track", "wbr"];
@@ -620,7 +642,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 
 				//Check if DOM Element where the busy indicator is supposed to be placed can handle content
 				var sTag = $this.get(0) && $this.get(0).tagName;
-				if (sTag && jQuery.inArray(sTag.toLowerCase(), aForbiddenTags) >= 0) {
+				if (sTag && aForbiddenTags.indexOf(sTag.toLowerCase()) >= 0) {
 					jQuery.sap.log.warning("BusyIndicator cannot be placed in elements with tag '" + sTag + "'.");
 					return;
 				}
@@ -658,7 +680,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 						tabindex : $this.attr('tabindex')
 					});
 					$this.attr('tabindex', -1);
-					$this.bind(sPreventedEvents, fnPreserveEvents);
+					$this.bind(sPreventedEvents, this._preserveEvents);
 
 					$TabRefs.each(function(iIndex, oObject) {
 						var $Ref = jQuery(oObject),
@@ -674,7 +696,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 						});
 
 						$Ref.attr('tabindex', -1);
-						$Ref.bind(sPreventedEvents, fnPreserveEvents);
+						$Ref.bind(sPreventedEvents, this._preserveEvents);
 					});
 				} else {
 					if (this._busyTabIndices) {
@@ -689,17 +711,18 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 								oObject.ref.removeAttr('tabindex');
 							}
 
-							oObject.ref.unbind(sPreventedEvents, fnPreserveEvents);
+							oObject.ref.unbind(sPreventedEvents, this._preserveEvents);
 						});
 					}
 					this._busyTabIndices = [];
 				}
-			},
-			fnPreserveEvents = function(oEvent) {
-				jQuery.sap.log.debug("Local Busy Indicator Event Suppressed: " + oEvent.type);
-				oEvent.preventDefault();
-				oEvent.stopImmediatePropagation();
 			};
+
+		Control.prototype._preserveEvents = function(oEvent) {
+			jQuery.sap.log.debug("Local Busy Indicator Event Suppressed: " + oEvent.type);
+			oEvent.preventDefault();
+			oEvent.stopImmediatePropagation();
+		};
 
 		/**
 		 * Set the controls busy state.
@@ -718,7 +741,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 			}
 
 			//No rerendering
-			this.setProperty("busy", bBusy, true);
+			this.setProperty("busy", bBusy, /*bSuppressInvalidate*/ true);
 
 			if (bBusy) {
 				this.addDelegate(oBusyIndicatorDelegate, false, this);
@@ -755,7 +778,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 					delete this._busyStoredPosition;
 				}
 				fnHandleInteraction.apply(this, [false]);
-				
+
 				BusyIndicatorUtils.animateIE9.stop(this._$BusyIndicator);
 			}
 			return this;
@@ -780,7 +803,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 		 * @return {sap.ui.core.Control} <code>this</code> to allow method chaining
 		 */
 		Control.prototype.setBusyIndicatorDelay = function(iDelay) {
-			this.setProperty("busyIndicatorDelay", iDelay, true);
+			this.setProperty("busyIndicatorDelay", iDelay, /*bSuppressInvalidate*/ true);
 			return this;
 		};
 
@@ -813,7 +836,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 		 * See {@link #checkFieldGroupIds checkFieldGroupIds} for a description of the
 		 * <code>vFieldGroupIds</code> parameter.
 		 * Associated controls are not taken into account.
-		 * 
+		 *
 		 * @param {string|string[]} [vFieldGroupIds] ID of the field group or an array of field group IDs to match
 		 * @return {sap.ui.core.Control[]} The list of controls with a field group ID
 		 * @public
@@ -833,7 +856,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 		 * If <code>vFieldGroupIds</code> is an empty array or empty string, true is returned if there is no field group ID set for this control.
 		 * If <code>vFieldGroupIds</code> is a string array or a string all expected field group IDs are checked and true is returned if all are contained for given for this control.
 		 * The comma delimiter can be used to seperate multiple field group IDs in one string.
-		 * 
+		 *
 		 * @param {string|string[]} [vFieldGroupIds] ID of the field group or an array of field group IDs to match
 		 * @return {boolean} true if a field group ID matches
 		 * @public
@@ -845,7 +868,7 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 				}
 				return this.checkFieldGroupIds(vFieldGroupIds.split(","));
 			}
-			var aFieldGroups = this.getFieldGroupIds();
+			var aFieldGroups = this._getFieldGroupIds();
 			if (jQuery.isArray(vFieldGroupIds)) {
 				var iFound = 0;
 				for (var i = 0; i < vFieldGroupIds.length; i++) {
@@ -874,6 +897,46 @@ sap.ui.define(['jquery.sap.global', './CustomStyleClassSupport', './Element', '.
 				fieldGroupIds : aFieldGroupIds
 			});
 		};
+
+		/**
+		 * This function (if available on the concrete control) provides
+		 * the current accessibility state of the control.
+		 *
+		 * Applications must not call this hook method directly, it is called by the framework.
+		 *
+		 * Subclasses of Control should implement this hook to provide any necessary accessibility information:
+		 *
+		 * <pre>
+		 * MyControl.prototype.getAccessibilityInfo = function() {
+		 *    return {
+		 *      role: "textbox",      // String which represents the WAI-ARIA role which is implemented by the control.
+		 *      type: "date input",   // String which represents the control type (Must be a translated text). Might correlate with
+		 *                            // the role.
+		 *      description: "value", // String which describes the most relevant control state (e.g. the inputs value). Must be a
+		 *                            // translated text.
+		 *                            // Note: The type and the enabled/editable state must not be handled here.
+		 *      focusable: true,      // Boolean which describes whether the control can get the focus.
+		 *      enabled: true,        // Boolean which describes whether the control is enabled. If not relevant it must not be set or
+		 *                            // <code>null</code> can be provided.
+		 *      editable: true,       // Boolean which describes whether the control is editable. If not relevant it must not be set or
+		 *                            // <code>null</code> can be provided.
+		 *      children: []          // Array of accessibility info objects of children of the given control (e.g. when the control is a layout).
+		 *                            // Note: Children should only be provided when it is helpful to understand the accessibility context
+		 *                            //       (e.g. a form control must not provide details of its internals (fields, labels, ...) but a
+		 *                            //       layout should).
+		 *    };
+		 * };
+		 * </pre>
+		 *
+		 * Note: The returned object provides the accessibility state of the control at the point in time when this function is called.
+		 *
+		 * @return {object} Current accessibility state of the control.
+		 * @since 1.37.0
+		 * @function
+		 * @name sap.ui.core.Control.prototype.getAccessibilityInfo
+		 * @protected
+		 */
+		//sap.ui.core.Control.prototype.getAccessibilityInfo = function() { return null; };
 
 	})();
 

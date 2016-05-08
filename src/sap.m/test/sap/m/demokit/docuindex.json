@@ -16,27 +16,43 @@
 		"links": [
 			{
 				"text": "Shopping Cart",
-				"ref": "test-resources/sap/m/demokit/sample/ShoppingCart/webapp/index.html",
+				"ref": "test-resources/sap/m/demokit/cart/index.html",
+				"config": "test-resources/sap/m/demokit/cart/demoapp.json",
 				"icon": "sapmdemo/cart",
 				"desc": "The classic business process of finding & ordering products"
 			},
 			{
 				"text": "Hello World",
-				"ref": "test-resources/sap/m/demokit/sample/HelloWorld/index.html",
+				"ref": "test-resources/sap/m/demokit/helloworld/index.html",
+				"config": "test-resources/sap/m/demokit/helloworld/demoapp.json",
 				"icon": "sapmdemo/helloworld",
 				"desc": "This is where it all starts when developing with UI5"
 			},
 			{
 				"text": "Worklist",
-				"ref": "test-resources/sap/m/demokit/sample/Worklist/webapp/test/testOpenUI5Service.html",
+				"ref": "test-resources/sap/m/demokit/worklist/webapp/test/mockServer.html",
+				"config": "test-resources/sap/m/demokit/worklist/demoapp.json",
 				"icon": "task",
-				"desc": "Simple starting point for a worklist-style app according to the best practices"
+				"desc": "Best-practice starting point for a worklist-style app"
 			},
 			{
-				"text": "Downloads",
-				"ref": "explored.html#/entity/sap.m.demo.Apps/samples",
+				"text": "Master-Detail",
+				"ref": "test-resources/sap/m/demokit/master-detail/webapp/test/mockServer.html",
+				"config": "test-resources/sap/m/demokit/master-detail/demoapp.json",
 				"icon": "task",
-				"desc": "Download our Demo Apps here"
+				"desc": "Best-practice starting point for a master-detail app"
+			},
+			{
+				"text": "Manage Products",
+				"ref": "test-resources/sap/m/demokit/tutorial/worklist/07/webapp/test/mockServer.html",
+				"icon": "task",
+				"desc": "This app is the final result of the 'Worklist App Tutorial'"
+			},
+			{
+				"text": "Bulletin Board",
+				"ref": "test-resources/sap/m/demokit/tutorial/testing/14/webapp/test/mockServer.html",
+				"icon": "task",
+				"desc": "This worklist-style app is the final result of the 'Testing Tutorial'"
 			}
 		]
 	},
@@ -112,6 +128,13 @@
 		  "samples": ["sap.m.sample.Button"]
 		},
 		{
+		  "id": "sap.m.Breadcrumbs",
+		  "name": "Breadcrumbs",
+		  "category": "Action",
+		  "since": "1.34",
+		  "samples": ["sap.m.sample.Breadcrumbs"]
+		},
+		{
 		  "id": "sap.m.Carousel",
 		  "name": "Carousel",
 		  "category": "Container",
@@ -119,7 +142,6 @@
 		  "samples": [
 			  "sap.m.sample.Carousel",
 			  "sap.m.sample.CarouselWithControls"
-
 		  ]
 		},
 		{
@@ -141,7 +163,11 @@
 		  "name": "ComboBox",
 		  "category": "User Input",
 		  "since": "1.22",
-		  "samples": ["sap.m.sample.ComboBox"]
+		  "samples": [
+		  	"sap.m.sample.ComboBox",
+			"sap.m.sample.ComboBox2Columns",
+            "sap.m.sample.ComboBoxLazyLoading"
+          ]
 		},
 		{
 		  "id": "sap.m.ColumnListItem",
@@ -191,6 +217,14 @@
 		  "samples": ["sap.m.sample.DateTimeInput"]
 		},
 		{
+		  "id": "sap.m.DateTimePicker",
+		  "name": "Date Time Picker",
+		  "category": "User Input",
+		  "since": "1.38",
+		  "formFactors": "L",
+		  "samples": ["sap.m.sample.DateTimePicker"]
+		},
+		{
 		  "id": "sap.m.Dialog",
 		  "name": "Dialog",
 		  "category": "Popup",
@@ -202,12 +236,30 @@
 		  ]
 		},
 		{
+			"id" : "sap.m.SlideTile",
+			"name" : "Slide Tile",
+			"category" : "Container",
+			"since" : "1.34",
+			"samples" : [
+				"sap.m.sample.SlideTile"
+			]
+		},
+		{
 		  "id": "sap.m.NotificationListItem",
 		  "name": "Notification List Item",
 		  "category": "List",
 		  "since": "1.34",
 		  "samples": [
 			"sap.m.sample.NotificationListItem"
+		  ]
+		},
+		{
+		  "id": "sap.m.NotificationListGroup",
+		  "name": "Notification List Group",
+		  "category": "List",
+		  "since": "1.34",
+		  "samples": [
+			"sap.m.sample.NotificationListGroup"
 		  ]
 		},
 		{
@@ -224,8 +276,8 @@
 		  "category": "Display",
 		  "since": "1.32",
 		  "samples": [
-		  	"sap.m.sample.DraftIndicator",
-		  	"sap.m.sample.SemanticPageDraftIndicator"
+			"sap.m.sample.DraftIndicator",
+			"sap.m.sample.SemanticPageDraftIndicator"
 		  ]
 		},
 		{
@@ -276,14 +328,38 @@
 		  ]
 		},
 		{
+		  "id": "sap.m.FormattedText",
+		  "name": "Formatted Text",
+		  "category": "Display",
+		  "since": "1.38",
+		  "samples": [
+			"sap.m.sample.FormattedText"
+		  ]
+		},
+		{
 		  "id": "sap.m.UploadCollection",
 		  "name": "Upload Collection",
 		  "category": "Action",
 		  "since": "1.26",
 		  "samples": [
-		    "sap.m.sample.UploadCollection",
-		    "sap.m.sample.UploadCollectionForPendingUpload"
+			"sap.m.sample.UploadCollection",
+			"sap.m.sample.UploadCollectionForPendingUpload",
+			"sap.m.sample.UploadCollectionVersioning"
 		  ]
+		},
+		{
+			"id": "sap.m.GenericTile",
+			"name": "Generic Tile",
+			"category": "Tile",
+			"since": "1.34",
+			"samples": [
+				"sap.m.sample.GenericTileAsLaunchTile",
+				"sap.m.sample.GenericTileAsMonitorTile",
+				"sap.m.sample.GenericTileAsKPITile",
+				"sap.m.sample.GenericTileAsFeedTile",
+				"sap.m.sample.SlideTile",
+				"sap.m.sample.GenericTileStates"
+			]
 		},
 		{
 		  "id": "sap.m.IconTabBar",
@@ -298,6 +374,16 @@
 			"sap.m.sample.IconTabBarProcess",
 			"sap.m.sample.IconTabBarStretchContent",
 			"sap.m.sample.IconTabSeparator"
+		  ]
+		},
+		{
+		  "id": "sap.m.TabContainer",
+		  "name": "Tab Container",
+		  "category": "Container",
+		  "since": "1.34",
+		  "samples": [
+			  "sap.m.sample.TabContainer",
+			  "sap.m.sample.TabContainerMHC"
 		  ]
 		},
 		{
@@ -335,6 +421,13 @@
 		  "since": "1.10",
 		  "formFactors": "L",
 		  "samples": ["sap.m.sample.InputListItem"]
+		},
+		{
+			"id" : "sap.m.FeedContent",
+			"name" : "Feed Content",
+			"category" : "Tile",
+			"since" : "1.34",
+			"samples" : [ "sap.m.sample.FeedContent" ]
 		},
 		{
 		  "id": "sap.m.Label",
@@ -381,6 +474,24 @@
 		  ]
 		},
 		{
+		  "id": "sap.m.MaskInput",
+		  "name": "Mask Input",
+		  "category": "User Input",
+		  "since": "1.34",
+		  "samples": [
+			"sap.m.sample.MaskInput"
+		  ]
+		},
+		{
+		  "id": "sap.m.MenuButton",
+		  "name": "Menu Button",
+		  "category": "User Input",
+		  "since": "1.38",
+		  "samples": [
+			"sap.m.sample.MenuButton"
+		  ]
+		},
+		{
 		  "id": "sap.m.MessageBox ",
 		  "name": "Message Box",
 		  "category": "Popup",
@@ -409,6 +520,17 @@
 		  "samples": ["sap.m.sample.MessagePopover"]
 		},
 		{
+			"id" : "sap.m.NumericContent",
+			"name" : "Numeric Content",
+			"category" : "Tile",
+			"since" : "1.34",
+			"samples" : [
+				"sap.m.sample.NumericContentDifColors",
+				"sap.m.sample.NumericContentIcon",
+				"sap.m.sample.NumericContentWithoutMargin"
+			]
+		},
+		{
 		  "id": "sap.m.QuickView",
 		  "name": "Quick View",
 		  "category": "Popup",
@@ -433,6 +555,13 @@
 		  "category": "Popup",
 		  "since": "1.10",
 		  "samples": ["sap.m.sample.MessageToast"]
+		},
+		{
+		  "id" : "sap.m.NewsContent",
+		  "name" : "News Content",
+		  "category" : "Tile",
+		  "since" : "1.34",
+		  "samples" : [ "sap.m.sample.NewsContent" ]
 		},
 		{
 		  "id": "sap.m.NavContainer",
@@ -481,6 +610,15 @@
 			"sap.m.sample.Table"
 		  ]
 		},
+        {
+          "id": "sap.m.ObjectMarker",
+          "name": "Object Marker",
+          "category": "Display",
+          "since": "1.38",
+          "samples": [
+            "sap.m.sample.ObjectMarker"
+          ]
+        },
 		{
 		  "id": "sap.m.ObjectNumber",
 		  "name": "Object Number",
@@ -558,6 +696,19 @@
 		  ]
 		},
 		{
+		  "id": "sap.m.PlanningCalendar",
+		  "name": "PlanningCalendar",
+		  "category": "User Input",
+		  "since": "1.34",
+		  "formFactors": "L",
+		  "samples": ["sap.m.sample.PlanningCalendar",
+		  	"sap.m.sample.PlanningCalendarMulti",
+		  	"sap.m.sample.PlanningCalendarSingle",
+		  	"sap.m.sample.PlanningCalendarViews",
+		  	"sap.m.sample.PlanningCalendarOneLine",
+		  	"sap.m.sample.PlanningCalendarMinMax"]
+		},
+		{
 		  "id": "sap.m.Popover",
 		  "name": "Popover",
 		  "category": "Popup",
@@ -629,7 +780,8 @@
 		  "samples": [
 			"sap.m.sample.SearchField",
 			"sap.m.sample.ListSelectionSearch",
-			"sap.m.sample.DialogSearch"
+			"sap.m.sample.DialogSearch",
+			"sap.m.sample.SearchFieldSuggestions"
 		  ]
 		},
 		{
@@ -683,6 +835,7 @@
 		  "since": "1.26",
 		  "samples": [
 			"sap.m.sample.P13nDialog",
+			"sap.m.sample.P13nDialogWithDimMeasurePanel",
 			"sap.m.sample.P13nDialogWithCustomPanel"
 		  ]
 		},
@@ -695,7 +848,8 @@
 			"sap.m.sample.MultiInput",
 			"sap.m.sample.MultiInputValidators",
 			"sap.m.sample.MultiInputMultiLine",
-			"sap.m.sample.MultiInputDatabinding"
+			"sap.m.sample.MultiInputDatabinding",
+			"sap.m.sample.MultiInputMaxTokens"
 		  ]
 		},
 		{
@@ -735,6 +889,13 @@
 		  "formFactors": "L",
 		  "samples": ["sap.m.sample.TileContainer"]
 		},
+        {
+          "id": "sap.m.StepInput",
+          "name": "StepInput",
+          "category": "User Input",
+          "since": "1.40",
+          "samples": ["sap.m.sample.StepInput"]
+        },
 		{
 		  "id": "sap.m.Switch",
 		  "name": "Switch",
@@ -749,6 +910,7 @@
 		  "since": "1.12",
 		  "samples": [
 			"sap.m.sample.Table",
+			"sap.m.sample.TableColumnWidth",
 			"sap.m.sample.TableBreadcrumb",
 			"sap.m.sample.TableLayout",
 			"sap.m.sample.TableMergeCells",
@@ -783,7 +945,8 @@
 		  "since": "1.10",
 		  "samples": [
 			"sap.m.sample.TextArea",
-			"sap.m.sample.TextAreaValueUpdate"
+			"sap.m.sample.TextAreaValueUpdate",
+			"sap.m.sample.TextAreaGrowing"
 		  ]
 		},
 		{
@@ -793,6 +956,15 @@
 		  "since": "1.12",
 		  "formFactors": "L",
 		  "samples": ["sap.m.sample.TileContainer"]
+		},
+		{
+		  "id" : "sap.m.TileContent",
+		  "name" : "Tile Content",
+		  "category" : "Tile",
+		  "since" : "1.34",
+		  "samples" : [
+		  	"sap.m.sample.TileContent"
+		  ]
 		},
 		{
 		"id": "sap.m.TimePicker",
@@ -852,7 +1024,7 @@
 		  ]
 		},
 		{
-		  "id": "sap.m.UrlHelper",
+		  "id": "sap.m.URLHelper",
 		  "name": "Url Helper",
 		  "category": "Action",
 		  "since": "1.10",
@@ -922,7 +1094,7 @@
 		  "category" : "Container",
 		  "since" : "1.11",
 		  "samples" : [
-			"sap.m.sample.SplitApp"
+			"sap.m.sample.SplitContainer"
 		  ]
 		},
 		{
@@ -943,9 +1115,9 @@
 			"JSON Model",
 			"Translatable Texts",
 			"Component Configuration",
-			"App Descriptor",
+			"Descriptor for Applications",
 			"Pages and Panels",
-			"Shell Container",
+			"Shell Control as Container",
 			"Margins and Paddings",
 			"Custom CSS and Theme Colors",
 			"Nested Views",
@@ -960,54 +1132,69 @@
 			"Filtering",
 			"Sorting and Grouping",
 			"Remote OData Service",
-			"Mock Server and Automatic Model Instantiation",
+			"Mock Server Configuration",
 			"Unit Test with QUnit",
 			"Integration Test with OPA",
 			"Debugging Tools",
 			"Routing and Navigation",
-			"Routing with Params",
+			"Routing with Parameters",
 			"Routing Back and History",
 			"Custom Controls",
-			"Responsiveness and Device Adaptation"
+			"Responsiveness",
+			"Device Adaptation",
+			"Content Density"
 		  ]
 		},
 		{
 		  "id": "sap.m.tutorial.testing",
-		  "name": "Testing Apps",
+		  "name": "Testing",
 		  "category": "Tutorial",
 		  "since": "1.30",
 		  "formFactors": "-",
 		  "description": "In this tutorial we will test application functionality with QUnit, OPA5, and the mock server",
+		  "docuLink": "#docs/guide/291c9121e6044ab381e0b51716f97f52.html",
 		  "samplesAsSteps": [
-			"Handover and Testing Strategy",
-			"A first Unit Test",
-			"Adding a price formatter",
-			"Testing a new type module",
-			"Adding a flagged button",
-			"A first OPA Test",
-			"Changing the Table to grow",
+			"Overview and Testing Strategy",
+			"A First Unit Test",
+			"Adding the Price Formatter",
+			"Testing a New Module",
+			"Adding a Flag Button",
+			"A First OPA Test",
+			"Changing the table to a Growing Table",
 			"Testing Navigation",
 			"Adding the Post Page",
-			"Testsuite and Automated Testing",
-			"Testing Interactions",
+			"Test Suite and Automated Testing",
+			"Testing User Interactions",
 			"Adding Tabs",
-			"Writing a Short Date Formatter TDD style",
-			"Adding the date formatter"
+			"Writing a Short Date Formatter Using TDD ",
+			"Adding the Date Formatter"
 		  ]
 		},
 		{
-			"id" : "sap.m.demo.Apps",
-			"name" : "Demo Apps",
-			"category" : "Application",
-			"since" : "1.11",
-			"samples" : [
-				"sap.m.sample.HelloWorld",
-				"sap.m.sample.ShoppingCart",
-				"sap.m.sample.Worklist"
-			]
+		  "id": "sap.m.tutorial.worklist",
+		  "name": "Worklist App",
+		  "category": "Tutorial",
+		  "since": "1.32",
+		  "formFactors": "-",
+		  "description": "In this tutorial we implement typical features of a full-screen worklist app, a typical SAP Fiori design pattern",
+		  "docuLink": "#docs/guide/6a6a621c978145ad9eef2b221d2cf21d.html",
+		  "samplesAsSteps": [
+			"Creating the Initial App",
+			"Custom Mock Data",
+			"Extending the Worklist Table",
+			"Quick Filter for the Worklist",
+			"Adding Actions to the Worklist",
+			"Extending the Detail Page",
+			"Adding a Comments Section"
+		  ]
 		}
 	  ],
 	  "samples": [
+		{
+		  "id": "sap.m.sample.NewsContent",
+		  "name": "News Content",
+		  "description": "This control is used to display the news content text and subheader in a tile."
+		},
 		{
 		  "id": "sap.m.sample.MessagePage",
 		  "name": "Message Page",
@@ -1015,8 +1202,23 @@
 		},
 		{
 		  "id": "sap.m.sample.ComboBox",
-		  "name": "ComboBox",
-		  "description": "The ComboBox control provides a list box with items and a text field allowing the user to either type a value directly into the control or choose from the list of existing items."
+		  "name": "Combo box",
+		  "description": "The combo box control provides a list box with items and a text field allowing the user to either type a value directly into the control or choose from the list of existing items."
+		},
+		{
+		  "id": "sap.m.sample.ComboBox2Columns",
+		  "name": "Combo box - Two columns layout",
+		  "description": "Use the combo box dropdown list with two columns layout if you need to display additional information to your options, like e.g. currencies to countries or abbreviations to systems."
+		},
+        {
+          "id": "sap.m.sample.ComboBoxLazyLoading",
+          "name": "Combo box - Lazy loading",
+          "description": "Use this feature to defer initialization of items until the point at which the items are needed. It can improve performance, reduce memory usage and unnecessary client/server round-trips."
+        },
+		{
+		  "id": "sap.m.sample.DynamicPageListReport",
+		  "name": "Dynamic Page FIORI 2.0 List Report floor plan",
+		  "description": "The Dynamic Page is a FIORI 2.0 generation layout control. The sample shows how the List Report floor plan can be implemented."
 		},
 		{
 		  "id": "sap.m.sample.DateRangeSelection",
@@ -1189,6 +1391,20 @@
 		  "description": "Flex Boxes can be nested. Remember also that HBox and VBox are 'convenience' controls based on the Flex Box control."
 		},
 		{
+		  "id": "sap.m.sample.FormattedText",
+		  "name": "Formatted Text",
+		  "description": "The control can be used for embedding formatted HTML text into your application."
+		},
+		{  "id": "sap.m.sample.FlexibleColumnLayoutSimple",
+		  "name": "Flexible Column Layout basic sample",
+		  "description": "This sample demonstrates a Flexible Column Layout aggregating three pages. Additionally the option to switch between the two different types of three-column layout is enabled. To observe how the control behaves on Desktop, it is recommended to view the sample in Fullscreen mode."
+		},
+		{
+		  "id": "sap.m.sample.FlexibleColumnLayoutDynamicPage",
+		  "name": "Flexible Column Layout with Dynamic Pages",
+		  "description": "This sample demonstrates how to configure a Flexible Column Layout with three Dynamic Page instances, and additionally add a Fullscreen button to the page in the rightmost visible column. To observe how the control behaves on Desktop, it is recommended to view the sample in Fullscreen mode."
+		},
+		{
 		  "id": "sap.m.sample.Page",
 		  "name": "Page,Toolbar and Bar",
 		  "description": "Each screen of a mobile application is typically represented by a 'Page' consisting of a header, a scrollable content area and optionally a footer. The standard header offers a navigation button and a title. Alternatively you can provide a customer header. Gernerally you should use Toolbars in the Page. If you need a centered title you may use a Bar."
@@ -1206,12 +1422,12 @@
 		{
 		  "id": "sap.m.sample.PageListReportIconTabBar",
 		  "name": "Fiori List Report Page - Icon Tab Bar",
-		  "description": "This page shows the floorplan for a list report with an Icon Tab Bar: VBox with Filter Bar, Icon Tab Bar with Analytical Tables and a Footer. By applying a bit custom CSS you arrange all the controls with the correct spacing."
+		  "description": "This page shows the floorplan for a list report with an Icon Tab Bar: The upper part extends with its content, but doesn't react to viewport changes. The Icon Tab Bar reacts to the viewport size. The table inside takes the available space. If the minimum size of the table is reached, the page begins to scroll."
 		},
 		{
 		  "id": "sap.m.sample.PageListReportToolbar",
 		  "name": "Fiori List Report Page - Toolbar ",
-		  "description": "This page shows the floorplan for a list report with a Title Bar, Toolbar and a Footer: Filter Bar, Toolbar, second Toolbar, Analytical Table and Footer inside a VBox. By applying a bit custom CSS you arrange all the controls with the correct spacing."
+		  "description": "This page shows the floorplan for a list report with a Toolbar. The upper part extends with its content, but doesn't react to viewport changes. The lower part reacts to the viewport size. The table inside takes the available space. If the minimum size of the table is reached, the page begins to scroll."
 		},
 		{
 		  "id": "sap.m.sample.IconTabBar",
@@ -1257,6 +1473,11 @@
 		  "id": "sap.m.sample.Image",
 		  "name": "Image",
 		  "description": "Images are faster than words and attract people's attention. Images can also have an active state like the last image in this example."
+		},
+		{
+			"id": "sap.m.sample.FeedContent",
+			"name": "Feed Content",
+			"description": "Shows the tile containing the text of the feed, a subheader, and a numeric value."
 		},
 		{
 		  "id": "sap.m.sample.Label",
@@ -1349,6 +1570,11 @@
 		  "description": "The object identifier is a small building block representing an object by a title and short description. Often it is used in the first column of a table."
 		},
 		{
+		"id": "sap.m.sample.ObjectMarker",
+		"name": "Object Marker in a table",
+		"description": "The <code>ObjectMarker</code> is a small building block representing an object by an icon or text and icon. Often it is used in a table."
+		},
+		{
 		  "id": "sap.m.sample.ObjectNumber",
 		  "name": "Object Number",
 		  "description": "The object number is a small building block representing an important, numerical attribute of an object together with it's unit. Often it is used in the last column of a table."
@@ -1371,7 +1597,12 @@
 		{
 		  "id": "sap.m.sample.DateTimeInput",
 		  "name": "Date Time Input",
-		  "description": "The Date & Time Input is an extension of the Input control and is dedicated to Date and Time."
+		  "description": "The Date & Time Input control allows input of dates and times using date and time pickers. [Deprecated since 1.32.8]"
+		},
+		{
+		  "id": "sap.m.sample.DateTimePicker",
+		  "name": "Date Time Picker",
+		  "description": "With the DateTimePicker a Date can be entered or selected including the time part."
 		},
 		{
 		  "id": "sap.m.sample.RadioButton",
@@ -1449,6 +1680,11 @@
 		  "description": "Dialog for personalization of column order and their visibility, sorting and filtering conditions of columns."
 		},
 		{
+		  "id": "sap.m.sample.P13nDialogWithDimMeasurePanel",
+		  "name": "P13nDialog stand-alone",
+		  "description": "Dialog for personalization of dimension/measure order and their visibility, sorting and filtering conditions of dimensions/measures."
+		},
+		{
 		  "id": "sap.m.sample.P13nDialogWithCustomPanel",
 		  "name": "P13nDialog stand-alone with custom panel",
 		  "description": "Dialog for personalization of column order and their visibility and custom panel."
@@ -1466,12 +1702,32 @@
 		{
 		  "id": "sap.m.sample.MultiInputMultiLine",
 		  "name": "MultiInput Multi-line Mode",
-		  "description": "Multi-line display mode allows to fully view all tokens and easily edit tokens in the MultiInput. This display mode should be used if you need overview of all content in the MultiInput."
+		  "description": "Multi-line display mode allows you to fully view all tokens and easily edit tokens in the MultiInput. This display mode should be used if you need an overview of all content in the MultiInput."
 		},
 		{
 			"id": "sap.m.sample.MultiInputDatabinding",
-			"name": "MultiInput Databinding",
-			"description": "MultiInput Databinding allows data to be binded to tokens in MultiInput."
+			"name": "MultiInput Data Binding",
+			"description": "MultiInput data binding allows data to be bound to tokens in MultiInput."
+		},
+		{
+			"id": "sap.m.sample.MultiInputMaxTokens",
+			"name": "MultiInput with Max Tokens",
+			"description": "Number of Tokens in MultiInput cannot exceed the maxToken number."
+		},
+		{
+			"id": "sap.m.sample.NumericContentDifColors",
+			"name": "Numeric Content of Different Colors",
+			"description": "Shows NumericContent including numbers, units of measurement, and status arrows indicating a trend. The numbers can be colored according to their meaning."
+		},
+		{
+			"id": "sap.m.sample.NumericContentIcon",
+			"name": "Numeric Content with Icon",
+			"description": "Shows NumericContent including an icon."
+		},
+		{
+			"id": "sap.m.sample.NumericContentWithoutMargin",
+			"name": "Numeric Content Without Margins",
+			"description": "This is an example of the NumericContent that contains no margins, so the control is aligned to the left and to the top without any margins."
 		},
 		{
 		  "id": "sap.m.sample.Token",
@@ -1499,6 +1755,11 @@
 		  "description": "Since 1.30 the value property of sap.m.TextArea is not updated on every keystroke, but first when the user presses Enter or leaves the input. The change was necessary to fully support the standard UI5 data binding with formatters and types. If you still need immediate update you have 2 options: Handle liveChange events or enable the boolean property valueLiveUpdate."
 		},
 		{
+		  "id": "sap.m.sample.TextAreaGrowing",
+		  "name": "TextArea - Growing",
+		  "description": "Since 1.38 the growing property of sap.m.TextArea gives the ability of a control to automatically grow and shrink dynamically with its content."
+		},
+		{
 		  "id": "sap.m.sample.Switch",
 		  "name": "Switch",
 		  "description": "\"Some say it is only a switch, I say it is one of the most stylish controls in the universe of mobile UI controls.\" (unknown developer)"
@@ -1507,6 +1768,11 @@
 		  "id": "sap.m.sample.SearchField",
 		  "name": "Search Field",
 		  "description": "Use the Search Field to let the user enter a search string and trigger the search process."
+		},
+		{
+		  "id": "sap.m.sample.SearchFieldSuggestions",
+		  "name": "Search Field - Suggestions",
+		  "description": "Add suggestion capabilities to a basic Search Field."
 		},
 		{
 		  "id": "sap.m.sample.DialogConfirm",
@@ -1531,7 +1797,7 @@
 		{
 		  "id": "sap.m.sample.InputTypes",
 		  "name": "Input - Types",
-		  "description": "On touch devices the 'type' of the input controls the keyboard layout. On keyboard devices this setting has no effect."
+		  "description": "Input type corresponds to the type attribute of the HTML input tag. On touch devices, it controls the keyboard layout. On desktop, the effect of this setting is browser dependent."
 		},
 		{
 		  "id": "sap.m.sample.InputPassword",
@@ -1664,6 +1930,11 @@
 		  "description": "You can use fixedLayout property to define the layout algorithm to be used for the table cells, rows, and columns.\nWhen fixedLayout property is set to false, the width of the table and its cells depends on the content thereof. The column width is set by the widest unbreakable content in the cells.\nBy default, table is rendered with fixed layout algorithm. This means the horizontal layout only depends on the table's width and the width of the columns, not the contents of the cells. Cells in subsequent rows do not affect column widths."
 		},
 		{
+		  "id": "sap.m.sample.TableColumnWidth",
+		  "name": "Table - Defining Column Width",
+		  "description": "While defining the column width you can use percent values but you should be careful with them. Click to see some traps and tipps."
+		},
+		{
 		  "id": "sap.m.sample.TablePerso",
 		  "name": "Table - Personalization",
 		  "description": "The Table Perso Dialog is a simple dialog to be used for allowing the user to set table personalizations, specifically column visibility and order. Use the Table Perso Controller in conjunction with a persistence service based on the abstract Table Perso Provider to have changes made and persisted."
@@ -1671,7 +1942,7 @@
 		{
 		  "id": "sap.m.sample.TableMergeCells",
 		  "name": "Table - Merge Cells",
-		  "description": "With column duplicate merging, you can improve the display of repeated data. See the effect of mergeDuplicates on the Supplier column, space permitting."
+		  "description": "With column duplicate merging, you can improve the display of repeated data. See the effect of mergeDuplicates on the Supplier column, space permitting.\nNote: This feature is ignored if a column is shown in the pop-in."
 		},
 		{
 		  "id": "sap.m.sample.TableVerticalAlignment",
@@ -1764,6 +2035,16 @@
 		  "description": "By default the title size adapts to the available space and gets bigger if the description is empty. List items with and without descriptions results in titles with different sizes. In this cases it is better to switch the size adaption off."
 		},
 		{
+		  "id": "sap.m.sample.MaskInput",
+		  "name": "MaskInput",
+		  "description": "The sap.m.MaskInput control allows users to easily enter data in a certain format and in a fixed-width input (for example: date, time, credit card number, and others)."
+		},
+		{
+		  "id": "sap.m.sample.MenuButton",
+		  "name": "Menu Button",
+		  "description": "This control is used to open a menu in both desktop and mobile."
+		},
+		{
 		  "id": "sap.m.sample.MessageBox",
 		  "name": "Message Box",
 		  "description": "MessageBox is an easy way of displaying a message-type dialog to the user. You can display different types of dialogs:\n- Types of message (Alert, Confirmation, etc.)\n- Initial focus can be set to the buttons or the controls used in the message"
@@ -1824,6 +2105,11 @@
 		  "description": "A list item suitable for showing notifications to the user."
 		},
 		{
+		  "id": "sap.m.sample.NotificationListGroup",
+		  "name": "Notification List Group",
+		  "description": "A control suitable for grouping notifications."
+		},
+		{
 		  "id": "sap.m.sample.Dialog",
 		  "name": "Dialog",
 		  "description": "Typically a Dialog prompts the user for decisions or additional information required by the application. The content of a dialog is fully customizable. If you want to highlight important information you should use the special type of 'Message Dialog'."
@@ -1870,13 +2156,18 @@
 		},
 		{
 		  "id": "sap.m.sample.UploadCollection",
-		  "name": "Upload Collection",
+		  "name": "Upload Collection - Instant Upload",
 		  "description": "This control allows users to upload single or multiple files from their devices (desktop PC, tablet, or smartphone) and attach them to the application immediately. The selection and upload process is completed in one step and is automatically triggered by the UploadCollection control."
 		},
 		{
 		  "id": "sap.m.sample.UploadCollectionForPendingUpload",
 		  "name": "Upload Collection - Upload Pending",
-		  "description": "With this UploadCollection scenario, you can select an attachment and add it to the upload list first. You can select another one if required. In a second step, you can upload the selected files. The application triggers the upload with an event."
+		  "description": "You can use this UploadCollection scenario to select single or mutliple files and to add them to the upload list first. In a second step, the application can upload the selected files by calling the upload() function."
+		},
+		{
+		  "id": "sap.m.sample.UploadCollectionVersioning",
+		  "name": "With Download and Update Feature",
+		  "description": "Shows the UploadCollection with a download and update version feature. If one item is selected, you can download it or update the item to a new version. Both features can only be used in the Instant Upload scenario."
 		},
 		{
 		  "id": "sap.m.sample.StandardMarginsAll",
@@ -1913,6 +2204,11 @@
 		  "name": "Remove Margins",
 		  "description": "Use our standard 'No-Margins' classes to remove existing margins from your control. You can either remove all margins at once or remove the margin on one or more sides."
 		},
+        {
+          "id": "sap.m.sample.StepInput",
+          "name": "StepInput",
+          "description": "The StepInput allows the user to change stepwise a value by a predefined step."
+        },
 		{
 		"id": "sap.m.sample.TimePicker",
 		"name": "Time Picker",
@@ -1961,7 +2257,12 @@
 		{
 		  "id": "sap.m.sample.SplitApp",
 		  "name": "SplitApp standard use case",
-		  "description": "The SplitApp is the base for each master detail application. It extends the sap.m.SplitContainer control. The display of master NavContainer depends on the portrait/landscape orientation of the device and the mode of SplitApp."
+		  "description": "The SplitApp is the base for each master detail application. It extends the sap.m.SplitContainer control."
+		},
+		{
+		  "id": "sap.m.sample.SplitContainer",
+		  "name": "SplitContainer standard use case",
+		  "description": "SplitContainer maintains two NavContainers if running on tablet or desktop and one NavContainer - on phone. The display of master NavContainer depends on the portrait/landscape orientation of the device and the mode of SplitContainer."
 		},
 		{
 		  "id": "sap.m.sample.DraftIndicator",
@@ -1969,20 +2270,85 @@
 		  "description": "The Draft Indicator shows that eighter currently a draft is saving or that it is already saved. It does not block the current UI screen so other operations could be triggered in parallel."
 		},
 		{
-		  "id": "sap.m.sample.ShoppingCart",
-		  "name": "Shopping Cart",
-		  "description": "The classic business process of finding & ordering products"
+		  "id": "sap.m.sample.SlideTile",
+		  "name": "Slide Tile",
+		  "description": "GenericTile controls with the 2x1 frame type are displayed as sliding tiles."
 		},
 		{
-			"id": "sap.m.sample.HelloWorld",
-			"name": "Hello World",
-			"description": "This is where it all starts when developing with UI5"
+		  "id": "sap.m.sample.GenericTileStates",
+		  "name": "Generic Tile Status",
+		  "description": "Shows the GenericTile while it is loading, if loading fails, and in disabled status."
 		},
 		{
-			"id": "sap.m.sample.Worklist",
-			"name": "Worklist",
-			"description": "Simple starting point for a worklist-style app according to the best practices"
+		  "id": "sap.m.sample.GenericTileAsLaunchTile",
+		  "name": "Launch Tile",
+		  "description": "Shows samples of Launch Tile, which can contain header, subheader, image content, and footer."
+		},
+		{
+		  "id": "sap.m.sample.GenericTileAsMonitorTile",
+		  "name": "Monitor Tile",
+		  "description": "Shows samples of Monitor Tile, which can contain header, subheader, icon, key value, unit, and footer."
+		},
+		{
+		  "id": "sap.m.sample.GenericTileAsKPITile",
+		  "name": "KPI Tile",
+		  "description": "Shows samples of KPI Tile, which can contain header, subheader, key value, trend, unit, and footer."
+		},
+		{
+		  "id": "sap.m.sample.GenericTileAsFeedTile",
+		  "name": "Feed Tile",
+		  "description": "Shows samples of Feed Tile and News Tile, which can contain feed content, news content, and footer."
+		},
+		{
+		  "id": "sap.m.sample.TileContent",
+		  "name": "Tile Content",
+		  "description": "Shows the universal container for different content types and context information in the footer area."
+		},
+		{
+		  "id": "sap.m.sample.Breadcrumbs",
+		  "name": "Breadcrumbs sample",
+		  "description": "Breadcrumbs is useful for displaying link hierarchy"
+		},
+		{
+		  "id": "sap.m.sample.TabContainer",
+		  "name": "Tab Container",
+		  "description": "The sap.m.TabContainer allows for working with multiple tabs."
+		},
+		{
+		  "id": "sap.m.sample.TabContainerMHC",
+		  "name": "Tab Container - Multi-instance handling concept",
+		  "description": "Allows detail view / edit in <code>sap.m.TabContainer</code> after selecting items from table"
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendar",
+		  "name": "simple PlanningCalendar",
+		  "description": "PlanningCalendar with single row selection."
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendarMulti",
+		  "name": "PlanningCalendar - multiple selection",
+		  "description": "PlanningCalendar with multiple row selection. No interval headers are displayed. On click on an interval a new appointment is created."
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendarSingle",
+		  "name": "PlanningCalendar - for one person",
+		  "description": "PlanningCalendar with only one row without row header.  On click on an interval a new appointment is created."
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendarViews",
+		  "name": "PlanningCalendar - with custom views",
+		  "description": "PlanningCalendar with custom views to set number of hours, days and months and change view description. Sub-intervals are shown. Custom non-working days and hours are set."
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendarOneLine",
+		  "name": "PlanningCalendar - with one line appointments",
+		  "description": "PlanningCalendar showing appointment with only title in one line to save space. The interval headers are only shown if there are some assigned in the visible area."
+		},
+		{
+		  "id": "sap.m.sample.PlanningCalendarMinMax",
+		  "name": "PlanningCalendar - with min. and max. date",
+		  "description": "PlanningCalendar with min. date 2000-01-01 and max. date 2050-12-31"
 		}
-	  ]
+		]
 	}
 }

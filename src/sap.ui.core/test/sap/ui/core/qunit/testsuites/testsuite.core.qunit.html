@@ -13,6 +13,7 @@
 			var suite = new parent.jsUnitTestSuite();
 			var contextPath = "/" + window.location.pathname.split("/")[1];
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/AppCacheBuster.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/CacheManager.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ControlDefinition.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Core.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/CoreLock.qunit.html");
@@ -20,6 +21,7 @@
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Declarative.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/DuplicateIds.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/DuplicateIds_noError.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Element_sourceInfo.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Element_data.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Element_delegates.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Fragment.qunit.html");
@@ -33,6 +35,8 @@
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/jquery.sap.mobile3.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/jquery.sap.ui.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Locale.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/LocaleData.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/LRUPersistentCache.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ManagedObject.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ModuleSystem.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Object.qunit.html");
@@ -40,10 +44,14 @@
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/RenderManager.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/sap.ui.Global.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/SinonJS.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/StashedControlSupport.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ThemeCheck.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/ThemeParameters.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/UIArea.qunit.html");
-			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/IslamicDate.qunit.html");
 			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/UniversalDate.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Islamic.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/Japanese.qunit.html");
+			suite.addTestPage(contextPath + "/test-resources/sap/ui/core/qunit/QUnit.qunit.html");
 
 			return suite;
 		}

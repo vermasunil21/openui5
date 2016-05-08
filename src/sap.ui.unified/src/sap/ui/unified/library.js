@@ -5,7 +5,7 @@
 /**
  * Initialization Code and shared classes of library sap.ui.unified.
  */
-sap.ui.define(['jquery.sap.global', 
+sap.ui.define(['jquery.sap.global',
 	'sap/ui/core/library'], // library dependency
 	function(jQuery) {
 
@@ -44,6 +44,7 @@ sap.ui.define(['jquery.sap.global',
 			"sap.ui.unified.CalendarMonthInterval",
 			"sap.ui.unified.CalendarTimeInterval",
 			"sap.ui.unified.CalendarLegend",
+			"sap.ui.unified.CalendarRow",
 			"sap.ui.unified.ContentSwitcher",
 			"sap.ui.unified.Currency",
 			"sap.ui.unified.FileUploader",
@@ -54,6 +55,7 @@ sap.ui.define(['jquery.sap.global',
 			"sap.ui.unified.SplitContainer"
 		],
 		elements: [
+			"sap.ui.unified.CalendarAppointment",
 			"sap.ui.unified.CalendarLegendItem",
 			"sap.ui.unified.DateRange",
 			"sap.ui.unified.DateTypeRange",
@@ -146,12 +148,42 @@ sap.ui.define(['jquery.sap.global',
 	};
 
 	/**
+	 * Type of a interval in a <code>CalendarRow</code>.
+	 *
+	 * @enum {string}
+	 * @public
+	 * @since 1.34.0
+	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
+	 */
+	sap.ui.unified.CalendarIntervalType = {
+
+		/**
+		 * one code>CalendarRow</code> interval has the size of one hour
+		 * @public
+		 */
+		Hour : "Hour",
+
+		/**
+		 * one code>CalendarRow</code> interval has the size of one day
+		 * @public
+		 */
+		Day : "Day",
+
+		/**
+		 * one code>CalendarRow</code> interval has the size of one Month
+		 * @public
+		 */
+		Month : "Month"
+
+	};
+
+	/**
 	 * Predefined animations for the ContentSwitcher
 	 *
 	 * @enum {string}
 	 * @public
 	 * @since 1.16.0
-	 * @experimental Since version 1.16.0. 
+	 * @experimental Since version 1.16.0.
 	 * API is not yet finished and might change completely
 	 * @ui5-metamodel This enumeration also will be described in the UI5 (legacy) designtime metamodel
 	 */

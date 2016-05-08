@@ -2,8 +2,8 @@
  * ${copyright}
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueStateSupport'],
-	function(jQuery, Renderer, ValueStateSupport) {
+sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueStateSupport', 'sap/ui/core/IconPool'],
+	function(jQuery, Renderer, ValueStateSupport, IconPool) {
 		"use strict";
 
 		/**
@@ -33,7 +33,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 				CSS_CLASS = SelectRenderer.CSS_CLASS;
 
 			oRm.write("<div");
-			this.addStyleClass(oRm, oSelect);
+			this.addClass(oRm, oSelect);
 			oRm.addClass(CSS_CLASS);
 			oRm.addClass(CSS_CLASS + oSelect.getType());
 
@@ -64,6 +64,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 
 			if (sTooltip) {
 				oRm.writeAttributeEscaped("title", sTooltip);
+			} else if (sType === sap.m.SelectType.IconOnly) {
+				var oIconInfo = IconPool.getIconInfo(oSelect.getIcon());
+
+				if (oIconInfo) {
+					oRm.writeAttributeEscaped("title", oIconInfo.text);
+				}
 			}
 
 			if (bEnabled) {
@@ -149,7 +155,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 */
 		SelectRenderer.renderIcon = function(oRm, oSelect) {
 			oRm.writeIcon(oSelect.getIcon(), SelectRenderer.CSS_CLASS + "Icon", {
-				id: oSelect.getId() + "-icon"
+				id: oSelect.getId() + "-icon",
+				title: null
 			});
 		};
 
@@ -212,7 +219,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Renderer', 'sap/ui/core/ValueSt
 		 * @param {sap.ui.core.Control} oSelect An object representation of the control that should be rendered.
 		 * @protected
 		 */
-		SelectRenderer.addStyleClass = function(oRm, oSelect) {};
+		SelectRenderer.addClass = function(oRm, oSelect) {};
 
 		/**
 		 * Gets accessibility role.

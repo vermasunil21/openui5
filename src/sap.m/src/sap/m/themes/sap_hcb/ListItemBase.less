@@ -8,46 +8,24 @@
 	padding: 0 1rem 0 1rem;
 }
 
-.sap-desktop .sapMLIB:focus {
+.sapMLIBFocusable:focus {
 	outline: 0.125rem dotted @sapHCStandardFG;
 	outline-offset: -0.125rem;
 }
 
-/* IE ignores outline-offset. Use an overlay: */
-.sap-desktop[data-sap-ui-browser^="ie"] {
-	.sapMLIB:not(.sapMListTblRow):focus, {
-		outline: none;
-		position: relative;
-	}
+.sapMLIBLegacyOutline:focus {
+  	outline: none;
+}
 
-	.sapMLIB:not(.sapMListTblRow):focus::before, {
-		content: "";
-		border: 0.125rem dotted @sapHCStandardFG;
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		pointer-events: none;
-	}
+/* IE ignores outline-offset. Use an overlay: */
+.sapMLIBLegacyOutline:focus::before {
+	border: 0.125rem dotted @sapHCStandardFG;
 }
 
 .sapMListModeDelete .sapMLIB,
 .sapMListModeSingleSelect .sapMLIB,
 .sapMLIB.sapMLIBTypeNavigation {
 	padding-right: 0;
-}
-
-.sapMListBGTransparent .sapMLIB {
-	background-color:  @sapHCStandardBG;
-}
-
-.sapMListBGTranslucent .sapMLIB {
-	background-color:  @sapHCStandardBG;
-}
-
-.sapMListBGSolid .sapMLIB{
-	background-color: @sapHCStandardBG;
 }
 
 .sapMListShowSeparatorsNone .sapMLIBShowSeparator{
@@ -184,16 +162,13 @@
 
 .sapMLIBTypeDetailAndActive .sapMLIBIconDet:active,
 .sapMLIBTypeDetail .sapMLIBIconDet:active,
-.sapMListModeDelete .sapMLIBSelectD:active,
-/* in IE9 the SelectD does not get the active state so we have to put it on the icon*/
-.sapMListModeDelete .sapMLIBSelectD > .sapUiIcon:active,
-.sapMLIBActive:not(.sapMLIBTypeDetailAndActive):not(.sapMLIBTypeNavigation):not(.sapMLIBTypeActive) .sapMLIBImgNav {
-	background-color : @sapHCHighlightBG;
+.sapMLIBSelectD > .sapUiIcon:active {
+	background : @sapHCHighlightBG;
 }
 
-.sap-desktop .sapMLIBImgNav:focus,
-.sap-desktop .sapMLIBIconDet:focus,
-.sap-desktop .sapMLIBIconDel:focus {
+html.sap-desktop .sapMLIBImgNav:focus,
+html.sap-desktop .sapMLIBIconDet:focus,
+html.sap-desktop .sapMLIBIconDel:focus {
 	outline: 1px dotted @sapHCReducedAltFG;
 	outline-offset: -1px;
 }
@@ -203,57 +178,21 @@
 	width: 3rem;
 }
 
-.sapMLIB.sapMLIBSelected,
-.sapMLIB.sapMLIBSelected > td {
+.sapMLIB {
+	background: @sapHCStandardBG;
+}
+
+.sapMLIBSelected {
 	background: @sapHCHighlightAltBG;
 }
 
-.sapMLIBSelectD:hover {
-	box-sizing: border-box;
-}
-
-/* deleteIcon */
-.sap-desktop .sapMLIBSelectD:hover:not(:active),
-
-/* active state is always stronger than the selected state
-* List item hover : does not apply to column list item*/
-.sap-desktop .sapMLIB:not(.sapMLIBActive):not(.sapMLIBTypeInactive):not(.sapMLIBTypeDetail):not(.sapMALI):hover ,
-
-/* all selectable items should get the hover */
-.sap-desktop .sapMListUl:not(.sapMListModeDelete):not(.sapMListModeNone) .sapMLIB:not(.sapMLIBActive):not(.sapMALI):hover,
-
-/* column list item hover: since the dom is different to the list we need td */
-.sap-desktop .sapMLIB:not(.sapMLIBActive):not(.sapMLIBSelected):not(.sapMLIBTypeInactive):not(.sapMLIBTypeDetail):not(.sapMALI):hover > td,
-
-/* popin also gets hovered, when hovering over the listitem */
-.sap-desktop .sapMLIB:not(.sapMLIBActive):not(.sapMLIBTypeInactive):not(.sapMLIBTypeDetail):not(.sapMALI):not(.sapMLIBSelected):hover + .sapMListTblSubRow,
-
-/* popin hover - issue does not hover the list item, only the popin */
-.sap-desktop .sapMListTblSubRow:not(.sapMLIBActive):not(.sapMLIBTypeInactive):not(.sapMLIBTypeDetail):not(.sapMALI):hover {
-	background : @sapHCHighlightBG;
-}
-
-/* same as the 4 selectors above just for selected */
-.sap-desktop .sapMLIBSelected:not(.sapMLIBActive):not(.sapMALI):hover ,
-.sap-desktop .sapMListUl:not(.sapMListModeDelete):not(.sapMListModeNone) .sapMLIBSelected:not(.sapMLIBActive):not(.sapMALI):hover,
-.sap-desktop .sapMLIBSelected:not(.sapMLIBActive):not(.sapMALI):hover > td,
-.sap-desktop .sapMLIBSelected:not(.sapMLIBActive):not(.sapMALI):hover + .sapMListTblSubRow,
-.sap-desktop .sapMLIBSelected:not(.sapMLIBActive):not(.sapMALI)  + .sapMListTblSubRow:hover {
-	background : @sapHCHighlightBG;
-}
-
-/* HCB Additional Styles */
-/* active state is always stronger than the selected state
-* List item hover : does not apply to column list item
-*adding color white to hovered warning messages*/
-.sap-desktop .sapMLIB:not(.sapMLIBActive):not(.sapMLIBTypeInactive):not(.sapMLIBTypeDetail):not(.sapMALI):hover div {
-	color : @sapHCStandardFG;
-}
-
-.sapMLIBActive.sapMLIB,
-.sapMLIBActive.sapMLIB > td {
+.sapMLIBActive {
 	color: @sapHCStandardFG;
 	background: @sapHCHighlightBG;
+}
+
+.sapMLIBHoverable:hover {
+	background : @sapUiListHoverBackground;
 }
 
 .sapMLIBActive div,
@@ -271,6 +210,7 @@
 /* Compact size */
 .sapUiSizeCompact .sapMLIBSelectSL,
 .sapUiSizeCompact .sapMLIBSelectM {
+	padding-left: 0.5rem;
 	width:2.5rem;
 }
 

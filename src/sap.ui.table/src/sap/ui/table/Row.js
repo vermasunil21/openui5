@@ -8,11 +8,11 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './library'],
 	"use strict";
 
 
-	
+
 	/**
 	 * Constructor for a new Row.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given 
+	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
@@ -26,19 +26,33 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './library'],
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
 	var Row = Element.extend("sap.ui.table.Row", /** @lends sap.ui.table.Row.prototype */ { metadata : {
-	
+
 		library : "sap.ui.table",
 		defaultAggregation : "cells",
 		aggregations : {
-	
+
 			/**
 			 * The controls for the cells.
 			 */
 			cells : {type : "sap.ui.core.Control", multiple : true, singularName : "cell"}
 		}
 	}});
-	
-	
+
+	Row.prototype.init = function() {
+		this.initDomRefs();
+	};
+
+	Row.prototype.exit = function() {
+		this.initDomRefs();
+	};
+
+	/**
+	 * @private
+	 */
+	Row.prototype.initDomRefs = function() {
+		this._mDomRefs = {};
+	};
+
 	/**
 	 * Returns the index of the row in the table or -1 if not added to a table. This
 	 * function considers the scroll position of the table and also takes fixed rows and
@@ -84,44 +98,52 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './library'],
 	 * @returns {object} contains DomRefs or jQuery objects of the row
 	 */
 	Row.prototype.getDomRefs = function (bJQuery) {
-		var oDomRefs = {};
-		var fnAccess = jQuery.sap.domById;
+		var fnAccess;
+		var sKey;
 		if (bJQuery === true) {
 			fnAccess = jQuery.sap.byId;
+			sKey = "jQuery";
+		} else {
+			fnAccess = jQuery.sap.domById;
+			sKey = "dom";
 		}
 
-		var oTable = this.getParent();
-		if (oTable) {
-			var iRowIndex = oTable.indexOfRow(this);
+		if (!this._mDomRefs[sKey]) {
+			this._mDomRefs[sKey] = {};
+			var oTable = this.getParent();
+			if (oTable) {
+				var iRowIndex = oTable.indexOfRow(this);
+				// row selector domRef
+				this._mDomRefs[sKey].rowSelector = fnAccess(oTable.getId() + "-rowsel" + iRowIndex);
+			}
+
+			// row domRef
+			this._mDomRefs[sKey].rowScrollPart = fnAccess(this.getId());
+			// row domRef (the fixed part)
+			this._mDomRefs[sKey].rowFixedPart = fnAccess(this.getId() + "-fixed");
 			// row selector domRef
-			oDomRefs.rowSelector = fnAccess(oTable.getId() + "-rowsel" + iRowIndex);
-		}
+			this._mDomRefs[sKey].rowSelectorText = fnAccess(this.getId() + "-rowselecttext");
 
-		// row domRef
-		oDomRefs.rowScrollPart = fnAccess(this.getId());
-		// row domRef (the fixed part)
-		oDomRefs.rowFixedPart = fnAccess(this.getId() + "-fixed");
-		// row selector domRef
-		oDomRefs.rowSelectorText = fnAccess(this.getId() + "-rowselecttext");
+			if (bJQuery === true) {
+				this._mDomRefs[sKey].row = this._mDomRefs[sKey].rowScrollPart;
 
-		if (bJQuery === true) {
-			oDomRefs.row = oDomRefs.rowScrollPart;
-			if (oDomRefs.rowSelector && oDomRefs.rowSelector.length > 0) {
-				oDomRefs.row = oDomRefs.row.add(oDomRefs.rowSelector);
-			} else {
-				// since this won't be undefined in jQuery case
-				oDomRefs.rowSelector = undefined;
-			}
+				if (this._mDomRefs[sKey].rowFixedPart.length > 0) {
+					this._mDomRefs[sKey].row = this._mDomRefs[sKey].row.add(this._mDomRefs[sKey].rowFixedPart);
+				} else {
+					// since this won't be undefined in jQuery case
+					this._mDomRefs[sKey].rowFixedPart = undefined;
+				}
 
-			if (oDomRefs.rowFixedPart.length > 0) {
-				oDomRefs.row = oDomRefs.row.add(oDomRefs.rowFixedPart);
-			} else {
-				// since this won't be undefined in jQuery case
-				oDomRefs.rowFixedPart = undefined;
+				if (this._mDomRefs[sKey].rowSelector && this._mDomRefs[sKey].rowSelector.length > 0) {
+					this._mDomRefs[sKey].row = this._mDomRefs[sKey].row.add(this._mDomRefs[sKey].rowSelector);
+				} else {
+					// since this won't be undefined in jQuery case
+					this._mDomRefs[sKey].rowSelector = undefined;
+				}
 			}
 		}
 
-		return oDomRefs;
+		return this._mDomRefs[sKey];
 	};
 
 	/**
@@ -147,14 +169,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './library'],
 			sSelectReference = "rowDeselect";
 		}
 
-		// update tooltips and aria texts
+		// update tooltips
 		if ($DomRefs.rowSelector) {
 			$DomRefs.rowSelector.attr("title", mTooltipTexts.mouse[sSelectReference]);
-			$DomRefs.rowSelector.attr("aria-label", mTooltipTexts.keyboard[sSelectReference]);
 		}
 
 		if ($DomRefs.rowSelectorText) {
-			$DomRefs.rowSelectorText.text(mTooltipTexts.keyboard[sSelectReference]);
+			var sText = "";
+			if (!(this._oNodeState && this._oNodeState.sum) && !this._bHasChildren) {
+				sText = mTooltipTexts.keyboard[sSelectReference];
+			}
+			$DomRefs.rowSelectorText.text(sText);
 		}
 
 		var $Row = $DomRefs.rowScrollPart;
@@ -165,17 +190,94 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/Element', './library'],
 		if (bSelectOnCellsAllowed) {
 			// the row requires a tooltip for selection if the cell selection is allowed
 			$Row.attr("title", mTooltipTexts.mouse[sSelectReference]);
-			$Row.attr("aria-label", mTooltipTexts.keyboard[sSelectReference]);
 		} else {
 			$Row.removeAttr("title");
-			$Row.removeAttr("aria-label");
 		}
 
-		// update aria-selected state, do at the very end since this forces the screen reader to read the aria texts again
 		if ($DomRefs.row) {
 			// update visual selection state
 			$DomRefs.row.toggleClass("sapUiTableRowSel", bIsSelected);
-			$DomRefs.row.children("td").add($DomRefs.row).attr("aria-selected", bIsSelected.toString());
+			oTable._getAccExtension().updateAriaStateOfRow(this, $DomRefs, bIsSelected);
+		}
+	};
+
+	Row.prototype.setRowBindingContext = function(oContext, sModelName, oBinding) {
+		var oNode;
+		if (oContext && !(oContext instanceof sap.ui.model.Context)) {
+			oNode = oContext;
+			oContext = oContext.context;
+		}
+
+		var $rowTargets = this.getDomRefs(true).row;
+		if (oContext) {
+			this._bHidden = false;
+			$rowTargets.removeClass("sapUiTableRowHidden");
+		} else {
+			this._bHidden = true;
+			$rowTargets.addClass("sapUiTableRowHidden");
+		}
+
+		// collect rendering information for new binding context
+		this._collectRenderingInformation(oContext, oNode, oBinding);
+
+		this.setBindingContext(oContext, sModelName);
+	};
+
+	Row.prototype.setBindingContext = function(oContext, sModelName) {
+		var bReturn = sap.ui.core.Element.prototype.setBindingContext.call(this, oContext || null, sModelName);
+
+		this._updateTableCells(oContext);
+		return bReturn;
+	};
+
+	Row.prototype._updateTableCells = function(oContext) {
+		var aCells = this.getCells();
+		var iAbsoluteRowIndex = this.getIndex();
+		for (var i = 0; i < aCells.length; i++) {
+			var oCell = aCells[i];
+			if (oCell._updateTableCell) {
+				oCell._updateTableCell(oCell, oContext, oCell.$().closest("td"), iAbsoluteRowIndex);
+			}
+		}
+	};
+
+	Row.prototype._collectRenderingInformation = function(oContext, oNode, oBinding) {
+		// init node states
+		this._oNodeState = undefined;
+		this._iLevel = 0;
+		this._bIsExpanded = false;
+		this._bHasChildren = false;
+		this._sTreeIconClass = "";
+
+		if (oNode) {
+			this._oNodeState = oNode.nodeState;
+			this._iLevel = oNode.level;
+			this._bIsExpanded = false;
+			this._bHasChildren = false;
+			this._sTreeIconClass = "sapUiTableTreeIconLeaf";
+			this._sGroupIconClass = "";
+
+			if (oBinding) {
+				if (oBinding.getLevel) {
+					//used by the "mini-adapter" in the TreeTable ClientTreeBindings
+					this._bIsExpanded = oBinding.isExpanded(this.getIndex());
+				} else if (oBinding.findNode) { // the ODataTreeBinding(Adapter) provides the hasChildren method for Tree
+					this._bIsExpanded = this && this._oNodeState ? this._oNodeState.expanded : false;
+				}
+
+				if (oBinding.nodeHasChildren) {
+					if (this._oNodeState) {
+						this._bHasChildren = oBinding.nodeHasChildren(oNode);
+					}
+				} else if (oBinding.hasChildren) {
+					this._bHasChildren = oBinding.hasChildren(oContext);
+				}
+
+				if (this._bHasChildren) {
+					this._sTreeIconClass = this._bIsExpanded ? "sapUiTableTreeIconNodeOpen" : "sapUiTableTreeIconNodeClosed";
+					this._sGroupIconClass = this._bIsExpanded ? "sapUiTableGroupIconOpen" : "sapUiTableGroupIconClosed";
+				}
+			}
 		}
 	};
 

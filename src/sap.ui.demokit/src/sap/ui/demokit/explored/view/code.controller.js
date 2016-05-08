@@ -2,8 +2,8 @@
  * ${copyright}
  */
 
-/*global JSZip *///declare unusual global vars for JSLint/SAPUI5 validation
-sap.ui.define(['sap/ui/core/mvc/Controller'], function (Controller) {
+/*global JSZip, URI *///declare unusual global vars for JSLint/SAPUI5 validation
+sap.ui.define(['sap/ui/core/mvc/Controller', 'sap/ui/Device', 'sap/m/MessageToast'], function (Controller, Device, MessageToast) {
 	"use strict";
 
 	return Controller.extend("sap.ui.demokit.explored.view.code", {
@@ -114,6 +114,14 @@ sap.ui.define(['sap/ui/core/mvc/Controller'], function (Controller) {
 
 		onDownload : function (evt) {
 
+			if (Device.browser.internet_explorer && Device.browser.version < 10) {
+				MessageToast.show('Download action is not supported in Internet Explorer 9', {
+					autoClose: true,
+					duration: 3000
+				});
+				return;
+			}
+
 			jQuery.sap.require("sap.ui.thirdparty.jszip");
 			var oZipFile = new JSZip();
 
@@ -123,7 +131,8 @@ sap.ui.define(['sap/ui/core/mvc/Controller'], function (Controller) {
 				var oFile = oData.files[i],
 					sRawFileContent = oFile.raw;
 
-				if (oFile.name === oData.iframe) {
+				// change the bootstrap URL to the current server for all HTML files of the sample
+				if (oFile.name && (oFile.name === oData.iframe || oFile.name.split(".").pop() === "html")) {
 					sRawFileContent = this._changeIframeBootstrapToCloud(sRawFileContent);
 				}
 
@@ -141,10 +150,11 @@ sap.ui.define(['sap/ui/core/mvc/Controller'], function (Controller) {
 			var sRef = jQuery.sap.getModulePath(this._sId),
 				aExtraFiles = oData.includeInDownload || [],
 				that = this;
-			oZipFile.file("Component.js", this.fetchSourceFile(sRef, "Component.js"));
 
+			// iframe examples have a separate index file and a component file to describe it
 			if (!oData.iframe) {
-				oZipFile.file("index.html", this.createIndexFile(oData));
+				oZipFile.file("Component.js", this.fetchSourceFile(sRef, "Component.js"));
+				oZipFile.file("index.html", this._changeIframeBootstrapToCloud(this.createIndexFile(oData)));
 			}
 
 			// add extra download files
@@ -227,8 +237,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller'], function (Controller) {
 		},
 
 		_changeIframeBootstrapToCloud : function (sRawIndexFileHtml) {
-			var rReplaceIndex = /src=["|']([^"|^']*sap-ui-core\.js)["|']/;
-			return sRawIndexFileHtml.replace(rReplaceIndex, 'src="https://openui5.hana.ondemand.com/resources/sap-ui-core.js"');
+			var rReplaceIndex = /src=(?:"[^"]*\/sap-ui-core\.js"|'[^']*\/sap-ui-core\.js')/;
+			var oCurrentURI = new URI(window.location.href).search("");
+			var oRelativeBootstrapURI = new URI(jQuery.sap.getResourcePath("", "/sap-ui-core.js"));
+			var sBootstrapURI = oRelativeBootstrapURI.absoluteTo(oCurrentURI).toString();
+
+			// replace the bootstrap path of the sample with the current to the core
+			return sRawIndexFileHtml.replace(rReplaceIndex, 'src="' + sBootstrapURI + '"');
 		},
 
 		handleTabSelectEvent: function(oEvent) {

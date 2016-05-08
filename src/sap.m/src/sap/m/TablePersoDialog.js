@@ -166,10 +166,10 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './InputListItem', '
 			// Check if dialog is rendered
 			if (that._oDialog) {
 				var $dialogCont = that._oDialog.$("cont");
-				var $scrollCont = that._oDialog.$("scrollCont");
+				var $scroll = that._oDialog.$("scroll");
 				if ($dialogCont.children().length > 0) {
 					var iContentHeight = $dialogCont.children()[0].clientHeight;
-					var iPaddingHeight = $scrollCont[0].clientHeight - iContentHeight;
+					var iPaddingHeight = $scroll[0].clientHeight - iContentHeight;
 
 					// Take the header border into account otherwise the scroll container's
 					// height is 2px bigger and causes the selectAllToolbar to scroll as well
@@ -244,13 +244,13 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './InputListItem', '
 				that._oList.getItems().some(fnItemMatches);
 				// Clear last selected item so it does not get used again
 				that._sLastSelectedItemId = null;
-				
-				// Make sure that arrow buttons are updated 
+
+				// Make sure that arrow buttons are updated
 				if (that._fnUpdateArrowButtons) {
 					that._fnUpdateArrowButtons.call(this);
 				}
 			}
-			
+
 		};
 
 		this._fnAfterDialogOpen = function () {
@@ -326,8 +326,6 @@ sap.ui.define(['jquery.sap.global', './Button', './Dialog', './InputListItem', '
 			design : sap.m.ToolbarDesign.Transparent,
 			content: [this._oSelectAllCheckbox, this._resetAllButton]
 		}).addStyleClass("sapMPersoDialogFixedBar");
-
-		this._oSelectAllToolbar.addDelegate({onAfterRendering: this._fnAfterToolbarRendering});
 
 		this._oDialog = new Dialog({
 			title : this._oRb.getText("PERSODIALOG_COLUMNS_TITLE"),

@@ -1,0 +1,53 @@
+/* ============================================== */
+/* CSS for control sap.m/SlideTile.control */
+/* ============================================== */
+.sapMST {
+	background: transparent;
+	position: relative;
+	overflow: hidden;
+	display: inline-block;
+	font-size: 0;
+	box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.5);
+	border-radius: 0.125rem;
+	outline: none;
+	border: 1px transparent dotted; /* Usage of px as aligned with designers. */
+}
+
+.sapMSTWrapper {
+	position: absolute;
+	left: 100%;
+}
+
+.sapMSTWrapper>.sapMGT,
+html.sap-desktop .sapMSTWrapper>.sapMGT:hover,
+html.sap-phone .sapMGTHvrOutln:active,
+html.sap-tablet .sapMGTHvrOutln:active {
+	box-shadow: none;
+}
+
+.sapMST.OneByOne {
+	width: 11rem;
+	height: 11rem;
+}
+
+.sapMST.TwoByOne {
+	width: 22.5rem;
+	height: 11rem;
+}
+
+.sapMST .sapMGT {
+	border: none;
+}
+
+/* BREAKPOINT FOR SMALL PHONES */
+@media screen and (max-width: 374px) {
+	.sapMST.OneByOne {
+		width: 9.25rem;
+		height: 9.25rem;
+	}
+
+	.sapMST.TwoByOne {
+		width: 19rem;
+		height: 9.25rem;
+	}
+}

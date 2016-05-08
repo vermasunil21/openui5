@@ -120,7 +120,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 					expand: {type : "boolean"}
 				}
 			}
-		}
+		},
+		designTime: true
 	}});
 
 	Panel.prototype.init = function () {
@@ -156,6 +157,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var oDomRef = this.getDomRef();
 		if (oDomRef) {
 			oDomRef.style.height = sHeight;
+			oDomRef.querySelector(".sapMPanelContent").style.height = sHeight;
 			this._setContentHeight();
 		}
 
@@ -196,7 +198,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		}
 
 		// ARIA
-		this._getIcon().$().attr("aria-expanded", bExpanded.toString());
+		this._getIcon().$().attr("aria-expanded", this.getExpanded());
 
 		this._toggleExpandCollapse();
 		this._toggleCssClasses();
@@ -206,12 +208,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	Panel.prototype.onBeforeRendering = function () {
-		var sId;
-
-		if (this.oIconCollapsed) {
-			sId = this._getLabellingElementId();
-			this.oIconCollapsed.addAriaLabelledBy(sId);
-		}
+		this._updateIconAriaLabelledBy();
 	};
 
 	Panel.prototype.onAfterRendering = function () {
@@ -294,12 +291,29 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		$this.find(".sapMPanelExpandableIcon").first().toggleClass("sapMPanelExpandableIconExpanded");
 	};
 
+	Panel.prototype._updateIconAriaLabelledBy = function () {
+		var sLabelId, aAriaLabels;
+
+		if (!this.oIconCollapsed) {
+			return;
+		}
+
+		sLabelId = this._getLabellingElementId();
+		aAriaLabels = this.oIconCollapsed.getAriaLabelledBy();
+
+		// If the old label is different we should reinitialize the association, because we can have only one label
+		if (aAriaLabels.indexOf(sLabelId) === -1) {
+			this.oIconCollapsed.removeAllAssociation("ariaLabelledBy");
+			this.oIconCollapsed.addAriaLabelledBy(sLabelId);
+		}
+	};
+
 	Panel.prototype._getLabellingElementId = function () {
 		var headerToolbar = this.getHeaderToolbar(),
 			id;
 
 		if (headerToolbar) {
-			id = headerToolbar.getId();
+			id = headerToolbar.getTitleId();
 		} else {
 			id = this.getId() + "-header";
 		}

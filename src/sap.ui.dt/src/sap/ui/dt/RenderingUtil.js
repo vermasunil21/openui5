@@ -11,7 +11,7 @@ function(jQuery) {
 
 	/**
 	 * Class for RenderingUtil.
-	 * 
+	 *
 	 * @class
 	 * Utility functionality to work with élements, e.g. iterate through aggregations, find parents, ...
 	 *
@@ -28,35 +28,46 @@ function(jQuery) {
 	var RenderingUtil = {};
 
 	/**
-	 * 
+	 *
 	 */
 	RenderingUtil.renderOverlay = function(oRm, oOverlay, sClassName) {
-		if (oOverlay.getDomRef()) {
-			oOverlay.$().empty();
-			this._triggerOnAfterRenderingWithoutRendering(oRm, oOverlay);
+		var oGeometry = oOverlay.getGeometry();
+		var bGeometryVisible = oGeometry && oGeometry.visible;
+		var bRenderOverlay = !oOverlay.getLazyRendering() || bGeometryVisible;
 
-			return;
+		if (oOverlay.isVisible() && bRenderOverlay) {
+			if (oOverlay.getDomRef()) {
+				this._triggerOnAfterRenderingWithoutRendering(oRm, oOverlay);
+
+				return;
+			}
+
+			oRm.addClass("sapUiDtOverlay");
+			oRm.addClass(sClassName);
+			oRm.write("<div");
+			oRm.writeControlData(oOverlay);
+			var sAggregationName = oOverlay.getAggregationName && oOverlay.getAggregationName();
+			if (sAggregationName) {
+				oRm.write("data-sap-ui-dt-aggregation='" + oOverlay.getAggregationName() + "'");
+			} else {
+				oRm.write("data-sap-ui-dt-for='" + oOverlay.getElementInstance().getId() + "'");
+			}
+			oRm.writeClasses();
+
+			oRm.writeStyles();
+			oRm.write(">");
+
+			oRm.write("<div");
+			oRm.addClass("sapUiDtOverlayChildren");
+			oRm.writeClasses();
+			oRm.write(">");
+			this._renderChildren(oRm, oOverlay);
+
+			oRm.write("</div>");
+			oRm.write("</div>");
 		}
 
-		oRm.addClass("sapUiDtOverlay");
-		oRm.addClass(sClassName);
-		oRm.write("<div");
-		oRm.writeControlData(oOverlay);
-		var sAggregationName = oOverlay.getAggregationName && oOverlay.getAggregationName();
-		if (sAggregationName) {
-			oRm.write("data-sap-ui-dt-aggregation='" + oOverlay.getAggregationName() + "'");
-		} else {
-			oRm.write("data-sap-ui-dt-for='" + oOverlay.getElementInstance().getId() + "'");
-		}
-		oRm.writeClasses();
-
-		oRm.writeStyles();
-		oRm.write(">");
-
-		this._renderChildren(oRm, oOverlay);
-
-		oRm.write("</div>");
-	};		
+	};
 
 	/**
 	 */
@@ -64,12 +75,13 @@ function(jQuery) {
 		var aChildrenOverlays = oOverlay.getChildren();
 		aChildrenOverlays.forEach(function(oChildOverlay) {
 			oRm.renderControl(oChildOverlay);
-		});	
+		});
 	};
-	
+
 	/**
 	 */
 	RenderingUtil._triggerOnAfterRenderingWithoutRendering = function(oRm, oOverlay) {
+		// to trigger after rendering without renfering we need to write something in a renderManager buffer
 		oRm.write("");
 		this._renderChildren(oRm, oOverlay);
 	};

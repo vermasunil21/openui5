@@ -22,6 +22,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 	 *
 	 * @constructor
 	 * @public
+	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.ComboBox</code> control.
 	 * @alias sap.ui.commons.DropdownBox
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -506,9 +507,9 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			return;
 		}
 
-		if ((!!sap.ui.Device.browser.internet_explorer && (oEvent.which == jQuery.sap.KeyCodes.DELETE || oEvent.which == jQuery.sap.KeyCodes.BACKSPACE)) ||
-		   (!!sap.ui.Device.browser.webkit && (oEvent.which == jQuery.sap.KeyCodes.DELETE || oEvent.which == jQuery.sap.KeyCodes.BACKSPACE))) {
-			//as IE and Webkit do not fire keypress event for DELETE or BACKSPACE
+		if (!!sap.ui.Device.browser.webkit && (oEvent.which == jQuery.sap.KeyCodes.DELETE || oEvent.which == jQuery.sap.KeyCodes.BACKSPACE)) {
+			// Webkit do not fire keypress event for DELETE or BACKSPACE
+			// IE also fires no keypress but an input event, so it's handled there
 			this.onkeypress(oEvent);
 		}
 
@@ -610,7 +611,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			var iCursorPos = $Ref.cursorPos();
 			if (this._iCursorPosBeforeBackspace !== iCursorPos) {
 				iCursorPos++;
-			} // 'normalize' cursor position for upcoming handling... especially IE8
+			} // 'normalize' cursor position for upcoming handling...
 			this._iCursorPosBeforeBackspace = null; // forget being called by backspace handling
 			bValid = this._doTypeAhead($Ref.val().substr(0, iCursorPos - 1), "");
 		} else if (!(bValid = this._doTypeAhead("", $Ref.val()))) {
@@ -730,12 +731,18 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			this._open();
 			this.noTypeAheadByOpen = undefined;
 		}
-		if (iKC === oKC.BACKSPACE) {// only happens in FF or other non-IE-browsers. IE does not support BACKSPACE in keypress
+		if (iKC === oKC.BACKSPACE) {// only happens in FF or other non-IE-browsers. Webkit or IE does not support BACKSPACE in keypress, but in Webkit it's called from keydown
 			this._doTypeAhead(sVal.substr(0, iCursorPos - 1), "");
 		} else {
 			this._doTypeAhead(sVal.substr(0, iCursorPos), oNewChar);
 		}
-		this._fireLiveChange(oEvent);
+
+		if (sVal != $Ref.val()) {
+			// only if really something changed
+			this._fireLiveChange(oEvent);
+		}
+
+		this._bFocusByOpen = undefined; // as selection is set by typeahead, so do not select all by focusin
 
 		oEvent.preventDefault();
 	};
@@ -957,7 +964,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			aItems = this.__aItems || oLB.getItems(),
 			iVisibleItemsCnt = aItems.length,
 			// filtering and history only apply when more than a certain number of items is there
-			bHistory = aItems.length > this._iItemsForHistory,
+			bHistory = this.getMaxHistoryItems() > 0 && aItems.length > this._iItemsForHistory,
 			bFilter = !bNoFilter && bHistory,
 			oNewValue = oValue + oNewChar,
 			oSpecials = new RegExp("[.*+?|()\\[\\]{}\\\\]", "g"), // .*+?|()[]{}\
@@ -1106,7 +1113,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 		this._oValueBeforeOpen = this.$().val();
 
 		// remember we opening the popup (needed in applyFocusInfo called after rerendering of ListBox)
-		this._Opening = true;
+		this._bOpening = true;
 
 		if (!this.noTypeAheadByOpen) {
 			// there might be items with same text -> try to find out what is currently selected.
@@ -1150,7 +1157,7 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			this.__aItems = undefined;
 		}
 		this._oValueBeforeOpen = null;
-		this._Opening = undefined;
+		this._bOpening = undefined;
 		return this;
 	};
 
@@ -1278,32 +1285,23 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 	//***********************************************************
 
 	/**
-	 * Applies the focus info and ensures the typeAhead feature is re-established again.
+	 * Applies the focus info and ensures the cursor and selection is set again
 	 *
 	 * @param {object} oFocusInfo the focus information belonging to this dropdown
 	 * @returns {sap.ui.commons.DropdownBox} DropdownBox
 	 * @private
 	 */
 	DropdownBox.prototype.applyFocusInfo = function(oFocusInfo){
-		var $Inp = jQuery(this.getInputDomRef());
-		if (jQuery.sap.startsWithIgnoreCase(this.getValue(), oFocusInfo.sTypedChars)) {
-			$Inp.val(oFocusInfo.sTypedChars);
-			this.focus();
-			if (!this.getSelectedItemId() || sap.ui.getCore().byId(this.getSelectedItemId()).getText() != oFocusInfo.sTypedChars) {
-				// text entred before and is not the currently selected item -> just restore type-ahead
-				this._doTypeAhead(oFocusInfo.sTypedChars, "");
-			}
-			if (!this._Opening && (!this.oPopup || !this.oPopup.isOpen())) {
+
+		ComboBox.prototype.applyFocusInfo.apply(this, arguments);
+
+			if (!this._bOpening && (!this.oPopup || !this.oPopup.isOpen())) {
 				// as popup is not open restore listbox item like on popup close
 				this._cleanupClose(this._getListBox());
 			}
-		} else {
-			oFocusInfo.sTypedChars = "";
-			//	 $Inp.val(this.getValue()); // enable if really needed
-			this.focus();
-			this._doSelect();
-		}
+
 		return this;
+
 	};
 
 	/*
@@ -1320,15 +1318,9 @@ sap.ui.define(['jquery.sap.global', './ComboBox', './library', 'sap/ui/core/Hist
 			this.focus();
 		} else {
 			// we left the DropdownBox to another (unrelated) control and thus have to fire the change (if needed).
-			var $Inp = jQuery(this.getInputDomRef());
-			var sValue = $Inp.val();
-			if (!this.getSelectedItemId() || sap.ui.getCore().byId(this.getSelectedItemId()).getText() != sValue) {
-				// text entred before and is not the currently selected item -> just restore type-ahead
-				this._doTypeAhead(sValue, "");
-				if (!this._Opening && (!this.oPopup || !this.oPopup.isOpen())) {
-					// as popup is not open restore listbox item like on popup close
-					this._cleanupClose(this._getListBox());
-				}
+			if (this.oPopup && this.oPopup.isOpen()) {
+				// close Popup before it's autoclose to reset the listbox items
+				this._close();
 			}
 
 			sap.ui.commons.TextField.prototype.onsapfocusleave.apply(this, arguments);

@@ -6,15 +6,23 @@
 sap.ui.define([],
 	function() {
 	"use strict";
-	
+
 	return {
 		aggregations : {
 			formElements : {
-				domRef : ":sap-domref"
+				domRef : function() {
+					var oDomRef = this.getDomRef();
+					if (!oDomRef && this.getFormElements().length === 0) {
+						var oTitle = this.getTitle();
+						if (oTitle) {
+							return oTitle.getDomRef();
+						}
+					} else {
+						return oDomRef;
+					}
+				}
 			}
-		},
-		name: "{name}",
-		description: "{description}"
+		}
 	};
-	
-}, /* bExport= */ true);
+
+}, /* bExport= */ false);

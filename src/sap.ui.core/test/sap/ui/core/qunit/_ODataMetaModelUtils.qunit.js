@@ -1,7 +1,10 @@
 /*!
  * ${copyright}
  */
-sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
+sap.ui.require([
+	"jquery.sap.global",
+	'sap/ui/model/odata/_ODataMetaModelUtils'
+], function (jQuery, Utils) {
 	/*global QUnit */
 	"use strict";
 
@@ -373,7 +376,7 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 				}]
 			}
 		},
-		// contains only a subset of possible annotations to be able to see that v4 annotations win
+		// contains only a subset of possible annotations to be able to see that V4 annotations win
 		oAnnotations = {
 			"GWSAMPLE_BASIC.Contact" : {
 				"com.sap.vocabularies.Communication.v1.Contact" : {
@@ -472,7 +475,7 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 			sSemantics : "tel",
 			sTypes : "work"
 		},
-		// v2 types which are not supported in v4
+		// V2 types which are not supported in V4
 		{
 			oExpectedMessage : "pager",
 			sOutput : "",
@@ -568,13 +571,13 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 
 	//*********************************************************************************************
 	[{
-		expectedAnnotations: {"Contact" : oContactAnnotationFromV2}, type: oContactType
+		expectedAnnotations : {"Contact" : oContactAnnotationFromV2}, type : oContactType
 	}, {
-		expectedAnnotations: {"Event" : oEventAnnotationFromV2}, type: oEventType
+		expectedAnnotations : {"Event" : oEventAnnotationFromV2}, type : oEventType
 	}, {
-		expectedAnnotations: {"Message" : oMessageAnnotationFromV2}, type: oMessageType
+		expectedAnnotations : {"Message" : oMessageAnnotationFromV2}, type : oMessageType
 	}, {
-		expectedAnnotations: {"Task" : oTaskAnnotationFromV2}, type: oTaskType
+		expectedAnnotations : {"Task" : oTaskAnnotationFromV2}, type : oTaskType
 	}].forEach(function (oFixture) {
 		var sTypeName = oFixture.type.name;
 
@@ -689,15 +692,15 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 
 	//*********************************************************************************************
 	[{
-		test: "and v4 wins", annotations: oAnnotations,
-		expectedTypeAnnotations: oAnnotations["GWSAMPLE_BASIC.Contact"]
+		test : "and V4 wins", annotations : oAnnotations,
+		expectedTypeAnnotations : oAnnotations["GWSAMPLE_BASIC.Contact"]
 			["com.sap.vocabularies.Communication.v1.Contact"],
-		expectedComplexTypeAnnotations: oAnnotations["GWSAMPLE_BASIC.CT_Contact"]
+		expectedComplexTypeAnnotations : oAnnotations["GWSAMPLE_BASIC.CT_Contact"]
 			["com.sap.vocabularies.Communication.v1.Contact"]
 	}, {
-		test: "without v4 annotations",
-		expectedTypeAnnotations: oContactAnnotationFromV2,
-		expectedComplexTypeAnnotations: oContactAnnotationFromV2
+		test : "without V4 annotations",
+		expectedTypeAnnotations : oContactAnnotationFromV2,
+		expectedComplexTypeAnnotations : oContactAnnotationFromV2
 	}].forEach(function (oFixture) {
 		QUnit.test("merge: addSapSemantics called " + oFixture.test, function (assert) {
 			var oData = clone(oDataSchema),
@@ -741,9 +744,9 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 		oLogMock.expects("warning").never();
 
 		[
-			{i: "single-value", o: "SingleValue"},
-			{i: "multi-value", o: "MultiValue"},
-			{i: "interval", o: "SingleInterval"}
+			{i : "single-value", o : "SingleValue"},
+			{i : "multi-value", o : "MultiValue"},
+			{i : "interval", o : "SingleInterval"}
 		].forEach(function (oFixture, i) {
 			// prepare Property
 			oProperty = {
@@ -795,7 +798,7 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 				Utils.addFilterRestriction(oProperty, oEntitySet);
 
 				assert.deepEqual(oEntitySet, { entityType : "Baz" },
-					"No v4 annotation created in case of unsupported value");
+					"No V4 annotation created in case of unsupported value");
 			}
 		);
 	});
@@ -859,7 +862,7 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 						+ "SingleInterval"
 				}
 			}],
-			"no additional v4 annotations"
+			"no additional V4 annotations"
 		);
 
 		// with annotations
@@ -874,7 +877,7 @@ sap.ui.require(['sap/ui/model/odata/_ODataMetaModelUtils'], function (Utils) {
 			oProductSet["com.sap.vocabularies.Common.v1.FilterExpressionRestrictions"],
 			oAnnotations["EntityContainer"]["GWSAMPLE_BASIC.GWSAMPLE_BASIC_Entities"]["ProductSet"]
 				["com.sap.vocabularies.Common.v1.FilterExpressionRestrictions"],
-			"with additional v4 annotations"
+			"with additional V4 annotations"
 		);
 
 	});

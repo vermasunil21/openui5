@@ -1,17 +1,34 @@
-.sap-desktop .sapMListTblRow:focus{
+html.sap-desktop .sapMListTblRow:focus{
 	outline: 1px dotted @sapUiFocus;
 	outline-offset: -1px;
 }
 
-.sapMListTblSubRow {
-	background: fade(@sapUiListBackground, 80);
+.sapMListBGTransparent .sapMListTblSubRow {
+	background: fade(@sapUiListBackground, 0%);
 }
 
-.sapMLIBSelected.sapMLIB + .sapMListTblSubRow {
+.sapMListBGTranslucent .sapMListTblSubRow {
+	background: fade(@sapUiListBackground, @sapUiTranslucentBGOpacity);
+}
+
+.sapMListBGSolid .sapMListTblSubRow{
+	background: @sapUiListBackground;
+}
+
+.sapMLIBHoverable:hover + .sapMListTblSubRow {
+	background : @sapUiListHoverBackground;
+}
+
+.sapMLIBSelected + .sapMListTblSubRow {
 	background: @sapUiListSelectionBackgroundColor;
 }
 
-.sapMLIBActive.sapMLIB + .sapMListTblSubRow {
+.sapMLIBHoverable.sapMLIBSelected:hover + .sapMListTblSubRow {
+	background : @sapUiListSelectionHoverBackground;
+}
+
+.sapMLIB.sapMLIBActive + .sapMListTblSubRow{
+	color: @sapUiListActiveTextColor;
 	background: @sapUiListActiveBackground;
 }
 
@@ -102,7 +119,7 @@
 }
 
 /* popin padding */
-.sapUiSizeCompact .sapMListModeMultiSelect .sapMListTblSubCnt, 
+.sapUiSizeCompact .sapMListModeMultiSelect .sapMListTblSubCnt,
 .sapUiSizeCompact .sapMListModeSingleSelectLeft .sapMListTblSubCnt {
 	padding-left: 2.5rem;
 }

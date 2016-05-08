@@ -7,7 +7,7 @@
 
 <html>
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>Test Page for jquery.sap.promise</title>
 	<script>
 		//Ensure that custom API is populated to global namespace for testimng purposes
@@ -19,7 +19,7 @@
 		data-sap-ui-theme="sap_bluecrystal"
 		data-sap-ui-noConflict="true">
 	</script>
-	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+	<link rel="stylesheet" href="../../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 	<script type="text/javascript" src="../../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 	<script type="text/javascript" src="../../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 
@@ -37,13 +37,13 @@
 			sap.ui.Device.browser.firefox && sap.ui.Device.browser.version > 28 ||
 			sap.ui.Device.browser.chrome  && sap.ui.Device.browser.version > 32 ||
 			sap.ui.Device.browser.safari  && sap.ui.Device.browser.version >= 7.1 ||
-			sap.ui.Device.os.ios          && sap.ui.Device.browser.safari && sap.ui.Device.browser.version >= 8 ||
-			sap.ui.Device.browser.edge
+			sap.ui.Device.os.ios          && sap.ui.Device.browser.safari && sap.ui.Device.os.version >= 8
+			// || sap.ui.Device.browser.edge // For edge we currently replace the native promise with the polyfill due to timing issues (setTimeout vs Promise.resolve)
 		);
 	}
 
 	sap.ui.getCore().attachInit(function() {
-		var bNativePromise = window.Promise !== window.ES6Promise.Promise;
+		var bNativePromise = window.Promise.toString().indexOf("[native code]") > -1;
 		if (bNativePromise) {
 			testPromise(window.Promise, "Native: ");
 		}
@@ -118,7 +118,7 @@
 
 		module(sTestPrefix + "Basics");
 
-		var bNative = P !== window.ES6Promise.Promise;
+		var bNative = P.toString().indexOf("[native code]") > -1;
 
 		test((bNative ? "Native" : "Custom") +" API tested", function() {
 			var p = new P(function(res, rej) {
@@ -129,9 +129,9 @@
 
 		test(sTestPrefix + "Native Support", function() {
 			doOnNativeSupport(function(){
-				ok(window.Promise != window.ES6Promise.Promise, "Firefox, Chrome and Safari support Promises natively.");
+				ok(window.Promise.toString().indexOf("[native code]") > -1, "Firefox, Chrome and Safari support Promises natively.");
 			}, function(){
-				ok(window.Promise == window.ES6Promise.Promise, "Browsers other than Firefox, Chrome and Safari does not support Promises natively.");
+				ok(window.Promise.toString().indexOf("[native code]") == -1, "Browsers other than Firefox, Chrome and Safari does not support Promises natively.");
 			});
 		});
 
@@ -182,6 +182,34 @@
 				});
 			}, 40);
 		});
+
+		asyncTest(sTestPrefix + "Promise then always asynchronous", function() {
+			expect(4);
+
+			var iCounter = 0;
+
+			var pResolvedDirectly = P.resolve();
+			var fnResolveSecondPromise;
+			var pResolvedLater = new Promise(function(fnResolve /*, fnReject */) {
+				fnResolveSecondPromise = fnResolve;
+			});
+
+			equal(iCounter++, 0, "Synchronous Before");
+
+			pResolvedDirectly.then(function() {
+				equal(iCounter++, 2, "First promise.then() - Resolved after synchronous code");
+			});
+
+			pResolvedLater.then(function() {
+				equal(iCounter++, 3, "Second promise.then() - Resolved after first promise.then()");
+				start();
+			});
+
+			fnResolveSecondPromise();
+
+			equal(iCounter++, 1, "Synchronous After - befor promise.then()");
+		});
+
 
 		module(sTestPrefix + "promise.catch");
 

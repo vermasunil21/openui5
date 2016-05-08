@@ -2,12 +2,12 @@
 <html>
 
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>qUnit Page for sap.ui.test.OpaPlugin</title>
 
 <script
 	src="../../../../../../resources/sap-ui-core.js"
-	data-sap-ui-libs="sap.ui.commons">
+	data-sap-ui-libs="sap.ui.commons, sap.m">
 
 </script>
 
@@ -22,6 +22,8 @@ jQuery.sap.require("sap.ui.thirdparty.sinon-qunit");
 jQuery.sap.require("sap.ui.test.OpaPlugin");
 jQuery.sap.require("sap.ui.test.opaQunit");
 var OpaPlugin = sap.ui.test.OpaPlugin;
+
+QUnit.config.autostart = false;
 
 module("getControlByGlobalId");
 
@@ -422,15 +424,108 @@ QUnit.test("Should not throw an exception if the elements of core are not define
 	assert.ok(true, "did not throw an exception");
 });
 
+module("Controls in a dialog", {
+	beforeEach: function () {
+		this.oButtonInDialog = new sap.m.Button("buttonInDialog",{text: "OK"});
+		this.oDialog = new sap.m.Dialog({
+			content: this.oButtonInDialog
+		});
+		// System under Test
+		this.oPlugin = new OpaPlugin();
+	},
+	afterEach: function () {
+		this.oDialog.destroy();
+		this.oPlugin.destroy();
+	}
+});
+
+test("Should match a control in an open dialog specifying the control type", function (assert) {
+	// Arrange
+	var fnStart = assert.async();
+
+	// Act
+	this.oDialog.attachAfterOpen(function () {
+		var aRetrievedControls = this.oPlugin.getMatchingControls({
+			searchOpenDialogs : true,
+			controlType: sap.m.Button,
+			id : ["buttonInDialog"]
+		});
+
+		// Assert
+		assert.ok(aRetrievedControls.length == 1, "Found exactly one control in dialog");
+		assert.ok(aRetrievedControls[0] == this.oButtonInDialog, "Found the 'sap.m.button' we were looking");
+
+		fnStart();
+	}, this);
+	// Act
+	this.oDialog.open();
+});
+
+test("Should match a control in an open dialog without specifying the control type", function (assert) {
+	// Arrange
+	var fnStart = assert.async();
+
+	// Act
+	this.oDialog.attachAfterOpen(function () {
+		var aRetrievedControls = this.oPlugin.getMatchingControls({
+			searchOpenDialogs : true,
+			id : ["buttonInDialog"]
+		});
+
+		// Assert
+		assert.ok(jQuery.inArray(this.oButtonInDialog, aRetrievedControls) > -1, "Found button in dialog");
+
+		fnStart();
+	}, this);
+	// Act
+	this.oDialog.open();
+});
+
+sap.ui.require([
+	"sap/ui/test/matchers/Interactable",
+	"sap/ui/test/matchers/Visible",
+	"sap/ui/commons/Button"
+], function (Interactable, Visible, Button) {
+	"use strict";
+
+	QUnit.module("Actions", {
+		beforeEach: function () {
+			this.oPlugin =  new OpaPlugin();
+			this.oButton = new Button("foo").placeAt("qunit-fixture");
+			sap.ui.getCore().applyChanges();
+		},
+		afterEach: function () {
+			this.oPlugin.destroy();
+			this.oButton.destroy();
+		}
+	});
+
+
+	QUnit.test("Should invoke the interactable matcher if interactable is true", function(asssert) {
+		// Arrange
+		var fnInteractableSpy = this.spy(Interactable.prototype, "isMatching"),
+			fnVisibleSpy = this.spy(Visible.prototype, "isMatching");
+
+		// Act
+		this.oPlugin.getMatchingControls({
+			id: "foo",
+			interactable: true
+		});
+
+		// Assert
+		sinon.assert.calledOnce(fnInteractableSpy);
+		sinon.assert.calledOnce(fnVisibleSpy);
+	});
+
+	QUnit.start();
+});
+
+
+
 </script>
 </head>
 <body>
-	<h1 id="qunit-header">qUnit Page for sap.ui.test.OpaPlugin</h1>
-	<h2 id="qunit-banner"></h2>
-	<h2 id="qunit-userAgent"></h2>
-	<div id="qunit-testrunner-toolbar"></div>
-	<ol id="qunit-tests"></ol>
+	<div id="qunit"></div>
 	<div id="qunit-fixture"></div>
-
 </body>
 </html>

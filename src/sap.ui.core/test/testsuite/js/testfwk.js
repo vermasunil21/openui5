@@ -61,6 +61,8 @@ sap.ui.testfwk.TestFWK.LANGUAGES = {
 sap.ui.testfwk.TestFWK.THEMES = {
 	"base" : "Base",
 	"sap_bluecrystal" : "Blue Crystal",
+	"sap_belize" : "Belize",
+	"sap_belize_plus" : "Belize Plus",
 	"sap_goldreflection" : "Gold Reflection",
 	"sap_platinum" : "Platinum",
 	"sap_hcb" : "High Contrast Black",
@@ -69,18 +71,15 @@ sap.ui.testfwk.TestFWK.THEMES = {
 };
 
 sap.ui.testfwk.TestFWK.JQUERY_VERSIONS = {
-	"1.7.1" : "jQuery 1.7.1",
-	"1.8.1" : "jQuery 1.8.1",
 	"1.10.1" : "jQuery 1.10.1",
 	"1.10.2" : "jQuery 1.10.2",
 	"1.11.1" : "jQuery 1.11.1",
-	"2.1.4" : "jQuery 2.1.4"
+	"2.2.3" : "jQuery 2.2.3"
 };
 
 // the themes supported by each library
 sap.ui.testfwk.TestFWK.LIBRARY_THEMES = {
-	"sap.ui.core" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
-	"sap.m" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_hcb"]},
+	"sap.m" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_hcb"]},
 	"sap.me" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal"]},
 	"sap.service.visualization" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum"]},
 	"sap.ui.commons" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
@@ -88,9 +87,8 @@ sap.ui.testfwk.TestFWK.LIBRARY_THEMES = {
 	"sap.ui.dev" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
 	"sap.ui.richtexteditor" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
 	"sap.ui.suite" : {"default":"sap_goldreflection", "supports":["sap_goldreflection","sap_hcb","sap_bluecrystal"]},
-	"sap.ui.table" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]},
 	"sap.ui.ux3" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb"]},
-	"all" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]}
+	"all" : {"default":"sap_bluecrystal", "supports":["sap_bluecrystal","sap_belize","sap_belize_plus","sap_goldreflection","sap_hcb","sap_platinum","sap_ux","edding"]}
 };
 
 sap.ui.testfwk.TestFWK.init = function(oContentWindow) {
@@ -102,7 +100,7 @@ sap.ui.testfwk.TestFWK.init = function(oContentWindow) {
 sap.ui.testfwk.TestFWK.getAllowedThemes = function() {
 	if (!this.oThemeConstraints) {
 		return this.THEMES;
-		
+
 	} else {
 		var result = {};
 		var aThemeNames = this.oThemeConstraints.supports, l = aThemeNames.length;
@@ -120,9 +118,9 @@ sap.ui.testfwk.TestFWK.getContentURL = function() {
 /**
  * Sets a new URL as content, using the current settings, but considering the given constraints for the theme.
  * If this causes a theme change, the themeConfigurationChanged event will be fired.
- * 
+ *
  * @private
- * 
+ *
  * @param sURL
  * @param oThemeConstraints optional
  * @param sLibName optional
@@ -130,33 +128,33 @@ sap.ui.testfwk.TestFWK.getContentURL = function() {
  */
 sap.ui.testfwk.TestFWK.setContentURL = function(sURL, oThemeConstraints, sLibName) {
 	this.sContentURL = sURL;
-	
+
 	var newTheme = this.getEffectiveTheme(this.sTheme, oThemeConstraints);
 	var bSomethingChanged = false;
-	
+
 	if (this.sTheme !== newTheme) {
 		this.sTheme = newTheme;
 		bSomethingChanged = true;
 	}
-	
+
 	if (!jQuery.sap.equal(oThemeConstraints, this.oThemeConstraints)) {
 		this.oThemeConstraints = oThemeConstraints;
 		bSomethingChanged = true;
 	}
-	
+
 	// update settings ComboBox and selection in this ComboBox
 	if (bSomethingChanged) {
 		this.fireThemeConfigurationChanged();
 	}
-	
-	this.updateContent(sLibName); 
+
+	this.updateContent(sLibName);
 };
 
 /**
  * Updates the content according to the current settings
- * 
+ *
  * @private
- * 
+ *
  * @param sLibName optional
  */
 sap.ui.testfwk.TestFWK.updateContent = function(sLibName) {
@@ -245,7 +243,7 @@ sap.ui.testfwk.TestFWK.setJQueryVersion = function(sJQueryVersion) {
  * Returns the appropriate theme, considering the requested theme and the configuration of allowed themes.
  * If allowed, the requested theme will be returned, otherwise the default theme will be returned.
  * If either parameter is null, the other will be returned; if both are null, null will be returned.
- * 
+ *
  * @private
  * @param sRequestedTheme
  * @param oThemeConstraints
@@ -260,11 +258,11 @@ sap.ui.testfwk.TestFWK.getEffectiveTheme = function(sRequestedTheme, oThemeConst
 				}
 			}
 			return oThemeConstraints["default"]; // requested theme is not allowed, return the default one
-			
+
 		} else {
 			return sRequestedTheme; // no constraints configuration given, so it's okay to use the requested theme
 		}
-		
+
 	} else { // no theme requested: return the default from the configuration, if available
 		return oThemeConstraints ? oThemeConstraints["default"] : null;
 	}
@@ -290,7 +288,7 @@ sap.ui.testfwk.TestFWK.addSettingsToURL = function(sURL, oThemeConstraints) {
 		}
 		sURL += sParam + "=" + vValue;
 	}
-	
+
 	add("sap-ui-debug", true);
 	if ( this.sLanguage ) {
 		add("sap-ui-language", this.sLanguage);

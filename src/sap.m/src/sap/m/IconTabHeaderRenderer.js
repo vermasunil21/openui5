@@ -18,7 +18,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool'],
 	 *
 	 * @private
 	 */
-	IconTabHeaderRenderer._aAllIconColors = ['sapMITBFilterCritical', 'sapMITBFilterPositive', 'sapMITBFilterNegative', 'sapMITBFilterDefault'];
+	IconTabHeaderRenderer._aAllIconColors = ['sapMITBFilterCritical', 'sapMITBFilterPositive', 'sapMITBFilterNegative', 'sapMITBFilterDefault', 'sapMITBFilterNeutral'];
 
 
 	/**
@@ -137,6 +137,10 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/IconPool'],
 
 			oRM.writeElementData(oItem);
 			oRM.addClass("sapMITBItem");
+
+			if (!(oItem instanceof sap.m.IconTabSeparator) && !this.getCount()) {
+				oRM.addClass("sapMITBItemNoCount");
+			}
 
 			if (oItem instanceof sap.m.IconTabFilter) {
 

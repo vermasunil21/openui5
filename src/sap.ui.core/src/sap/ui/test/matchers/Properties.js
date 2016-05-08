@@ -2,14 +2,24 @@
  * ${copyright}
  */
 
-sap.ui.define([], function () {
+sap.ui.define(['jquery.sap.global'], function (jQuery) {
 	"use strict";
 
 	/**
-	 * @class Properties - checks if a control's properties have the following values
-	 * @param {object} the object with a properties to check { propertyName : propertyValue, ... }, if value is regexp, it evaluates regexp with a control's property value
+	 * @class Properties - checks if a control's properties have the provided values - all properties have to match their values.
+	 * @param {object} oProperties the object with the properties to be checked. Example:
+	 * <pre>
+	 * // Would filter for an enabled control with the text "Accept".
+	 * new Properties({
+	 *     // The property text has the exact value "Accept"
+	 *     text: "Accept",
+	 *     // The property enabled also has to be true
+	 *     enabled: true
+	 * })
+	 * </pre>
+	 * If the value is a RegExp, it tests the RegExp with the value. RegExp only works with string properties.
 	 * @public
-	 * @alias sap.ui.test.matchers.Properties
+	 * @name sap.ui.test.matchers.Properties
 	 * @author SAP SE
 	 * @since 1.27
 	 */
@@ -21,7 +31,7 @@ sap.ui.define([], function () {
 
 				if (!fnProperty) {
 					bIsMatching = false;
-					jQuery.sap.log.error("Control " + oControl.sId + " does not have a property called: " + sPropertyName);
+					jQuery.sap.log.error("Control " + oControl.sId + " does not have a property called: " + sPropertyName, this._sLogPrefix);
 					return false;
 				}
 

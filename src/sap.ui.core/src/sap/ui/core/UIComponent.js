@@ -3,18 +3,21 @@
  */
 
 // Provides base class sap.ui.core.Component for all components
-sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './UIComponentMetadata', './mvc/View'],
-	function(jQuery, ManagedObject, Component, UIComponentMetadata, View) {
+sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './library', './UIComponentMetadata', './mvc/Controller', './mvc/View'],
+	function(jQuery, ManagedObject, Component, library, UIComponentMetadata, Controller, View) {
 	"use strict";
+
+	// shortcut for enum(s)
+	var ViewType = library.mvc.ViewType;
 
 
 	/**
-	 * Base Class for UI Component.
+	 * Base Class for UIComponent.
 	 *
-	 * If you are extending an UI Component make sure you read the {@link #.extend} documentation since the metadata is special.
+	 * If you are extending an UIComponent make sure you read the {@link #.extend} documentation since the metadata is special.
 	 *
 	 * @class
-	 * Creates and initializes a new UI component with the given <code>sId</code> and
+	 * Creates and initializes a new UIComponent with the given <code>sId</code> and
 	 * settings.
 	 *
 	 * The set of allowed entries in the <code>mSettings</code> object depends on
@@ -22,8 +25,8 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 * for a general description of this argument.
 	 *
 	 * @param {string}
-	 *            [sId] optional id for the new control; generated automatically if
-	 *            no non-empty id is given Note: this can be omitted, no matter
+	 *            [sId] Optional ID for the new control; generated automatically if
+	 *            no non-empty ID is given Note: this can be omitted, no matter
 	 *            whether <code>mSettings</code> will be given or not!
 	 * @param {object}
 	 *            [mSettings] optional map/JSON-object with initial settings for the
@@ -58,7 +61,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 			publicMethods: [ "render" ],
 			aggregations: {
 				/**
-				 * The root Control of the UIComponent.
+				 * The root control of the UIComponent.
 				 *
 				 * The root control should be created inside the function {@link sap.ui.core.UIComponent#createContent}.
 				 */
@@ -72,21 +75,22 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	}, /* Metadata constructor */ UIComponentMetadata);
 
 	/**
-	 * Creates a new subclass of class sap.ui.core.UIComponent with name sClassName and enriches it with the information contained in oClassInfo.
-	 * oClassInfo might contain the same kind of information as described in {@link sap.ui.core.Element.html#.extend}.
+	 * Creates a new subclass of class <code>sap.ui.core.UIComponent</code> with name
+	 * <code>sClassName</code> and enriches it with the information contained in <code>oClassInfo</code>.
+	 * <code>oClassInfo</code> might contain the same kind of information as described in
+	 * {@link sap.ui.core.Element.html#.extend}.
 	 *
 	 * @alias {sap.ui.core.UIComponent.extend}
 	 * @public
-	 * @param {string} sClassName name of the class to be created
+	 * @param {string} sClassName Name of the class to be created
 	 *
-	 * @param {object} [oClassInfo] object literal with information about the class
+	 * @param {object} [oClassInfo] Object literal with information about the class
 	 *
-	 * @param {object} [oClassInfo.metadata] see {@link sap.ui.core.Element.html#.extend} for the values allowed in every extend.
+	 * @param {object} [oClassInfo.metadata] See {@link sap.ui.core.Element.html#.extend} for the values allowed in every extend.
 	 *
 	 * @param {object} [oClassInfo.metadata.routing]
 	 * @since 1.16
-	 * If you are using a version before UI5 1.28 you may put the same
-	 * An object containing he routing relevant configurations, routes, targets, config
+	 * An object containing he routing-relevant configurations, routes, targets, config
 	 * <b>Example for a config:</b><br/>
 	 * <pre>
 	 * <code>
@@ -94,9 +98,9 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 *     "routing": {
 	 *         "routes": {
 	 *             "welcome": {
-	 *                 // If the url has no hash eg: index.html or index.html# , this route will be matched.
+	 *                 // If the url has no hash e.g.: index.html or index.html# , this route will be matched.
 	 *                 "pattern": "",
-	 *                 // Displays the target called welcome specified in metadata.routing.targets.welcome.
+	 *                 // Displays the target called "welcome" specified in metadata.routing.targets.welcome.
 	 *                 "target": "welcome"
 	 *             }
 	 *             "product": {
@@ -111,7 +115,8 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 *             "controlId": "App",
 	 *             "controlAggregation": "pages",
 	 *             "viewNamespace": "myApplication.namespace",
-	 *             // If you are using the mobile library, you have to use a sap.m.Router, to get support for the controls App, SplitApp, NavContainer and SplitContainer.
+	 *             // If you are using the mobile library, you have to use a sap.m.Router, to get support for
+	 *             // the controls sap.m.App, sap.m.SplitApp, sap.m.NavContainer and sap.m.SplitContainer.
 	 *             "routerClass": "sap.m.routing.Router"
 	 *             // What happens if no route matches the hash?
 	 *             "bypassed": {
@@ -154,35 +159,54 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 * @param {object} [oClassInfo.metadata.routing.config]
 	 * @since 1.16
 	 * An object containing default values used for routes and targets.
-	 * See {@link sap.ui.core.routing.Router#constructor} and {@link sap.ui.core.routing.Targets} for mor documentation.
+	 * See {@link sap.ui.core.routing.Router#constructor} and {@link sap.ui.core.routing.Targets} for more documentation.
 	 *
-	 * @param {string|function} [oClassInfo.metadata.routing.config.routerClass] default: "sap.ui.core.routing.Router".
+	 * @param {string|function} [oClassInfo.metadata.routing.config.routerClass] Default: "sap.ui.core.routing.Router".
 	 * @since 1.20
-	 * The namespace of the router that should be used.
-	 * If you are using an own router extension, it has to be required before the contructor of the component is invoked.
-	 * If you use "sap.m.routing.Router" the component will automatically create a {@link sap.m.routing.Targets} instance.
-	 * If you pass a function it has to be a constructor function extending a router.
+	 * The namespace of the router that is used in the component.
+	 * If you are using an own router extension, it has to be required before the constructor of the component is invoked.
+	 * If you use <code>sap.m.routing.Router</code> the component will automatically create a {@link sap.m.routing.Targets} instance.
+	 * If you pass a function, it has to be a constructor function extending a router.
 	 *
 	 * @param {string|function} [oClassInfo.metadata.routing.config.targetsClass]
 	 * @since 1.28.1
 	 * default: "sap.ui.core.routing.Targets".
-	 * The namespace of the targets that should be used.
-	 * If you are using an own Targets extension, it has to be required before the contructor of the component is invoked.
+	 * The namespace of the targets that are used in the component.
+	 * If you are using an own Targets extension, it has to be required before the constructor of the component is invoked.
 	 * If you define routes in your routing section, this parameter will be ignored and the Targets instance of the router will be taken see {@lint #sap.ui.core.routing.Router#getTargets}.
 	 *
 	 *
 	 * @param {string} [oClassInfo.metadata.routing.config.rootView]
-	 * By default the rootView will be set to the id of the view returned by the {@link #getRootView} function.
+	 * By default the rootView will be set to the ID of the view returned by the {@link #getRootView} function.
 	 * You should not set this parameter if you create a view with the UIComponent.
 	 *
-	 * @param {function} [FNMetaImpl} constructor function for the metadata object. If not given, it defaults to {@link sap.ui.core.ElementMetadata}.
+	 * @param {function} [FNMetaImpl} Constructor function for the metadata object. If not given, it defaults to {@link sap.ui.core.ElementMetadata}.
 	 */
+
+	/**
+	 * Callback handler which will be executed once a new Component instance is
+	 * initialized.
+	 * <p>
+	 * Example usage:
+	 * <pre>
+	 * sap.ui.core.UIComponent._fnOnInstanceCreated = function(oComponent) {
+	 *   // do some logic with the Component
+	 * }
+	 * </pre>
+	 * <p>
+	 * <b>ATTENTION:</b> This hook must only be used by Fiori 2.0 adapter.
+	 *
+	 * @sap-restricted sap.ushell
+	 * @private
+	 * @since 1.37.0
+	 */
+	UIComponent._fnOnInstanceInitialized = null;
 
 	/**
 	 * Initializes the Component instance after creation.
 	 *
 	 * Applications must not call this hook method directly, it is called by the
-	 * framework while the constructor of an Component is executed.
+	 * framework while the constructor of a Component is executed.
 	 *
 	 * Subclasses of Component should override this hook to implement any necessary
 	 * initialization. <b>When overriding this function make sure to invoke the
@@ -203,26 +227,25 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 		}
 
 		// create the routing
-		var oMetadata = this.getMetadata(),
-			// extend the metadata config, so that the metadata object cannot be modified afterwards
-			oRoutingManifestEntry = oMetadata._getRoutingSection() || {},
+		// extend the metadata config, so that the metadata object cannot be modified afterwards
+		var oRoutingManifestEntry = this._getManifestEntry("/sap.ui5/routing", true) || {},
 			oRoutingConfig = oRoutingManifestEntry.config || {},
 			vRoutes = oRoutingManifestEntry.routes;
 
 		// create the router for the component instance
 		if (vRoutes) {
-			jQuery.sap.require("sap.ui.core.routing.Router");
-			var fnRouterConstructor = getConstructorFunctionFor(oRoutingConfig.routerClass || sap.ui.core.routing.Router);
+			var Router = sap.ui.requireSync("sap/ui/core/routing/Router");
+			var fnRouterConstructor = getConstructorFunctionFor(oRoutingConfig.routerClass || Router);
 			this._oRouter = new fnRouterConstructor(vRoutes, oRoutingConfig, this, oRoutingManifestEntry.targets);
 			this._oTargets = this._oRouter.getTargets();
 			this._oViews = this._oRouter.getViews();
 		} else if (oRoutingManifestEntry.targets) {
-			jQuery.sap.require("sap.ui.core.routing.Targets");
-			jQuery.sap.require("sap.ui.core.routing.Views");
-			this._oViews = new sap.ui.core.routing.Views({
+			var Targets = sap.ui.requireSync("sap/ui/core/routing/Targets");
+			var Views = sap.ui.requireSync("sap/ui/core/routing/Views");
+			this._oViews = new Views({
 				component: this
 			});
-			var fnTargetsConstructor = getConstructorFunctionFor(oRoutingConfig.targetsClass || sap.ui.core.routing.Targets);
+			var fnTargetsConstructor = getConstructorFunctionFor(oRoutingConfig.targetsClass || Targets);
 			this._oTargets = new fnTargetsConstructor({
 				targets: oRoutingManifestEntry.targets,
 				config: oRoutingConfig,
@@ -247,6 +270,12 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 				this._oTargets._setRootViewId(oRootControl.getId());
 			}
 		}
+
+		// notify Component initialization callback handler
+		if (typeof UIComponent._fnOnInstanceInitialized === "function") {
+			UIComponent._fnOnInstanceInitialized(this);
+		}
+
 	};
 
 	function getConstructorFunctionFor (vRoutingObjectConstructor) {
@@ -293,10 +322,10 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 
 	/**
 	 * Returns the reference to the router instance. The passed controller or view
-	 * have to be created in the context of a UIComponent to return the router
+	 * has to be created in the context of a UIComponent to return the router
 	 * instance. Otherwise this function will return undefined.
 	 * You may define the routerClass property in the config section of the routing to make the Component create your router extension.
-	 * eg:
+	 * Example:
 	 * routing: {
 	 * 	config: {
 	 * 		routerClass : myAppNamespace.MyRouterClass
@@ -310,11 +339,11 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 */
 	UIComponent.getRouterFor = function(oControllerOrView) {
 		var oView = oControllerOrView;
-		if (oView instanceof sap.ui.core.mvc.Controller) {
+		if (oView instanceof Controller) {
 			oView = oView.getView();
 		}
 		if (oView instanceof View) {
-			var oComponent = sap.ui.core.Component.getOwnerComponentFor(oView);
+			var oComponent = Component.getOwnerComponentFor(oView);
 
 			if (oComponent) {
 				return oComponent.getRouter();
@@ -337,9 +366,9 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 
 
 	/**
-	 * Returns the reference to the targets instance which has been created by
+	 * Returns the reference to the Targets instance which has been created by
 	 * the UIComponent once the targets in the routing metadata has been defined.
-	 * If routes have been defined, it will be the targets instance created and used by the router.
+	 * If routes have been defined, it will be the Targets instance created and used by the router.
 	 * @since 1.28
 	 * @return {sap.ui.core.routing.Targets} the targets instance
 	 * @public
@@ -354,19 +383,20 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	 * the {@link sap.ui.core.UIComponent#createContent} function. By default this
 	 * feature is not activated.
 	 *
-	 * You can overwrite this function and return true to activate the automatic
-	 * prefixing.
+	 * You can overwrite this function and return <code>true</code> to activate the automatic
+	 * prefixing. In addition the default behavior can be configured in the manifest
+	 * by specifying the entry <code>sap.ui5/autoPrefixId</code>.
 	 *
 	 * @since 1.15.1
-	 * @return {boolean} true, if the controls IDs should be prefixed automatically
+	 * @return {boolean} true, if the Controls IDs should be prefixed automatically
 	 * @protected
 	 */
 	UIComponent.prototype.getAutoPrefixId = function() {
-		return false;
+		return !!this.getManifestObject().getEntry("/sap.ui5/autoPrefixId");
 	};
 
 	/**
-	 * Returns an Element by its id in the context of the Component
+	 * Returns an element by its ID in the context of the Component
 	 *
 	 * @param {string} sId
 	 * @return {sap.ui.core.Element} Element by its id
@@ -377,7 +407,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	};
 
 	/**
-	 * Creates an id for an Element prefixed with the component id
+	 * Creates an ID for an element prefixed with the Component ID
 	 *
 	 * @param {string} sId
 	 * @return {string} prefixed id
@@ -392,7 +422,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	};
 
 	/**
-	 * Checks whether the given ID is already prefixed with this View's ID
+	 * Checks whether the given ID is already prefixed with this view's ID
 	 *
 	 * @param {string} potentially prefixed id
 	 * @return whether the ID is already prefixed
@@ -402,16 +432,31 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	};
 
 	/**
-	 * The method to create the Content (UI Control Tree) of the Component.
+	 * The method to create the content (UI Control Tree) of the Component.
 	 * This method has to be overwritten in the implementation of the component
 	 * if the root view is not declared in the component metadata.
 	 *
 	 * @public
 	 */
 	UIComponent.prototype.createContent = function() {
-		var oRootView = this.getMetadata().getRootView();
-		if (oRootView) {
+		var oRootView = this._getManifestEntry("/sap.ui5/rootView", true);
+		if (oRootView && typeof oRootView === "string") {
+			// This is a duplication of the logic in UIComponentMetadata#_convertLegacyMetadata
+			// to convert the string into a configuration object for the view factory in
+			// case of the manifest first approach.
+			// !This should be kept in sync with the UIComponentMetadata functionality!
+			return sap.ui.view({
+				viewName: oRootView,
+				type: ViewType.XML
+			});
+		} else if (oRootView && typeof oRootView === "object") {
+			// make sure to prefix the ID of the rootView
+			if (oRootView.id) {
+				oRootView.id = this.createId(oRootView.id);
+			}
 			return sap.ui.view(oRootView);
+		} else if (oRootView) {
+			throw new Error("Configuration option 'rootView' of component '" + this.getMetadata().getName() + "' is invalid! 'rootView' must be type of string or object!");
 		}
 		return null;
 	};
@@ -461,7 +506,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	};
 
 	/**
-	 * Function is called when the rendering of the Component Container is started.
+	 * Function is called when the rendering of the ComponentContainer is started.
 	 *
 	 * Applications must not call this hook method directly, it is called from ComponentContainer.
 	 *
@@ -472,7 +517,7 @@ sap.ui.define(['jquery.sap.global', '../base/ManagedObject', './Component', './U
 	UIComponent.prototype.onBeforeRendering = function() {};
 
 	/**
-	 * Function is called when the rendering of the Component Container is completed.
+	 * Function is called when the rendering of the ComponentContainer is completed.
 	 *
 	 * Applications must not call this hook method directly, it is called from ComponentContainer.
 	 *

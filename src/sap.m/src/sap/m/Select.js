@@ -2,13 +2,12 @@
  * ${copyright}
  */
 
-// Provides control sap.m.Select.
 sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popover', './SelectList', './library', 'sap/ui/core/Control', 'sap/ui/core/EnabledPropagator', 'sap/ui/core/IconPool'],
 	function(jQuery, Bar, Dialog, InputBase, Popover, SelectList, library, Control, EnabledPropagator, IconPool) {
 		"use strict";
 
 		/**
-		 * Constructor for a new Select.
+		 * Constructor for a new <code>sap.m.Select</code>.
 		 *
 		 * @param {string} [sId] ID for the new control, generated automatically if no ID is given.
 		 * @param {object} [mSettings] Initial settings for the new control.
@@ -25,136 +24,208 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @alias sap.m.Select
 		 * @ui5-metamodel This control will also be described in the UI5 (legacy) design time meta model.
 		 */
-		var Select = Control.extend("sap.m.Select", /** @lends sap.m.Select.prototype */ { metadata: {
+		var Select = Control.extend("sap.m.Select", /** @lends sap.m.Select.prototype */ {
+			metadata: {
+				library: "sap.m",
+				properties: {
 
-			library: "sap.m",
-			properties: {
+					/**
+					 * The name to be used in the HTML code (for example, for HTML forms that send data to the server via submit).
+					 */
+					name: {
+						type: "string",
+						group: "Misc",
+						defaultValue: ""
+					},
 
-				/**
-				 * The name to be used in the HTML code (for example, for HTML forms that send data to the server via submit).
-				 */
-				name: { type : "string", group : "Misc", defaultValue: "" },
+					/**
+					 * Indicates whether the user can change the selection.
+					 */
+					enabled: {
+						type: "boolean",
+						group: "Behavior",
+						defaultValue: true
+					},
 
-				/**
-				 * Indicates whether the user can change the selection.
-				 */
-				enabled: { type: "boolean", group: "Behavior", defaultValue: true },
+					/**
+					 * Sets the width of the control. The default width is derived from the widest item.
+					 * If the width defined is smaller than the widest item in the selection list, only the width of
+					 * the selection field will be changed: the list will keep the width of its widest item.
+					 * If the list is wider than the viewport, it is truncated and an ellipsis is displayed for each item.
+					 * For phones, the width of the list is always the same as the viewport.
+					 *
+					 * <b>Note:</b> This property is ignored if the <code>autoAdjustWidth</code> property is set to <code>true</code>.
+					 */
+					width: {
+						type: "sap.ui.core.CSSSize",
+						group: "Dimension",
+						defaultValue: "auto"
+					},
 
-				/**
-				 * Sets the width of the control. The default width is derived from the widest item.
-				 * If the width defined is smaller than the widest item in the selection list, only the width of the selection field will be changed:
-				 * the list will keep the width of its widest item.
-				 * If the list is wider than the viewport, it is truncated and an ellipsis is displayed for each item.
-				 * For phones, the width of the list is always the same as the viewport.
-				 *
-				 * <b>Note:</b> This property is ignored if the <code>autoAdjustWidth</code> property is set to <code>true</code>.
-				 */
-				width: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: "auto" },
+					/**
+					 * Sets the maximum width of the control.
+					 *
+					 * <b>Note:</b> This property is ignored if the <code>autoAdjustWidth</code> property is set to <code>true</code>.
+					 */
+					maxWidth: {
+						type: "sap.ui.core.CSSSize",
+						group: "Dimension",
+						defaultValue: "100%"
+					},
 
-				/**
-				 * Sets the maximum width of the control.
-				 *
-				 * <b>Note:</b> This property is ignored if the <code>autoAdjustWidth</code> property is set to <code>true</code>.
-				 */
-				maxWidth: { type: "sap.ui.core.CSSSize", group: "Dimension", defaultValue: "100%" },
+					/**
+					 * Key of the selected item.
+					 *
+					 * <b>Note:</b> If duplicate keys exist, the first item matching the key is used.
+					 * @since 1.11
+					 */
+					selectedKey: {
+						type: "string",
+						group: "Data",
+						defaultValue: ""
+					},
 
-				/**
-				 * Key of the selected item.
-				 *
-				 * <b>Note:</b> If duplicate keys exist, the first item matching the key is used.
-				 * @since 1.11
-				 */
-				selectedKey: { type: "string", group: "Data", defaultValue: "" },
+					/**
+					 * ID of the selected item.
+					 * @since 1.12
+					 */
+					selectedItemId: {
+						type: "string",
+						group: "Misc",
+						defaultValue: ""
+					},
 
-				/**
-				 * ID of the selected item.
-				 * @since 1.12
-				 */
-				selectedItemId: { type: "string", group: "Misc", defaultValue: "" },
+					/**
+					 * The URI to the icon that will be displayed only when using the <code>IconOnly</code> type.
+					 * @since 1.16
+					 */
+					icon: {
+						type: "sap.ui.core.URI",
+						group: "Appearance",
+						defaultValue: ""
+					},
 
-				/**
-				 * The URI to the icon that will be displayed only when using the <code>IconOnly</code> type.
-				 * @since 1.16
-				 */
-				icon: { type: "sap.ui.core.URI", group: "Appearance", defaultValue: "" },
+					/**
+					 * Type of a select. Possible values <code>Default</code>, <code>IconOnly</code>.
+					 * @since 1.16
+					 */
+					type: {
+						type: "sap.m.SelectType",
+						group: "Appearance",
+						defaultValue: sap.m.SelectType.Default
+					},
 
-				/**
-				 * Type of a select. Possible values <code>Default</code>, <code>IconOnly</code>.
-				 * @since 1.16
-				 */
-				type: { type: "sap.m.SelectType", group: "Appearance", defaultValue: sap.m.SelectType.Default },
+					/**
+					 * Indicates whether the width of the input field is determined by the selected item's content.
+					 * @since 1.16
+					 */
+					autoAdjustWidth: {
+						type: "boolean",
+						group: "Appearance",
+						defaultValue: false
+					},
 
-				/**
-				 * Indicates whether the width of the input field is determined by the selected item's content.
-				 * @since 1.16
-				 */
-				autoAdjustWidth: { type: "boolean", group: "Appearance", defaultValue: false },
+					/**
+					 * Sets the horizontal alignment of the text within the input field.
+					 * @since 1.28
+					 */
+					textAlign: {
+						type: "sap.ui.core.TextAlign",
+						group: "Appearance",
+						defaultValue: sap.ui.core.TextAlign.Initial
+					},
 
-				/**
-				 * Sets the horizontal alignment of the text within the input field.
-				 * @since 1.28
-				 */
-				textAlign: { type: "sap.ui.core.TextAlign", group: "Appearance", defaultValue: sap.ui.core.TextAlign.Initial },
+					/**
+					 * Specifies the direction of the text within the input field with enumerated options.
+					 * By default, the control inherits text direction from the DOM.
+					 * @since 1.28
+					 */
+					textDirection: {
+						type: "sap.ui.core.TextDirection",
+						group: "Appearance",
+						defaultValue: sap.ui.core.TextDirection.Inherit
+					},
 
-				/**
-				 * Specifies the direction of the text within the input field with enumerated options. By default, the control inherits text direction from the DOM.
-				 * @since 1.28
-				 */
-				textDirection: { type: "sap.ui.core.TextDirection", group: "Appearance", defaultValue: sap.ui.core.TextDirection.Inherit },
-
-				/**
-				 * Indicates whether the selection is restricted to one of the items in the list.
-				 * @since 1.34
-				 */
-				forceSelection: { type: "boolean", group: "Behavior", defaultValue: true }
-			},
-			defaultAggregation : "items",
-			aggregations: {
-
-				/**
-				 * Defines the items contained within this control.
-				 */
-				items: { type: "sap.ui.core.Item", multiple: true, singularName: "item", bindable: "bindable" },
-
-				/**
-				 * Internal aggregation to hold the inner picker popup.
-				 */
-				picker: { type : "sap.ui.core.Control", multiple: false, visibility: "hidden" }
-			},
-			associations: {
-
-				/**
-				 * Sets or retrieves the selected item from the aggregation named items.
-				 */
-				selectedItem: { type: "sap.ui.core.Item", multiple: false },
-
-				/**
-				 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
-				 * @since 1.27.0
-				 */
-				ariaLabelledBy: { type: "sap.ui.core.Control", multiple: true, singularName: "ariaLabelledBy" }
-			},
-			events: {
-
-				/**
-				 * This event is fired when the value in the selection field is changed in combination with one of the following actions:
-				 * <ul>
-				 * 	<li>The focus leaves the selection field</li>
-				 * 	<li>The <i>Enter</i> key is pressed</li>
-				 * 	<li>The item is pressed</li>
-				 * </ul>
-				 */
-				change: {
-					parameters: {
-
-						/**
-						 * The selected item.
-						 */
-						selectedItem: { type : "sap.ui.core.Item" }
+					/**
+					 * Indicates whether the selection is restricted to one of the items in the list.
+					 * <b>Note:</b> We strongly recommend that you always set this property to <code>false</code> and bind
+					 * the <code>selectedKey</code> property to the desired value for better interoperability with data binding.
+					 * @since 1.34
+					 */
+					forceSelection: {
+						type: "boolean",
+						group: "Behavior",
+						defaultValue: true
 					}
-				}
+				},
+				defaultAggregation : "items",
+				aggregations: {
+
+					/**
+					 * Defines the items contained within this control.
+					 */
+					items: {
+						type: "sap.ui.core.Item",
+						multiple: true,
+						singularName: "item",
+						bindable: "bindable"
+					},
+
+					/**
+					 * Internal aggregation to hold the inner picker popup.
+					 */
+					picker: {
+						type: "sap.ui.core.PopupInterface",
+						multiple: false,
+						visibility: "hidden"
+					}
+				},
+				associations: {
+
+					/**
+					 * Sets or retrieves the selected item from the aggregation named items.
+					 */
+					selectedItem: {
+						type: "sap.ui.core.Item",
+						multiple: false
+					},
+
+					/**
+					 * Association to controls / IDs which label this control (see WAI-ARIA attribute <code>aria-labelledby</code>).
+					 * @since 1.27.0
+					 */
+					ariaLabelledBy: {
+						type: "sap.ui.core.Control",
+						multiple: true,
+						singularName: "ariaLabelledBy"
+					}
+				},
+				events: {
+
+					/**
+					 * This event is fired when the value in the selection field is changed in combination with one of
+					 * the following actions:
+					 * <ul>
+					 * 	<li>The focus leaves the selection field</li>
+					 * 	<li>The <i>Enter</i> key is pressed</li>
+					 * 	<li>The item is pressed</li>
+					 * </ul>
+					 */
+					change: {
+						parameters: {
+
+							/**
+							 * The selected item.
+							 */
+							selectedItem: {
+								type: "sap.ui.core.Item"
+							}
+						}
+					}
+				},
+				designTime: true
 			}
-		}});
+		});
 
 		IconPool.insertFontFaceStyle();
 		EnabledPropagator.apply(Select.prototype, [true]);
@@ -168,14 +239,11 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		/* ----------------------------------------------------------- */
 
 		function fnHandleKeyboardNavigation(oItem) {
-
 			if (oItem) {
-
 				this.setSelection(oItem);
 				this.setValue(oItem.getText());
+				this.scrollToItem(oItem);
 			}
-
-			this.scrollToItem(oItem);
 		}
 
 		Select.prototype._handleFocusout = function() {
@@ -525,23 +593,23 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype._createPopover = function() {
 
-			var that = this,
-				oPicker = new Popover({
+			var that = this;
+			var oPicker = new Popover({
 				showArrow: false,
 				showHeader: false,
-				placement: sap.m.PlacementType.Vertical,
+				placement: sap.m.PlacementType.VerticalPreferredBottom,
 				offsetX: 0,
 				offsetY: 0,
 				initialFocus: this,
 				bounce: false
 			});
 
-			// detect when the scrollbar is pressed
+			// detect when the scrollbar or an item is pressed
 			oPicker.addEventDelegate({
 				ontouchstart: function(oEvent) {
 					var oPickerDomRef = this.getDomRef("cont");
 
-					if (oEvent.target === oPickerDomRef) {
+					if ((oEvent.target === oPickerDomRef) || (oEvent.srcControl instanceof sap.ui.core.Item)) {
 						that._bProcessChange = false;
 					}
 				}
@@ -560,29 +628,23 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		Select.prototype._decoratePopover = function(oPopover) {
 			var that = this;
 
-			oPopover._setMinWidth = function(sWidth) {
-				var oPickerDomRef = this.getDomRef();
-
-				if (oPickerDomRef) {
-					oPickerDomRef.style.minWidth = sWidth;
-				}
-			};
-
 			oPopover.open = function() {
 				return this.openBy(that);
 			};
 		};
 
 		/**
-		 * Required adaptations after rendering of the Popover.
+		 * Required adaptations before rendering of the popover.
 		 *
 		 * @private
 		 */
-		Select.prototype._onAfterRenderingPopover = function() {
+		Select.prototype._onBeforeRenderingPopover = function() {
 			var oPopover = this.getPicker(),
 				sWidth = (this.$().outerWidth() / parseFloat(sap.m.BaseFontSize)) + "rem";
 
-			oPopover._setMinWidth(sWidth);
+			if (oPopover) {
+				oPopover.setContentMinWidth(sWidth);
+			}
 		};
 
 		/* ----------------------------------------------------------- */
@@ -600,7 +662,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 			// initialize Dialog
 			var oDialog = new Dialog({
-				stretchOnPhone: true,
+				stretch: true,
 				customHeader: new Bar({
 					contentLeft: new InputBase({
 						width: "100%",
@@ -636,10 +698,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		/* Lifecycle methods                                           */
 		/* =========================================================== */
 
-		/**
-		 * Initialization hook.
-		 *
-		 */
 		Select.prototype.init = function() {
 
 			// set the picker type
@@ -660,39 +718,30 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			// used to prevent the change event from firing when the user scrolls
 			// the picker popup (dropdown) list using the mouse
 			this._bProcessChange = false;
+
+			this.sTypedChars = "";
+			this.iTypingTimeoutID = -1;
 		};
 
-		/**
-		 * This event handler is called before the rendering of the control is started.
-		 *
-		 */
 		Select.prototype.onBeforeRendering = function() {
 
 			// rendering phase is started
 			this._bRenderingPhase = true;
 
-			// note: in IE11 and Firefox 38, the focusout event is not fired when the select is removed
-			if (this.getFocusDomRef() === document.activeElement) {
+			// note: in Firefox 38, the focusout event is not fired when the select is removed
+			if (sap.ui.Device.browser.firefox && (this.getFocusDomRef() === document.activeElement)) {
 				this._handleFocusout();
 			}
 
 			this.synchronizeSelection();
 		};
 
-		/**
-		 * This event handler is called when the rendering of the control is completed.
-		 *
-		 */
 		Select.prototype.onAfterRendering = function() {
 
 			// rendering phase is finished
 			this._bRenderingPhase = false;
 		};
 
-		/**
-		 * Cleans up before destruction.
-		 *
-		 */
 		Select.prototype.exit = function() {
 			this._oSelectionOnFocus = null;
 		};
@@ -730,7 +779,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
 
-			if (this.getEnabled() && (!this.isOpen() || !this.hasContent()) && this.isOpenArea(oEvent.target)) {
+			if (this.getEnabled() && !this.isOpen() && this.isOpenArea(oEvent.target)) {
 
 				// remove the active state of the Select HTMLDIVElement container
 				this.removeStyleClass(this.getRenderer().CSS_CLASS + "Pressed");
@@ -761,9 +810,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 					return;
 				}
 
-				if (this.hasContent()) {
-					this.open();
-				}
+				this.open();
 			}
 
 			if (this.isOpen()) {
@@ -799,14 +846,40 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onkeypress = function(oEvent) {
 
-			// mark the event for components that needs to know if the event was handled
-			oEvent.setMarked();
-
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
 			if (!this.getEnabled()) {
 				return;
 			}
 
-			var oItem = this.findNextItemByFirstCharacter(String.fromCharCode(oEvent.which));	// note: jQuery oEvent.which normalizes oEvent.keyCode and oEvent.charCode
+			// mark the event for components that needs to know if the event was handled
+			oEvent.setMarked();
+
+			// note: jQuery oEvent.which normalizes oEvent.keyCode and oEvent.charCode
+			var sTypedCharacter = String.fromCharCode(oEvent.which),
+				oSelectedItem = this.getSelectedItem(),
+				sText = sTypedCharacter,
+				oItem = null;
+
+			this.sTypedChars += sTypedCharacter;
+
+			// the typed characters match the text of the selected item
+			if ((oSelectedItem && jQuery.sap.startsWithIgnoreCase(oSelectedItem.getText(), this.sTypedChars)) ||
+
+				// one or more characters have been typed (excluding patterns such as "aa" or "bb")
+				((this.sTypedChars.length === 1) ||
+				((this.sTypedChars.length > 1) &&
+				(this.sTypedChars.charAt(0) !== this.sTypedChars.charAt(1))))) {
+
+				sText = this.sTypedChars;
+			}
+
+			oItem = this.searchNextItemByText(sText);
+			clearTimeout(this.iTypingTimeoutID);
+			this.iTypingTimeoutID = setTimeout(function() {
+				this.sTypedChars = "";
+				this.iTypingTimeoutID = -1;
+			}.bind(this), 1000);
 			fnHandleKeyboardNavigation.call(this, oItem);
 		};
 
@@ -817,6 +890,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onsapshow = function(oEvent) {
+
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
@@ -846,6 +925,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onsapescape = function(oEvent) {
 
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
+
 			if (this.isOpen()) {
 
 				// mark the event for components that needs to know if the event was handled
@@ -864,6 +949,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onsapenter = function(oEvent) {
 
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
+
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
 
@@ -878,6 +969,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onsapspace = function(oEvent) {
+
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
@@ -900,6 +997,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onsapdown = function(oEvent) {
 
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
+
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
 
@@ -920,6 +1023,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onsapup = function(oEvent) {
+
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
@@ -943,6 +1052,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onsaphome = function(oEvent) {
 
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
+
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
 
@@ -962,6 +1077,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.onsapend = function(oEvent) {
 
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
+
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
 
@@ -979,6 +1100,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onsappagedown = function(oEvent) {
+
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
@@ -1006,6 +1133,12 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @private
 		 */
 		Select.prototype.onsappageup = function(oEvent) {
+
+			// prevents actions from occurring when the control is disabled,
+			// IE11 browser focus non-focusable elements
+			if (!this.getEnabled()) {
+				return;
+			}
 
 			// mark the event for components that needs to know if the event was handled
 			oEvent.setMarked();
@@ -1132,7 +1265,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @param {array} [aItems]
 		 */
 		Select.prototype.synchronizeSelection = function() {
-			SelectList.prototype.synchronizeSelection.call(this);
+			SelectList.prototype.synchronizeSelection.apply(this, arguments);
 		};
 
 		/**
@@ -1181,13 +1314,13 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 		/**
 		 * Retrieves the next item from the aggregation named <code>items</code>
-		 * whose first character match with the given <code>sChar</code>.
+		 * whose text match with the given <code>sText</code>.
 		 *
-		 * @param {string} sChar
+		 * @param {string} sText
 		 * @returns {sap.ui.core.Item | null}
 		 * @since 1.26.0
 		 */
-		Select.prototype.findNextItemByFirstCharacter = function(sChar) {
+		Select.prototype.searchNextItemByText = function(sText) {
 			var aItems = this.getItems(),
 				iSelectedIndex = this.getSelectedIndex(),
 				aItemsAfterSelection = aItems.splice(iSelectedIndex + 1, aItems.length - iSelectedIndex),
@@ -1198,7 +1331,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			for (var i = 0, oItem; i < aItems.length; i++) {
 				oItem = aItems[i];
 
-				if (oItem.getEnabled() && !(oItem instanceof sap.ui.core.SeparatorItem) && jQuery.sap.startsWithIgnoreCase(oItem.getText(), sChar)) {
+				if (oItem.getEnabled() && !(oItem instanceof sap.ui.core.SeparatorItem) && jQuery.sap.startsWithIgnoreCase(oItem.getText(), sText)) {
 					return oItem;
 				}
 			}
@@ -1212,17 +1345,18 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @returns {sap.m.SelectList}
 		 */
 		Select.prototype.createList = function() {
+			var mListKeyboardNavigationMode = sap.m.SelectListKeyboardNavigationMode,
+				sKeyboardNavigationMode = sap.ui.Device.system.phone ? mListKeyboardNavigationMode.Delimited : mListKeyboardNavigationMode.None;
 
-			// list to use inside the picker
 			this._oList = new SelectList({
-				width: "100%"
+				width: "100%",
+				keyboardNavigationMode: sKeyboardNavigationMode
 			}).addEventDelegate({
 				ontap: function(oEvent) {
 					this.close();
 				}
 			}, this)
 			.attachSelectionChange(this.onSelectionChange, this);
-
 			return this._oList;
 		};
 
@@ -1232,7 +1366,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @returns {boolean}
 		 */
 		Select.prototype.hasContent = function() {
-			return !!this.getItems().length;
+			return this.getItems().length > 0;
 		};
 
 		/**
@@ -1279,7 +1413,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		Select.prototype.toggleOpenState = function() {
 			if (this.isOpen()) {
 				this.close();
-			} else if (this.hasContent()) {
+			} else {
 				this.open();
 			}
 
@@ -1407,7 +1541,11 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 						break;
 
 					case "key":
-						this.setSelectedKey(sNewValue);
+
+						if (!this.isBound("selectedKey")) {
+							this.setSelectedKey(sNewValue);
+						}
+
 						break;
 
 					// no default
@@ -1495,16 +1633,28 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			return Control.prototype.removeAllAssociation.apply(this, arguments);
 		};
 
-		Select.prototype.clone = function(sIdSuffix) {
+		Select.prototype.clone = function() {
 			var oSelectClone = Control.prototype.clone.apply(this, arguments),
-				oList = this.getList();
+				oList = this.getList(),
+				oSelectedItem = this.getSelectedItem(),
+				sSelectedKey = this.getSelectedKey();
 
+			// note: clone the items because the select forward its aggregation items
+			// to an inner list control. In this case, the standard clone functionality
+			// doesn't detect and clone the items that are forwarded to an inner control.
 			if (!this.isBound("items") && oList) {
 				for (var i = 0, aItems = oList.getItems(); i < aItems.length; i++) {
 					oSelectClone.addItem(aItems[i].clone());
 				}
+			}
 
-				oSelectClone.setSelectedIndex(this.indexOfItem(this.getSelectedItem()));
+			if (!this.isBound("selectedKey") && !oSelectClone.isSelectionSynchronized()) {
+
+				if (oSelectedItem && (sSelectedKey === "")) {
+					oSelectClone.setSelectedIndex(this.indexOfItem(oSelectedItem));
+				} else {
+					oSelectClone.setSelectedKey(sSelectedKey);
+				}
 			}
 
 			return oSelectClone;
@@ -1583,7 +1733,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * @param {string | sap.ui.core.Item | null} vItem New value for the <code>selectedItem</code> association.
 		 * If an ID of a <code>sap.ui.core.Item</code> is given, the item with this ID becomes the <code>selectedItem</code> association.
 		 * Alternatively, a <code>sap.ui.core.Item</code> instance may be given or <code>null</code>.
-		 * If the value of <code>null</code> is provided, the first enabled item will be selected (if any).
+		 * If the value of <code>null</code> is provided, the first enabled item will be selected (if any items exist).
 		 *
 		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
 		 * @public
@@ -1591,11 +1741,11 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		Select.prototype.setSelectedItem = function(vItem) {
 
 			if (typeof vItem === "string") {
+				this.setAssociation("selectedItem", vItem, true);
 				vItem = sap.ui.getCore().byId(vItem);
 			}
 
 			if (!(vItem instanceof sap.ui.core.Item) && vItem !== null) {
-				jQuery.sap.log.warning('Warning: setSelectedItem() "vItem" has to be an instance of sap.ui.core.Item, a valid sap.ui.core.Item id, or null on', this);
 				return this;
 			}
 
@@ -1614,7 +1764,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * Default value is an empty string <code>""</code> or <code>undefined</code>.
 		 *
 		 * @param {string | undefined} vItem New value for property <code>selectedItemId</code>.
-		 * If the provided <code>vItem</code> has a default value, the first enabled item will be selected (if any).
+		 * If the provided <code>vItem</code> has a default value, the first enabled item will be selected (if any items exist).
 		 *
 		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
 		 * @public
@@ -1638,7 +1788,10 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 * Default value is an empty string <code>""</code> or <code>undefined</code>.
 		 *
 		 * @param {string} sKey New value for property <code>selectedKey</code>.
-		 * If the provided <code>sKey</code> is an empty string <code>""</code> or <code>undefined</code>, the first enabled item is selected (if any).
+		 * If the <code>forceSelection</code> property is set to <code>true</code> and the provided <code>sKey</code> is
+		 * an empty string <code>""</code> or <code>undefined</code>, the value of <code>sKey</code> is changed to match
+		 * the <code>key</code> of the first enabled item and the first enabled item is selected (if any items exist).
+		 *
 		 * In the case that an item has the default key value, it is selected instead.
 		 * If duplicate keys exist, the first item matching the key is selected.
 		 *
@@ -1648,13 +1801,21 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 		 */
 		Select.prototype.setSelectedKey = function(sKey) {
 			sKey = this.validateProperty("selectedKey", sKey);
+			var bDefaultKey = (sKey === "");
+
+			if (!this.getForceSelection() && bDefaultKey) {
+				this.setSelection(null);
+				this.setValue("");
+				return this;
+			}
+
 			var oItem = this.getItemByKey(sKey);
 
-			if (oItem || (sKey === "")) {
+			if (oItem || bDefaultKey) {
 
 				// if "sKey" is an empty string "" or undefined,
-				// the first enabled item will be selected (if any)
-				if (!oItem && sKey === "") {
+				// the first enabled item will be selected (if any items exist)
+				if (!oItem && bDefaultKey) {
 					oItem = this.getDefaultSelectedItem();
 				}
 
@@ -1665,32 +1826,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 			return this.setProperty("selectedKey", sKey);
 		};
-
-		/**
-		 * Sets property <code>textAlign</code>.
-		 *
-		 * Default value is a sap.ui.core.TextAlign.Initial <code>"Initial"</code>.
-		 *
-		 * @param {sap.ui.core.TextAlign} sValue New value for property <code>textAlign</code>.
-		 * If the provided <code>sValue</code> has a default value, the browser default is used.
-		 *
-		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
-		 * @public
-		 * @since 1.28
-		 */
-
-		/**
-		 * Sets property <code>textDirection</code>.
-		 *
-		 * Default value is a sap.ui.core.TextDirection.Inherit <code>"Inherit"</code>.
-		 *
-		 * @param {sap.ui.core.TextDirection} sValue New value for property <code>textDirection</code>.
-		 * If the provided <code>sValue</code> has a default value, the inherited direction from the DOM is used.
-		 *
-		 * @returns {sap.m.Select} <code>this</code> to allow method chaining.
-		 * @public
-		 * @since 1.28
-		 */
 
 		/**
 		 * Gets the item from the aggregation named <code>items</code> at the given 0-based index.
@@ -1800,7 +1935,7 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 
 		/**
 		 * Removes all the items in the aggregation named <code>items</code>.
-		 * Additionally unregisters them from the hosting UIArea and clears the selection.
+		 * Additionally unregisters them from the hosting UIArea.
 		 *
 		 * @returns {sap.ui.core.Item[]} An array of the removed items (might be empty).
 		 * @public
@@ -1809,7 +1944,6 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			var oList = this.getList(),
 				aItems = oList ? oList.removeAllItems() : [];
 
-			this.clearSelection();
 			this.setValue("");
 
 			if (this._isRequiredSelectElement()) {
@@ -1872,6 +2006,34 @@ sap.ui.define(['jquery.sap.global', './Bar', './Dialog', './InputBase', './Popov
 			}
 
 			return this;
+		};
+
+		/**
+		 * @see {sap.ui.core.Control#getAccessibilityInfo}
+		 * @protected
+		 */
+		Select.prototype.getAccessibilityInfo = function() {
+			var oInfo = {
+				role: this.getRenderer().getAriaRole(this),
+				focusable: this.getEnabled(),
+				enabled: this.getEnabled()
+			};
+
+			if (this.getType() === "IconOnly") {
+				var sDesc = this.getTooltip_AsString();
+				if (!sDesc) {
+					var oIconInfo = IconPool.getIconInfo(this.getIcon());
+					sDesc = oIconInfo && oIconInfo.text ? oIconInfo.text : "";
+				}
+
+				oInfo.type = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_BUTTON");
+				oInfo.description = sDesc;
+			} else if (this.getType() === "Default") {
+				oInfo.type = sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("ACC_CTR_TYPE_COMBO");
+				oInfo.description = this._getSelectedItemText();
+			}
+
+			return oInfo;
 		};
 
 		return Select;

@@ -67,12 +67,12 @@
 					type: "Information",
 					title: "Information message (Long)",
 					description: "Just some text description",
-					longtextUrl: "protocol://domain.tld"
+					longtextUrl: "./SampleHTML.html"
 				}, {
 					type: "Information",
 					title: "Information message (Long) 2",
 					description: "Just some text description",
-					longtextUrl: "protocol://domain.tld"
+					longtextUrl: "./SampleHTML.html"
 				}]
 			};
 
@@ -89,13 +89,19 @@
 			jQuery.sap.require("sap.m.MessagePopover");
 
 			sap.m.MessagePopover.setDefaultHandlers({
-				asyncDescriptionHandler: function (config) {
-					// put async loading here
-					setTimeout(function () {
-						config.item.setDescription(mockMarkupDescription);
-						config.promise.resolve();
-					}, 1000 + 4000 * Math.random());
-				},
+
+                // to have all links in the longtextdescription validated by default
+                // use this commented out version of asyncURLHandler instead
+
+                /*
+                asyncURLHandler: function(config) {
+                    config.promise.resolve({
+                        allowed: true,
+                        id: config.id
+                    });
+                }
+                */
+
 				asyncURLHandler: function(config) {
 					// put async validation here
 					setTimeout(function() {
@@ -113,12 +119,15 @@
 				}
 			});
 
+			var headerButton = new sap.m.Button({text: "Clear"});
+
 			//list.bindAggregation("items", "/", oMessageTemplate);
 			var oMessagePopover = new sap.m.MessagePopover({
 				items: {
 					path: "/messages",
 					template: oMessageTemplate
 				},
+				headerButton: headerButton,
 				beforeOpen: function (oEvt) {
 					console.log("beforeOpen", oEvt.getParameters());
 				},
@@ -142,7 +151,7 @@
 			core.setModel(oModel);
 
 			var oMessagePopoverButton = new sap.m.Button({
-				icon: sap.ui.core.IconPool.getIconURI("alert"),
+				icon: sap.ui.core.IconPool.getIconURI("message-popup"),
 				text: "{/count}",
 				type: sap.m.ButtonType.Emphasized,
 				press: function () {

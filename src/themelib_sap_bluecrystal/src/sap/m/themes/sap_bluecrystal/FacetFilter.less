@@ -19,16 +19,16 @@
 	font-size: 1rem;
 }
 
-.sap-phone .sapMFFHead {
+html.sap-phone .sapMFFHead {
 	margin: 1rem;
 }
 
 /* Scroll arrows */
-.sap-desktop .sapMFFScrolling > .sapMFFHead {
+html.sap-desktop .sapMFFScrolling > .sapMFFHead {
 	margin-right: 2rem;
 	margin-left: 3rem;
 }
-	
+
 .sapMFFArrowScroll {
 	font-size: 1rem;
 	line-height: 1rem;
@@ -50,8 +50,8 @@
 	visibility: hidden;
 }
 
-.sap-desktop .sapMFFScrolling.sapMFFNoScrollBack > .sapMFFArrowScrollLeft,
-.sap-desktop .sapMFFScrolling.sapMFFNoScrollForward > .sapMFFArrowScrollRight {
+html.sap-desktop .sapMFFScrolling.sapMFFNoScrollBack > .sapMFFArrowScrollLeft,
+html.sap-desktop .sapMFFScrolling.sapMFFNoScrollForward > .sapMFFArrowScrollRight {
 	visibility: hidden;
 }
 
@@ -73,7 +73,7 @@
 }
 
 /* Move the reset button to the end of the toolbar */
-.sapMFF .sapMTB-Info-CTX.sapMTB > .sapMBtn {
+.sapMFF .sapMTB-Info-CTX.sapMTB > .sapMBarChild.sapMBtn {
     margin: 0;
 }
 
@@ -85,7 +85,7 @@
     background-color: @sapUiInfobarHoverBackground;
 }
 
-.sap-desktop .sapMFFRefresh .sapMBtnTransparent > .sapMBtnIcon {
+html.sap-desktop .sapMFFRefresh .sapMBtnTransparent > .sapMBtnIcon, html.sap-phone .sapMFFRefresh .sapMBtnTransparent > .sapMBtnIcon {
 	color: @sapUiInvertedElement;
 }
 

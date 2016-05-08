@@ -1,8 +1,8 @@
 <!DOCTYPE HTML>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta charset="utf-8">
 		<title>Test Page for sap.m.FeedListItem</title>
 
 		<!-- UI5 Bootstrap -->
@@ -11,7 +11,7 @@
 			data-sap-ui-theme="sap_bluecrystal" data-sap-ui-libs="sap.m"></script>
 
 		<!-- QUnit libraries -->
-		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen" />
+		<link rel="stylesheet" href="../../../../resources/sap/ui/thirdparty/qunit.css" type="text/css" media="screen">
 		<script src="../../../../resources/sap/ui/thirdparty/qunit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/qunit-junit.js"></script>
 		<script type="text/javascript" src="../../../../resources/sap/ui/qunit/QUnitUtils.js"></script>
@@ -25,7 +25,7 @@
 			var oList2 = new sap.m.List({
 				inset : true
 			});
-			
+
 			var data = {
 				navigation : [ {
 					title : "Travel Expend",
@@ -64,7 +64,7 @@
 					press : 'detailPage'
 				} ]
 			};
-			
+
 			var oItemTemplate1 = new sap.m.StandardListItem({
 				title : "{title}",
 				description : "{description}",
@@ -72,7 +72,7 @@
 				iconInset : "{iconInset}",
 				type : "{type}"
 			});
-			
+
 			function bindListData(data, itemTemplate, list)
 			{
 				var oModel = new sap.ui.model.json.JSONModel();
@@ -80,13 +80,13 @@
 				oModel.setData(data);
 				// set the model to the list
 				list.setModel(oModel);
-	
+
 				// bind Aggregation
 				list.bindAggregation("items", "/navigation", itemTemplate);
 			}
-			
+
 			bindListData(data, oItemTemplate1, oList2);
-			
+
 			var oLeftButton = new sap.m.Button({
 				text: "Modal",
 				type: sap.m.ButtonType.Reject,
@@ -94,7 +94,7 @@
 					oPopover.setModal(!oPopover.getModal());
 				}
 			});
-			
+
 			var oRightButton = new sap.m.Button({
 				text: "Close",
 				type: sap.m.ButtonType.Accept,
@@ -102,7 +102,7 @@
 					oPopover.close();
 				}
 			});
-			
+
 			var footer = new sap.m.Bar({
 				contentLeft: [],
 				contentMiddle: [new sap.m.Button({icon: "../images/favorite@2x.png"}),
@@ -110,8 +110,8 @@
 								new sap.m.Button({icon: "../images/flag@2x.png"})],
 				contentRight: []
 			});
-			
-			
+
+
 			var oPopover = new sap.m.Popover({
 				placement: sap.m.PlacementType.Auto,
 				title: "Popover",
@@ -135,18 +135,18 @@
 					oList2
 				]
 			});
-			
-			
-			
-			
+
+
+
+
 			var oFeedList = new sap.m.List("oFeedItemList", {
 			    mode: "SingleSelectMaster"
 			});
-			
-			
+
+
 			var fnOpenPopup = function(oControlEvent) {
 				if (oControlEvent.getSource().getSender() == "Jack Jones") {
-					if (window.console) { // console object is only exposed when Developer Tools are open for the particular tab (which is usually not the case when unit test is run)	
+					if (window.console) { // console object is only exposed when Developer Tools are open for the particular tab (which is usually not the case when unit test is run)
 						console.log("senderPress called");
 					}
 					oControlEvent.getSource().setSender("Event was fired");
@@ -155,8 +155,8 @@
 					oPopover.openBy(oControlEvent.getParameters().domRef);
 				}
 			};
-			
-			
+
+
 			var oFeedListItemTemplate = new sap.m.FeedListItem({
 				type: sap.m.ListType.Active,
 				icon : "{icon}",
@@ -184,7 +184,7 @@
 				// bind Aggregation
 				list.bindAggregation("items", "/chunks", itemTemplate);
 			}
-			
+
 			jQuery.sap.require("sap.ui.core.IconPool");
 			var sURI = sap.ui.core.IconPool.getIconURI("personnel-view");
 
@@ -273,14 +273,14 @@
 
 			var appFeedList = new sap.m.App("myApp", {initialPage:"feedListPage"});
 
-			var feedListPage = new sap.m.Page("feedListPage", 
+			var feedListPage = new sap.m.Page("feedListPage",
 				{title: "Feed List Item Test Page"}
 			);
 
 
 			feedListPage.addContent(oFeedList);
 			appFeedList.addPage(feedListPage);
-			appFeedList.placeAt("content");
+			appFeedList.placeAt("qunit-fixture");
 
 
 			QUnit.module("Properties", {
@@ -304,6 +304,14 @@
 				assert.ok(oFeedList.getItems()[0].$("timestamp").length === 1, "timestamp should be rendered");
 				assert.ok(oFeedList.getItems()[0].$("info").length === 1, "info should be rendered");
 				assert.ok(oFeedList.getItems()[0].$("maxCharacters").length === 0, "maxCharacters is nothing to be rendered");
+			});
+
+			QUnit.test("Test aria-hidden attribute", function(assert) {
+				var sFeedListItemId = oFeedList.getItems()[0].getId();
+				var sImageAria = jQuery.sap.byId(sFeedListItemId + "-figure").attr("aria-hidden");
+				var sTextAria = jQuery.sap.byId(sFeedListItemId + "-text").attr("aria-hidden");
+				assert.equal(sImageAria, "true", "aria-hidden was set successfully at Image");
+				assert.equal(sTextAria, "true", "aria-hidden was set successfully at Text");
 			});
 
 			QUnit.test("Sender inactive, Icon inactive", function(assert) {
@@ -376,25 +384,25 @@
 					oPopover.close();
 				}
 			});
-			
+
 			QUnit.test("Press SPACE Key on Sender", function(assert) {
 				qutils.triggerKeyboardEvent(oFeedList.getItems()[9]._oLinkControl.getId(), jQuery.sap.KeyCodes.SPACE, false, false, false);
 				assert.equal(oFeedList.getItems()[9].getSender(), "Event was fired", "Sender Press event was fired");
 				oFeedList.getItems()[9].setSender("Jack Jones");
 			});
-			
+
 			QUnit.test("Press X Key on Sender", function(assert) {
 				qutils.triggerKeyboardEvent(oFeedList.getItems()[9]._oLinkControl.getId(), jQuery.sap.KeyCodes.X, false, false, false);
 				assert.notEqual(oFeedList.getItems()[9].getSender(), "Hello", "Sender Press event was not fired");
 			});
-			
+
 			QUnit.test("Press SPACE Key on MORE", function(assert) {
 				qutils.triggerKeyboardEvent(oFeedList.getItems()[9]._oLinkExpandCollapse.getId(), jQuery.sap.KeyCodes.SPACE, false, false, false);
 				assert.ok(oFeedList.getItems()[9].$("realtext").text() === oFeedList.getItems()[9]._sFullText, "the expanded text displayed ");
 				qutils.triggerKeyboardEvent(oFeedList.getItems()[9]._oLinkExpandCollapse.getId(), jQuery.sap.KeyCodes.SPACE, false, false, false);
 				assert.ok(oFeedList.getItems()[9].$("realtext").text() === oFeedList.getItems()[9]._sShortText, "the collapsed text displayed ");
 			});
-			
+
 			QUnit.test("Press X Key on MORE", function(assert) {
 				qutils.triggerKeyboardEvent(oFeedList.getItems()[9]._oLinkExpandCollapse.getId(), jQuery.sap.KeyCodes.X, false, false, false);
 				assert.notEqual(oFeedList.getItems()[9].getSender(), "Hello", "Sender Press event was not fired");
@@ -414,10 +422,35 @@
 				oFeedList.getItems()[10].invalidate();
 				assert.equal(oFeedList.getItems()[10]._oLinkExpandCollapse.getText(), sap.m.FeedListItem._sTextShowMore);
 			});
+
+			QUnit.module("Check property combination", {
+				beforeEach : function() {
+					this.oFeedListItem = new sap.m.FeedListItem({
+						sender : null,
+						text : "Some text which is displayed.",
+						timestamp : "March 03 2013",
+						iconActive : true,
+						iconDensityAware: true,
+						showIcon : true,
+						senderActive : false
+					}).placeAt("qunit-fixture");
+					sap.ui.getCore().applyChanges();
+				},
+				afterEach : function () {
+					this.oFeedListItem.destroy();
+				}
+			});
+
+			QUnit.test("'sender' is set to null and 'senderActive' is set to false", function(assert) {
+				this.oFeedListItem.ontap({
+					srcControl : this.oFeedListItem
+				});
+				assert.ok(this.oFeedListItem, "FeedListItem is clickable");
+			});
 		</script>
 	</head>
 	<body id="body" class="sapUiBody">
 		<div id="qunit"></div>
-		<div id="content"></div>
+		<div id="qunit-fixture"></div>
 	</body>
 </html>

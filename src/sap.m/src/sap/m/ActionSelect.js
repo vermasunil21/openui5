@@ -10,7 +10,7 @@ sap.ui.define(['jquery.sap.global', './Select', './library'],
 		/**
 		 * Constructor for a new ActionSelect.
 		 *
-		 * @param {string} [sId] id for the new control, generated automatically if no id is given 
+		 * @param {string} [sId] id for the new control, generated automatically if no id is given
 		 * @param {object} [mSettings] initial settings for the new control
 		 *
 		 * @class
@@ -30,7 +30,7 @@ sap.ui.define(['jquery.sap.global', './Select', './library'],
 
 			library : "sap.m",
 			associations : {
-		
+
 				/**
 				 * Buttons to be added to the ActionSelect content.
 				 */
@@ -82,12 +82,6 @@ sap.ui.define(['jquery.sap.global', './Select', './library'],
 		/* Lifecycle methods                                           */
 		/* =========================================================== */
 
-		/**
-		 * Called after the ActionSelect picker pop-up is render.
-		 *
-		 * @override
-		 * @protected
-		 */
 		ActionSelect.prototype.onAfterRenderingPicker = function() {
 			Select.prototype.onAfterRenderingPicker.call(this);
 			var oPicker = this.getPicker(),

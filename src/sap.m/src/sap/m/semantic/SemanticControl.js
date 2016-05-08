@@ -29,6 +29,8 @@ sap.ui.define(["sap/m/semantic/SemanticConfiguration", "sap/ui/base/ManagedObjec
 	var SemanticControl = Element.extend("sap.m.semantic.SemanticControl", /** @lends sap.m.semantic.SemanticControl.prototype */ {
 		metadata: {
 
+			library: "sap.m",
+
 			"abstract": true,
 
 			properties: {
@@ -59,10 +61,7 @@ sap.ui.define(["sap/m/semantic/SemanticConfiguration", "sap/ui/base/ManagedObjec
 
 	SemanticControl.prototype.setProperty = function (key, value, bSuppressInvalidate) {
 		ManagedObject.prototype.setProperty.call(this, key, value, true);
-		var sSetter = "set" + this._capitalize(key); //we call the setter, rather than setProperty on the control,
-													// to make sure we cover the case when the control has
-													// overwritten the setter with custom implementation
-		this._getControl()[sSetter](value, bSuppressInvalidate);
+		this._applyProperty(key, value, bSuppressInvalidate);
 
 		return this;
 	};
@@ -132,6 +131,14 @@ sap.ui.define(["sap/m/semantic/SemanticConfiguration", "sap/ui/base/ManagedObjec
 		return oClone;
 	};
 
+	SemanticControl.prototype.destroy = function () {
+		var vResult = Element.prototype.destroy.apply(this, arguments);
+		if (this.getAggregation("_control")) {
+			this.getAggregation("_control").destroy();
+		}
+		return vResult;
+	};
+
 	/**
 	 * Implementation of a commonly used function that adapts sap.ui.core.Element
 	 * to provide dom reference for opening popovers
@@ -163,6 +170,17 @@ sap.ui.define(["sap/m/semantic/SemanticConfiguration", "sap/ui/base/ManagedObjec
 				this._getControl().applySettings(oSettings);
 			}
 		}
+	};
+
+	/**
+	 * Applies the property value according to semantic logic
+	 * @private
+	 */
+	SemanticControl.prototype._applyProperty = function(key, value, bSuppressInvalidate) {
+		var sSetter = "set" + this._capitalize(key); //we call the setter, rather than setProperty on the control,
+													// to make sure we cover the case when the control has
+													// overwritten the setter with custom implementation
+		this._getControl()[sSetter](value, bSuppressInvalidate);
 	};
 
 	SemanticControl.prototype._capitalize = function(sName) {

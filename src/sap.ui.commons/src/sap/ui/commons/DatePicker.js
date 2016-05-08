@@ -10,7 +10,7 @@ sap.ui.define(['jquery.sap.global', './TextField', 'sap/ui/model/type/Date', 'sa
 	/**
 	 * Constructor for a new DatePicker.
 	 *
-	 * @param {string} [sId] id for the new control, generated automatically if no id is given 
+	 * @param {string} [sId] id for the new control, generated automatically if no id is given
 	 * @param {object} [mSettings] initial settings for the new control
 	 *
 	 * @class
@@ -26,6 +26,7 @@ sap.ui.define(['jquery.sap.global', './TextField', 'sap/ui/model/type/Date', 'sa
 	 *
 	 * @constructor
 	 * @public
+	 * @deprecated Since version 1.38. Instead, use the <code>sap.m.DatePicker</code> control.
 	 * @alias sap.ui.commons.DatePicker
 	 * @ui5-metamodel This control/element also will be described in the UI5 (legacy) designtime metamodel
 	 */
@@ -62,9 +63,9 @@ sap.ui.define(['jquery.sap.global', './TextField', 'sap/ui/model/type/Date', 'sa
 				this._oFormatMobile = sap.ui.core.format.DateFormat.getInstance({pattern: "yyyy-MM-dd", strictParsing: true, calendarType: sap.ui.core.CalendarType.Gregorian});
 			}
 
-			this._oMinDate = new UniversalDate(1, 0, 1);
+			this._oMinDate = new Date(1, 0, 1);
 			this._oMinDate.setFullYear(1); // otherwise year 1 will be converted to year 1901
-			this._oMaxDate = new UniversalDate(9999, 11, 31);
+			this._oMaxDate = new Date(9999, 11, 31, 23, 59, 59, 99);
 
 		};
 
@@ -503,6 +504,16 @@ sap.ui.define(['jquery.sap.global', './TextField', 'sap/ui/model/type/Date', 'sa
 
 		};
 
+		/**
+		 * @see {sap.ui.core.Control#getAccessibilityInfo}
+		 * @protected
+		 */
+		DatePicker.prototype.getAccessibilityInfo = function() {
+			var oInfo = TextField.prototype.getAccessibilityInfo.apply(this, arguments);
+			oInfo.type = sap.ui.getCore().getLibraryResourceBundle("sap.ui.commons").getText("ACC_CTR_TYPE_DATEINPUT");
+			return oInfo;
+		};
+
 		function _getFormatter(oThis){
 
 			var sPattern = "";
@@ -608,6 +619,7 @@ sap.ui.define(['jquery.sap.global', './TextField', 'sap/ui/model/type/Date', 'sa
 					oThis._oDateRange.setStartDate(new Date(oDate.getTime()));
 				}
 			} else {
+				oThis._oCalendar.focusDate(new Date());
 				if (oThis._oDateRange.getStartDate()) {
 					oThis._oDateRange.setStartDate(undefined);
 				}

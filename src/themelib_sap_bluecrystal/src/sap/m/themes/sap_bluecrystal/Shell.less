@@ -1,11 +1,11 @@
 
-@media (min-height: @sapMShellMinHeightForHeader) { 
+@media (min-height: @sapMShellMinHeightForHeader) {
 	.sapMShellHeader {
 		border-top: 4px solid @sapUiBrand;
 	}
-	
+
 	.sap-desktop .sapMShellHeaderLogout:active {
-		color: @sapUiTextInverted;
+		color: @sapUiContentContrastTextColor;
 	}
 }
 .sapUiUfdShell .sapMShellHeader {
@@ -18,18 +18,18 @@
 	background-color: transparent; /* custom BG image... just hide the background */
 }
 .sapMShellBackgroundColorOnlyIfDefaultMixin() when (@sapUiGlobalBackgroundImage = '') {
-	background-color: mix(@sapUiHighlight, @sapUiWhite, 5%); /* default BG image - display the default background color */
+	background-color: mix(@sapUiHighlight, @sapUiWhite, 5); /* default BG image - display the default background color */
 }
 .sapMShellBackgroundColorOnlyIfDefault {
 	.sapMShellBackgroundColorOnlyIfDefaultMixin;
 }
 
 
-.sap-desktop .sapMShellHeaderText {
+html.sap-desktop .sapMShellHeaderText {
 	font-size: @sapMFontHeader2Size;
-	color: @sapUiGroupTitleTextColor;
+	color: @sapUiShellTextColor;
 }
 
-.sap-desktop .sapMShellCentralBox {
-	box-shadow: 0 0 24px fade(@sapUiDarkShadowTint, 15%);
+html.sap-desktop .sapMShellCentralBox {
+	box-shadow: 0 0 24px fade(@sapUiDarkShadowTint, 15);
 }

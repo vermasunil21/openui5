@@ -2,10 +2,9 @@
  * ${copyright}
  */
 
-sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
-	function (jQuery, ToolsAPI) {
+sap.ui.define(['jquery.sap.global'],
+	function (jQuery) {
 		"use strict";
-
 
 		/**
 		 * <pre>
@@ -49,12 +48,12 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 		 */
 		var Support = (function ($, document) {
 
-			var dialog, startTime, isEventRegistered, lastTouchUID;
-			var timeDiff = 0;
-			var minHoldTime = 3000; // 3s(3000ms) two-finger hold time
-			var holdFingersNumber = 2; // two-fingers hold
-			var maxFingersAllowed = 3; // two-fingers hold + 1-finger tab
-			var releasedFingersNumber = 1,
+			var dialog, startTime, isEventRegistered, lastTouchUID,
+				timeDiff = 0,
+				minHoldTime = 3000, // 3s(3000ms) two-finger hold time
+				holdFingersNumber = 2, // two-fingers hold
+				maxFingersAllowed = 3, // two-fingers hold + 1-finger tab
+				releasedFingersNumber = 1,
 				oData = {},
 				e2eTraceConst = {
 					btnStart: "startE2ETrace",
@@ -68,7 +67,8 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 				controlIDs = {
 					dvLoadedLibs: "LoadedLibs",
 					dvLoadedModules: "LoadedModules"
-				};
+				},
+				windowsPhoneTouches; // variable used to open the support dialog on windows phone
 
 			// copied from core
 			function line(buffer, right, border, label, content) {
@@ -101,21 +101,20 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 			}
 
 			// copied from core
-			function getTechnicalContent() {
-				var oCfg = ToolsAPI.getFrameworkInformation();
+			function getTechnicalContent(oFrameworkInformation) {
 				oData = {
-					version: oCfg.commonInformation.version,
-					build: oCfg.commonInformation.buildTime,
-					change: oCfg.commonInformation.lastChange,
-					useragent: oCfg.commonInformation.userAgent,
-					docmode: oCfg.commonInformation.documentMode,
-					debug: oCfg.commonInformation.debugMode,
-					bootconfig: oCfg.configurationBootstrap,
-					config: oCfg.configurationComputed,
-					loadedlibs: oCfg.loadedLibraries,
-					modules: oCfg.loadedModules,
-					uriparams: oCfg.URLParameters,
-					appurl: oCfg.commonInformation.applicationHREF
+					version: oFrameworkInformation.commonInformation.version,
+					build: oFrameworkInformation.commonInformation.buildTime,
+					change: oFrameworkInformation.commonInformation.lastChange,
+					useragent: oFrameworkInformation.commonInformation.userAgent,
+					docmode: oFrameworkInformation.commonInformation.documentMode,
+					debug: oFrameworkInformation.commonInformation.debugMode,
+					bootconfig: oFrameworkInformation.configurationBootstrap,
+					config: oFrameworkInformation.configurationComputed,
+					loadedlibs: oFrameworkInformation.loadedLibraries,
+					modules: oFrameworkInformation.loadedModules,
+					uriparams: oFrameworkInformation.URLParameters,
+					appurl: oFrameworkInformation.commonInformation.applicationHREF
 				};
 
 				var html = ["<table class='sapUiSelectable' border='0' cellspacing='5' cellpadding='5' width='100%'><tbody class='sapUiSelectable'>"];
@@ -159,7 +158,7 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 				});
 
 				line(html, true, true, "Loaded Modules", function (buffer) {
-					buffer.push("<div class='sapUiSupportDiv sapUiSelectable' id='" + buildControlId(controlIDs.dvLoadedModules) + "' />");
+					buffer.push("<div class='sapUiSupportDiv sapUiSelectable' id='" + buildControlId(controlIDs.dvLoadedModules) + "'></div>");
 				});
 
 				html.push("</tbody></table>");
@@ -269,11 +268,17 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 				return dialog;
 			}
 
-
 			//function is triggered when a touch is detected
 			function onTouchStart(oEvent) {
 				if (oEvent.touches) {
 					var currentTouches = oEvent.touches.length;
+
+					if (sap.ui.Device.browser.mobile &&
+						(sap.ui.Device.browser.name === sap.ui.Device.browser.BROWSER.INTERNET_EXPLORER ||
+						sap.ui.Device.browser.name === sap.ui.Device.browser.BROWSER.EDGE)) {
+						windowsPhoneTouches = currentTouches;
+					}
+
 
 					if (currentTouches > maxFingersAllowed) {
 						document.removeEventListener('touchend', onTouchEnd);
@@ -299,11 +304,16 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 
 			//function is triggered when a touch is removed e.g. the user’s finger is removed from the touchscreen.
 			function onTouchEnd(oEvent) {
+				var windowsPhoneTouchCondition = sap.ui.Device.browser.mobile &&
+					(sap.ui.Device.browser.name === sap.ui.Device.browser.BROWSER.INTERNET_EXPLORER ||
+					sap.ui.Device.browser.name === sap.ui.Device.browser.BROWSER.EDGE) &&
+					windowsPhoneTouches == maxFingersAllowed;
+
 				document.removeEventListener('touchend', onTouchEnd);
 
 				// Check if two fingers are holded for 3 seconds or more and after that it`s tapped with a third finger
 				if (timeDiff > minHoldTime
-					&& oEvent.touches.length === holdFingersNumber
+					&& (oEvent.touches.length === holdFingersNumber || windowsPhoneTouchCondition) // on Windows Phone oEvent.touches.lenght is 0 instead of 2
 					&& oEvent.changedTouches.length === releasedFingersNumber
 					&& oEvent.changedTouches[0].identifier === lastTouchUID) {
 
@@ -314,11 +324,14 @@ sap.ui.define(['jquery.sap.global', 'sap/ui/core/support/ToolsAPI'],
 			}
 
 			function show() {
-				var container = getDialog();
-				container.removeAllAggregation("content");
-				container.addAggregation("content", getTechnicalContent());
-				dialog.open();
-				setupDialog();
+				sap.ui.require(['sap/ui/core/support/ToolsAPI'], function (ToolsAPI) {
+					var container = getDialog();
+					container.removeAllAggregation("content");
+					container.addAggregation("content", getTechnicalContent(ToolsAPI.getFrameworkInformation()));
+
+					dialog.open();
+					setupDialog();
+				});
 			}
 
 			return ({

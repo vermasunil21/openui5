@@ -57,12 +57,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			introActive : {type : "boolean", group : "Misc", defaultValue : null},
 
 			/**
-			 * Indicates that the title is clickable
+			 * Indicates that the title is clickable and is set only if a title is provided
 			 */
 			titleActive : {type : "boolean", group : "Misc", defaultValue : null},
 
 			/**
-			 * Object header icon
+			 * Object header icon.
+			 *
+			 * <b>Note:</b> Recursive resolution of binding expressions is not supported by the framework.
+			 * It works only in ObjectHeader, since it is a composite control and creates an Image control internally.
 			 */
 			icon : {type : "sap.ui.core.URI", group : "Misc", defaultValue : null},
 
@@ -120,10 +123,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			condensed : {type : "boolean", group : "Appearance", defaultValue : false},
 
 			/**
-			 * NOTE: Only applied if you set "condensed=true" or "responsive=true".
 			 * This property is used to set the background color of the ObjectHeader. Possible values are "Solid", "Translucent" and "Transparent".
+			 * NOTE: The different types of ObjectHeader come with different default background.
+			 * - non responsive ObjectHeader: Transparent
+			 * - responsive ObjectHeader: Translucent
+			 * - condensed ObjectHeder: Solid
 			 */
-			backgroundDesign : {type : "sap.m.BackgroundDesign", group : "Appearance", defaultValue : sap.m.BackgroundDesign.Transparent},
+			backgroundDesign : {type : "sap.m.BackgroundDesign", group : "Appearance"},
 
 			/**
 			 * If this property is set to true the ObjectHeader is rendered with a different design and reacts responsively to the screen sizes.
@@ -180,7 +186,20 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			 * This property specifies the number and unit directionality with enumerated options. By default, the control inherits text direction from the DOM.
 			 * @since 1.28.0
 			 */
-			numberTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit}
+			numberTextDirection : {type : "sap.ui.core.TextDirection", group : "Appearance", defaultValue : sap.ui.core.TextDirection.Inherit},
+
+			/**
+			 * Sets custom text for the tooltip of the select title arrow. If not set, a default text of the tooltip will be displayed.
+			 * @since 1.30.0
+			 */
+			titleSelectorTooltip : {type : "string", group : "Misc", defaultValue : "Options"},
+
+			/**
+			 * Defines the semantic level of the title.
+			 * This information is e.g. used by assistive technologies like screenreaders to create a hierarchical site map for faster navigation.
+			 * Depending on this setting a HTML h1-h6 element is used.
+			 */
+			titleLevel : {type : "sap.ui.core.TitleLevel", group : "Appearance", defaultValue : sap.ui.core.TitleLevel.H1}
 
 		},
 		defaultAggregation : "attributes",
@@ -217,6 +236,15 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			 * The object number and unit are managed in this aggregation
 			 */
 			_objectNumber : {type : "sap.m.ObjectNumber", multiple : false, visibility : "hidden"},
+
+			/**
+			 * NOTE: Only applied if you set "responsive=false".
+			 * Additional object numbers and units are managed in this aggregation.
+			 * The numbers are hidden on tablet and phone size screens.
+			 * When only one number is provided, it is rendered with additional separator from the main ObjectHeader number.
+			 * @since 1.38.0
+			 */
+			additionalNumbers : {type : "sap.m.ObjectNumber", multiple : true, singularName : "additionalNumber"},
 
 			/**
 			 * This aggregation takes only effect when you set "responsive" to true.
@@ -295,8 +323,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	}});
 
 	ObjectHeader.prototype.init = function() {
-		var that = this,
-			oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"); // get resource translation bundle;
+		var oLibraryResourceBundle = sap.ui.getCore().getLibraryResourceBundle("sap.m"); // get resource translation bundle;
 
 		//TODO Remove placeholder when Safari iconFont issue is addressed.
 		this._oPlaceholderIcon = IconPool.createControlByURI({
@@ -325,12 +352,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			src: IconPool.getIconURI("arrow-down"),
 			decorative: false,
 			visible : false,
-			useIconTooltip : false,
+			tooltip: oLibraryResourceBundle.getText("OH_SELECT_ARROW_TOOLTIP"),
 			size: "1.375rem",
 			press : function(oEvent) {
-				that.fireTitleSelectorPress({
-					domRef : this.getDomRef()
-				});
+				// empty function here becuase icon needs an event handler in order to show pointer cursor
 			}
 		});
 
@@ -339,6 +364,93 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		this._titleText.setMaxLines(3);
 
 	};
+
+	ObjectHeader.prototype.insertAttribute = function (oAttribute, iIndex) {
+		var vResult = this.insertAggregation("attributes", oAttribute, iIndex);
+		this._registerControlListener(oAttribute);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.addAttribute = function (oAttribute) {
+		var vResult = this.addAggregation("attributes", oAttribute);
+		this._registerControlListener(oAttribute);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.removeAttribute = function (oAttribute) {
+		var vResult = this.removeAggregation("attributes", oAttribute);
+		this._deregisterControlListener(vResult);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.removeAllAttributes = function () {
+		var aAttributes = this.removeAllAggregation("attributes");
+		aAttributes.forEach(this._deregisterControlListener, this);
+		return aAttributes;
+	};
+
+	ObjectHeader.prototype.destroyAttributes = function () {
+		var aAttributes = this.getAggregation("attributes");
+		if (aAttributes !== null) {
+			aAttributes.forEach(this._deregisterControlListener, this);
+		}
+		return this.destroyAggregation("attributes");
+	};
+
+	ObjectHeader.prototype.insertStatus = function (oStatus, iIndex) {
+		var vResult = this.insertAggregation("statuses", oStatus, iIndex);
+		this._registerControlListener(oStatus);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.addStatus = function (oStatus) {
+		var vResult = this.addAggregation("statuses", oStatus);
+		this._registerControlListener(oStatus);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.removeStatus = function (oStatus) {
+		var vResult =  this.removeAggregation("statuses", oStatus);
+		this._deregisterControlListener(vResult);
+		return vResult;
+	};
+
+	ObjectHeader.prototype.removeAllStatuses = function () {
+		var aStatuses = this.removeAllAggregation("statuses");
+		aStatuses.forEach(this._deregisterControlListener, this);
+		return aStatuses;
+	};
+
+	ObjectHeader.prototype.destroyStatuses = function () {
+		var aStatuses = this.getAggregation("statuses");
+		if (aStatuses !== null) {
+			aStatuses.forEach(this._deregisterControlListener, this);
+		}
+		return this.destroyAggregation("statuses");
+	};
+
+	/**
+	 * Every time a control is inserted in the ObjectHeader, it must be monitored for size/visibility changes
+	 * @param oControl
+	 * @private
+	 */
+	ObjectHeader.prototype._registerControlListener = function (oControl) {
+		if (oControl) {
+			oControl.attachEvent("_change", this.invalidate, this);
+		}
+	};
+
+	/**
+	 * Each time a control is removed from the ObjectHeader, detach listeners
+	 * @param oControl
+	 * @private
+	 */
+	ObjectHeader.prototype._deregisterControlListener = function (oControl) {
+		if (oControl) {
+			oControl.detachEvent("_change", this.invalidate, this);
+		}
+	};
+
 
 	/**
 	 * Set the condensed flag
@@ -354,7 +466,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		} else {
 			this._oTitleArrowIcon.setSize("1.375rem");
 		}
-		
+
 		return this;
 	};
 
@@ -398,6 +510,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	};
 
 	/**
+	 * Sets the new text for the tooltip of the select title arrow to the internal aggregation
+	 * @override
+	 * @public
+	 * @param sTooltip the new value
+	 * @returns {sap.m.ObjectHeader} this pointer for chaining
+	 */
+	ObjectHeader.prototype.setTitleSelectorTooltip = function (sTooltip) {
+		this.setProperty("titleSelectorTooltip", sTooltip, false);
+		this._oTitleArrowIcon.setTooltip(sTooltip);
+		return this;
+	};
+
+	/**
 	 * lazy initializes the object number aggregation
 	 * @private
 	 * @returns {Object} the newly created control
@@ -413,6 +538,19 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this.setAggregation("_objectNumber", oControl, true);
 		}
 		return oControl;
+	};
+
+	/**
+	 * Gets the correct focus domRef.
+	 * @override
+	 * @returns {Object} the domRef of the ObjectHeader title
+	 */
+	ObjectHeader.prototype.getFocusDomRef = function() {
+		if (this.getResponsive()) {
+			return this.$("txt");
+		} else {
+			return this.$("title");
+		}
 	};
 
 	ObjectHeader.prototype.ontap = function(oEvent) {
@@ -448,6 +586,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			this.fireIconPress({
 				domRef : jQuery.sap.domById(sSourceId)
 			});
+		} else if (sSourceId === this.getId() + "-titleArrow") {
+			this.fireTitleSelectorPress({
+				domRef : jQuery.sap.domById(sSourceId)
+			});
 		}
 	};
 
@@ -459,7 +601,10 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ObjectHeader.prototype._handleSpaceOrEnter = function(oEvent) {
 		var sSourceId = oEvent.target.id;
 
-		if (!this.getResponsive() && this.getTitleActive() && ( sSourceId === this.getId() + "-title" || 
+		// mark the event that it is handled by the control
+		oEvent.setMarked();
+
+		if (!this.getResponsive() && this.getTitleActive() && ( sSourceId === this.getId() + "-title" ||
 				jQuery(oEvent.target).parent().attr('id') === this.getId() + "-title" || // check if the parent of the "h" tag is the "title"
 				sSourceId === this.getId() + "-titleText-inner" )) {
 			if (oEvent.type === "sapspace") {
@@ -482,7 +627,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				oEvent.preventDefault();
 			}
 			// The sourceId should be always the id of the "a", even if we click on the inside span element
-			sSourceId = jQuery(oEvent.target).parent().attr('id');
+			sSourceId = this.getId() + "-txt";
 
 			if (!this.getTitleHref()) {
 				oEvent.preventDefault();
@@ -515,6 +660,13 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 
 			this.fireIconPress({
 				domRef : iconOrImg
+			});
+		} else if (sSourceId === this.getId() + "-titleArrow") {
+			if (oEvent.type === "sapspace") {
+				oEvent.preventDefault();
+			}
+			this.fireTitleSelectorPress({
+				domRef : jQuery.sap.domById(sSourceId)
 			});
 		}
 	};
@@ -622,7 +774,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	 */
 	ObjectHeader.prototype.exit = function() {
 		if (sap.ui.Device.system.desktop) {
-			sap.ui.Device.media.detachHandler(this._rerenderOH, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
+			sap.ui.Device.media.detachHandler(this._rerenderOHR, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
 		}
 
 		if (sap.ui.Device.system.tablet || sap.ui.Device.system.phone) {
@@ -673,8 +825,6 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 	ObjectHeader.prototype._getImageControl = function() {
 		var sImgId = this.getId() + "-img";
 		var sSize = "2.5rem";
-		var sHeight = "3rem";
-		var sWidth = "3rem";
 
 		var mProperties = jQuery.extend(
 			{
@@ -683,8 +833,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				useIconTooltip : false,
 				densityAware : this.getIconDensityAware()
 			},
-				IconPool.isIconURI(this.getIcon()) ? 
-					{ size : sSize } : {height : sHeight, width : sWidth }
+				IconPool.isIconURI(this.getIcon()) ? { size : sSize } : {}
 		);
 
 		this._oImageControl = sap.m.ImageHelper.getImageControl(sImgId, this._oImageControl, this, mProperties);
@@ -711,10 +860,8 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		var bPageRTL = sap.ui.getCore().getConfiguration().getRTL();
 		var $titleArrow = this.$("titleArrow");
 
-		$titleArrow.attr("aria-haspopup", "true");
-		$titleArrow.attr("role", "link");
-		$titleArrow.attr("aria-label", sap.ui.getCore().getLibraryResourceBundle("sap.m").getText("OH_ARIA_SELECT_ARROW_VALUE")); // set label from resource translation bundle
-		
+		$titleArrow.attr("role", "button");
+
 		if (this.getResponsive()) {
 			this._adjustIntroDiv();
 
@@ -727,7 +874,7 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 			}
 			// adjust number div after initial alignment
 			this._adjustNumberDiv();
-			
+
 			// watch for orientation change only on tablet and phone
 			if (sap.ui.Device.system.tablet || sap.ui.Device.system.phone) {
 				sap.ui.Device.orientation.attachHandler(this._onOrientationChange, this);
@@ -738,8 +885,12 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 				sap.ui.Device.media.attachHandler(this._rerenderOHR, this, sap.ui.Device.media.RANGESETS.SAP_STANDARD);
 			}
 		} else {
+			var sTextAlign = bPageRTL ? sap.ui.core.TextAlign.Left : sap.ui.core.TextAlign.Right;
 			if (oObjectNumber && oObjectNumber.getNumber()) { // adjust alignment according the design specification
-				oObjectNumber.setTextAlign(bPageRTL ? sap.ui.core.TextAlign.Left : sap.ui.core.TextAlign.Right);
+				oObjectNumber.setTextAlign(sTextAlign);
+			}
+			if (this.getAdditionalNumbers()) { // do the same for the additional numbers
+				this._setTextAlignANum(sTextAlign);
 			}
 		}
 	};
@@ -872,6 +1023,51 @@ sap.ui.define(['jquery.sap.global', './library', 'sap/ui/core/Control', 'sap/ui/
 		return bHasStatus;
 	};
 
+	/**
+	 * Returns the default background design for the different types of the ObjectHeader
+	 * @private
+	 * @returns {sap.m.BackgroundDesign}
+	 */
+	ObjectHeader.prototype._getDefaultBackgroundDesign = function() {
+		if (this.getCondensed()) {
+			return sap.m.BackgroundDesign.Solid;
+		} else {
+			if (this.getResponsive()) {
+				return sap.m.BackgroundDesign.Translucent;
+			} else { // old none responsive OH
+				return sap.m.BackgroundDesign.Transparent;
+			}
+		}
+
+	};
+
+
+	/**
+	 * Returns either the default background or the one that is set by the user
+	 *
+	 * @private
+	 */
+	ObjectHeader.prototype._getBackground = function() {
+
+		if (this.getBackgroundDesign() === undefined) {
+			return this._getDefaultBackgroundDesign();
+		} else {
+			return this.getBackgroundDesign();
+		}
+
+	};
+
+	/**
+	 * Sets the text alignment for all additional numbers inside the AdditionalNumbers aggregation
+	 *
+	 * @private
+	 */
+	ObjectHeader.prototype._setTextAlignANum = function(sTextAlign) {
+		var numbers = this.getAdditionalNumbers();
+		for (var i = 0; i < numbers.length; i++) {
+			numbers[i].setTextAlign(sTextAlign);
+		}
+	};
 
 	return ObjectHeader;
 

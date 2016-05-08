@@ -17,7 +17,7 @@
 					class="sapUiDSCExplored sapUiContentPadding"
 					containerQuery="true"
 					sideContentFallDown="BelowM"
-					breakpointChanged="updateToggleButtonState">
+					breakpointChanged="handleBreakpointChangeEvent">
 					<l:mainContent>
 						<VBox>
 							<Title level="H1" text="Product" />
@@ -31,11 +31,15 @@
 						</VBox>
 					</l:mainContent>
 					<l:sideContent>
+						<Toolbar>
+							<Title text="Comments"/>
+							<ToolbarSpacer />
+							<Button text="Close" type="Transparent" press="handleSideContentHide" visible="{= !${media>/phone}}" />
+						</Toolbar>
 						<l:VerticalLayout
 								width="100%">
 							<l:content>
 								<List
-										headerText="Comments"
 										items="{/EntryCollection}" >
 									<FeedListItem
 											sender="{Author}"
@@ -58,17 +62,14 @@
 			</Page>
 		</content>
 		<footer>
-			<Bar>
-				<contentLeft>
-					<Button text="Toggle" type="Accept" press="handleToggleClick" id="toggleButton"></Button>
-				</contentLeft>
-				<contentMiddle>
-					<Slider value="100" width="300px" liveChange="handleSliderChange" />
-				</contentMiddle>
-				<contentRight>
-					<Text text="Best view in full screen"></Text>
-				</contentRight>
-			</Bar>
+			<Toolbar>
+				<content>
+					<Button text="Toggle" type="Accept" press="handleToggleClick" id="toggleButton" />
+					<Button text="Open Side Content" id="showSideContentButton" press="handleSideContentShow" visible="false" />
+					<Slider id='DSCWidthSlider' value="100" liveChange="handleSliderChange" visible="{= !${media>/phone}}" />
+					<Text id='DSCWidthHintText' text="Best view in full screen" visible="{= !${media>/phone}}" />
+				</content>
+			</Toolbar>
 		</footer>
 	</Page>
 </mvc:View>
